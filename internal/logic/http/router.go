@@ -1,21 +1,24 @@
-package router
+package http
 
 import (
 	"github.com/gin-gonic/gin"
-	"ppim/internal/logic/router/handler"
 	"ppim/internal/logic/srv"
 )
 
 var (
-	user *handler.UserHandler
+	user *UserHandler
+	msg  *MsgHandler
 )
 
-func init() {
-	user = &handler.UserHandler{Srv: srv.NewUserSrv()}
+func initSvcCtx() {
+	user = &UserHandler{Srv: srv.NewUserSrv()}
+	msg = &MsgHandler{}
 }
 
 func registerRoute(r *gin.Engine) {
-	r.GET("/test", user.Test)
+	initSvcCtx()
+
+	r.GET("/test", msg.Test)
 
 	u := r.Group("/user")
 	{

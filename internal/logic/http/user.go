@@ -1,4 +1,4 @@
-package handler
+package http
 
 import (
 	"errors"
@@ -31,15 +31,6 @@ func (h UserHandler) GetOne(ctx *gin.Context) {
 		}
 	} else {
 		render.JsonWithSuccess(ctx, u)
-	}
-}
-
-func (h UserHandler) Test(ctx *gin.Context) {
-	if err := h.Srv.Test(ctx); err != nil {
-		zlog.Error(ctx, err.Error())
-		render.JsonWithError(ctx, errs.ErrServerInternal)
-	} else {
-		render.JsonWithSuccess(ctx, "")
 	}
 }
 

@@ -16,11 +16,6 @@ func NewUserSrv() *UserSrv {
 	return &UserSrv{}
 }
 
-func (srv *UserSrv) Test(ctx *gin.Context) error {
-	t := global.Redis.Get(ctx, "test").String()
-	zlog.Infof(ctx, "redis test: %s", t)
-	return nil
-}
 func (srv *UserSrv) GetOne(ctx *gin.Context, uid int64) (resp *types.UserGetOneResp, err error) {
 	zlog.Infof(ctx, "uid: %d", uid)
 

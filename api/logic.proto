@@ -1,5 +1,9 @@
 syntax = "proto3";
 
+package ppim.logic;
+
+option go_package = "./logic;logic";
+
 message PingReq {}
 
 message PongResp {

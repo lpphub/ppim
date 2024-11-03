@@ -5,13 +5,12 @@ import (
 	"ppim/internal/logic"
 )
 
-func Execute() {
+func main() {
 	var rootCmd = &cobra.Command{
 		Use:   "main",
-		Short: "beacon-biz Main Function",
+		Short: "Main Function",
 		Run: func(cmd *cobra.Command, args []string) {
-			// 默认web服务
-			logic.HttpServe()
+			logic.Serve()
 		},
 	}
 
@@ -21,8 +20,4 @@ func Execute() {
 	if err := rootCmd.Execute(); err != nil {
 		panic(err.Error())
 	}
-}
-
-func main() {
-	Execute()
 }
