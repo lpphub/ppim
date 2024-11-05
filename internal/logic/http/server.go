@@ -15,6 +15,14 @@ type ApiServer struct {
 
 func NewApiServer() *ApiServer {
 	r := gin.New()
+	bootstraps(r)
+	registerRoutes(r)
+	return &ApiServer{
+		engine: r,
+	}
+}
+
+func bootstraps(r *gin.Engine) {
 	ware.Bootstraps(r, ware.BootstrapConf{
 		Cors: true,
 		AccessLog: ware.AccessLogConfig{
@@ -27,11 +35,6 @@ func NewApiServer() *ApiServer {
 	})
 
 	ext.RegisterMetrics(r)
-	registerRoute(r)
-
-	return &ApiServer{
-		engine: r,
-	}
 }
 
 func (s *ApiServer) Start() {

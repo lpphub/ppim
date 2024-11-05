@@ -15,7 +15,7 @@ func initSvcCtx() {
 	msg = &MsgHandler{}
 }
 
-func registerRoute(r *gin.Engine) {
+func registerRoutes(r *gin.Engine) {
 	initSvcCtx()
 
 	r.GET("/test", msg.Test)
