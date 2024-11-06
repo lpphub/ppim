@@ -4,7 +4,7 @@ services:
     ports:
       - "6379:6379"
     volumes:
-      - ./redis/data:/data
+      - ${DATA_DIR}/redis/data:/data
     command: redis-server --appendonly yes
 
   mongo:
@@ -12,7 +12,7 @@ services:
     ports:
       - "27017:27017"
     volumes:
-      - ./mongo/db:/data/db
+      - ${DATA_DIR}/mongo/db:/data/db
     environment:
       TZ: Asia/Shanghai
       MONGO_INITDB_ROOT_USERNAME: root
@@ -23,7 +23,7 @@ services:
 #    ports:
 #      - "9092:9092"
 #    volumes:
-#      - ./kafka:/bitnami/kafka
+#      - ${DATA_DIR}/kafka:/bitnami/kafka
 #    environment:
 #      TZ: Asia/Shanghai
 #      KAFKA_CFG_NODE_ID: 0
@@ -43,7 +43,7 @@ services:
       ALLOW_NONE_AUTHENTICATION: yes
       ETCD_ADVERTISE_CLIENT_URLS: http://etcd:2379
     volumes:
-      - ./etcd:/bitnami/etcd 
+      - ${DATA_DIR}/etcd:/bitnami/etcd
   
   etcdkeeper:
     image: deltaprojects/etcdkeeper:latest
