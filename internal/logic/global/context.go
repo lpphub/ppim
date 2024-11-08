@@ -1,7 +1,6 @@
 package global
 
 import (
-	"fmt"
 	"github.com/bwmarrin/snowflake"
 	"github.com/lpphub/golib/env"
 	"github.com/lpphub/golib/zlog"
@@ -40,7 +39,7 @@ func PreInit() {
 	env.SetAppName("beacon")
 
 	// 加载配置文件
-	configFile := filepath.Join("config", fmt.Sprintf("logic_%s.yml", env.GetRunEnv()))
+	configFile := filepath.Join("config", "logic.yml")
 	env.LoadConf(configFile, &Conf)
 
 	// 日志配置
