@@ -1,8 +1,11 @@
 package net
 
 import (
+	"errors"
+	"fmt"
 	"github.com/panjf2000/gnet/v2"
 	"github.com/panjf2000/gnet/v2/pkg/logging"
+	"ppim/internal/comet/net/packet"
 	"sync/atomic"
 )
 
@@ -34,12 +37,9 @@ func (s *TCPServer) OnBoot(eng gnet.Engine) gnet.Action {
 }
 
 func (s *TCPServer) OnOpen(c gnet.Conn) (out []byte, action gnet.Action) {
-	// 读取连接认证信息
-	buf, _ := c.Next(-1)
-	logging.Infof("OnOpen: %s\n", string(buf))
+	c.SetContext(new(packet.FixedHeaderCodec))
 
 	atomic.AddInt32(&s.connected, 1)
-
 	return
 }
 
@@ -55,8 +55,18 @@ func (s *TCPServer) OnClose(c gnet.Conn, err error) (action gnet.Action) {
 }
 
 func (s *TCPServer) OnTraffic(c gnet.Conn) gnet.Action {
-	buf, _ := c.Next(-1)
+	codec := c.Context().(*packet.FixedHeaderCodec)
+	buf, err := codec.Unpack(c)
+	if err != nil {
+		logging.Errorf("decode error: %v\n", err)
+		if errors.Is(err, packet.ErrInvalidMagic) {
+			return gnet.Close
+		}
+	} else {
+		fmt.Printf("recv data: %s\n", string(buf))
 
-	c.Write(buf)
+		buf, _ = codec.Encode([]byte("haha"))
+		_, _ = c.Write(buf)
+	}
 	return gnet.None
 }
