@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"github.com/panjf2000/gnet/v2"
 	"github.com/panjf2000/gnet/v2/pkg/logging"
-	"ppim/internal/comet/net/packet"
+	"ppim/internal/comet/net/protocol"
 	"sync/atomic"
 )
 
@@ -37,7 +37,7 @@ func (s *TCPServer) OnBoot(eng gnet.Engine) gnet.Action {
 }
 
 func (s *TCPServer) OnOpen(c gnet.Conn) (out []byte, action gnet.Action) {
-	c.SetContext(new(packet.FixedHeaderCodec))
+	c.SetContext(new(protocol.FixedHeaderCodec))
 
 	atomic.AddInt32(&s.connected, 1)
 	return
@@ -55,11 +55,11 @@ func (s *TCPServer) OnClose(c gnet.Conn, err error) (action gnet.Action) {
 }
 
 func (s *TCPServer) OnTraffic(c gnet.Conn) gnet.Action {
-	codec := c.Context().(*packet.FixedHeaderCodec)
+	codec := c.Context().(*protocol.FixedHeaderCodec)
 	buf, err := codec.Unpack(c)
 	if err != nil {
 		logging.Errorf("decode error: %v\n", err)
-		if errors.Is(err, packet.ErrInvalidMagic) {
+		if errors.Is(err, protocol.ErrInvalidMagic) {
 			return gnet.Close
 		}
 	} else {

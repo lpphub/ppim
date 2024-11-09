@@ -1,4 +1,4 @@
-package packet
+package protocol
 
 import (
 	"bytes"
@@ -8,11 +8,11 @@ import (
 )
 
 type Codec interface {
-	// Encode the given bytes into a packet.
+	// Encode the given bytes into a protocol.
 	Encode(buf []byte) ([]byte, error)
-	// Decode the packet into bytes.
+	// Decode the protocol into bytes.
 	Decode(buf []byte) ([]byte, error)
-	// Unpack the packet into bytes.
+	// Unpack the protocol into bytes.
 	Unpack(conn gnet.Conn) ([]byte, error)
 }
 
@@ -23,7 +23,7 @@ const (
 )
 
 var (
-	ErrIncompletePacket = errors.New("incomplete packet")
+	ErrIncompletePacket = errors.New("incomplete protocol")
 	ErrInvalidMagic     = errors.New("invalid magic number")
 
 	magicBytes []byte
@@ -33,7 +33,8 @@ func init() {
 	binary.BigEndian.PutUint16(magicBytes, uint16(magic))
 }
 
-type FixedHeaderCodec struct{}
+type FixedHeaderCodec struct {
+}
 
 func (p FixedHeaderCodec) Encode(buf []byte) ([]byte, error) {
 	offset := magicSize + bodySize
