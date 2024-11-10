@@ -1,0 +1,35 @@
+syntax = "proto3";
+
+package message;
+
+option go_package = "./message_pb;message_pb";
+
+enum MsgType {
+  UNKNOWN = 0;
+  CONNECT = 1;
+  SEND = 2;
+  SEND_ACK = 3;
+  RECEIVE = 4;
+  RECEIVE_ACK = 5;
+  PING = 6;
+  PONG = 7;
+  DISCONNECT = 8;
+}
+
+message Message {
+  MsgType msgType = 1;
+
+  oneof payload {
+    ConnectPacket connectPacket = 2;
+    SendPacket sendPacket = 3;
+  }
+}
+
+message ConnectPacket {
+  string userId = 1;
+  string token = 2;
+}
+
+message SendPacket {
+  string content = 1;
+}

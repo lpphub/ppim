@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package ppim.logic;
+package logic;
 
 option go_package = "./logic;logic";
 

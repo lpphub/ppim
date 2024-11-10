@@ -5,6 +5,7 @@ go 1.23.1
 require (
 	github.com/bwmarrin/snowflake v0.3.0
 	github.com/gin-gonic/gin v1.10.0
+	github.com/golang/protobuf v1.5.3
 	github.com/lpphub/golib v0.0.0-20241103132831-290afdb2b69a
 	github.com/panjf2000/gnet/v2 v2.5.9
 	github.com/prometheus/client_golang v1.20.5
@@ -48,6 +49,7 @@ require (
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/montanaflynn/stats v0.7.1 // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
+	github.com/panjf2000/ants/v2 v2.10.0 // indirect
 	github.com/pelletier/go-toml/v2 v2.2.2 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/prometheus/client_model v0.6.1 // indirect

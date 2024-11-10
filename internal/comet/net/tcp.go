@@ -5,7 +5,10 @@ import (
 	"fmt"
 	"github.com/panjf2000/gnet/v2"
 	"github.com/panjf2000/gnet/v2/pkg/logging"
-	"ppim/internal/comet/net/protocol"
+	"github.com/panjf2000/gnet/v2/pkg/pool/goroutine"
+	"google.golang.org/protobuf/proto"
+	"ppim/api/message_pb"
+	"ppim/internal/comet/net/codec"
 	"sync/atomic"
 )
 
@@ -21,7 +24,7 @@ type TCPServer struct {
 
 func NewTCPServer(addr string) *TCPServer {
 	return &TCPServer{
-		Addr:  addr,
+		Addr:  fmt.Sprintf("tcp://%s", addr),
 		Conns: make(map[uint64]*gnet.Conn),
 	}
 }
@@ -37,7 +40,8 @@ func (s *TCPServer) OnBoot(eng gnet.Engine) gnet.Action {
 }
 
 func (s *TCPServer) OnOpen(c gnet.Conn) (out []byte, action gnet.Action) {
-	c.SetContext(new(protocol.FixedHeaderCodec))
+	//c.SetContext(new(codec.FixedHeadCodec))
+	c.SetContext(new(codec.ProtobufCodec))
 
 	atomic.AddInt32(&s.connected, 1)
 	return
@@ -55,18 +59,22 @@ func (s *TCPServer) OnClose(c gnet.Conn, err error) (action gnet.Action) {
 }
 
 func (s *TCPServer) OnTraffic(c gnet.Conn) gnet.Action {
-	codec := c.Context().(*protocol.FixedHeaderCodec)
-	buf, err := codec.Unpack(c)
-	if err != nil {
-		logging.Errorf("decode error: %v\n", err)
-		if errors.Is(err, protocol.ErrInvalidMagic) {
-			return gnet.Close
-		}
-	} else {
-		fmt.Printf("recv data: %s\n", string(buf))
-
-		buf, _ = codec.Encode([]byte("haha"))
-		_, _ = c.Write(buf)
+	codecIns := c.Context().(*codec.ProtobufCodec)
+	buf, err := codecIns.Decode(c)
+	if errors.Is(err, codec.ErrInvalidMagic) { //非法数据包关闭连接，不完整的包继续处理
+		return gnet.Close
 	}
+
+	_ = goroutine.Default().Submit(func() {
+		// todo 异步处理业务
+
+		var msg message_pb.Message
+		_ = proto.Unmarshal(buf, &msg)
+		fmt.Printf("recv data: %s\n", msg.String())
+	})
+
+	// resp ack
+	ack, _ := codecIns.Encode([]byte("haha ack"))
+	_, _ = c.Write(ack)
 	return gnet.None
 }
