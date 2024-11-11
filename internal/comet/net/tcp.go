@@ -1,6 +1,7 @@
 package net
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"github.com/panjf2000/gnet/v2"
@@ -14,12 +15,16 @@ import (
 
 type TCPServer struct {
 	gnet.BuiltinEventEngine
-	engine gnet.Engine
 
 	Addr string
 
-	connected int32
-	Client    []*Client
+	connected   int32
+	connManager *ClientManager
+}
+
+type ConnContext struct {
+	Codec  codec.Codec
+	Authed bool
 }
 
 func NewTCPServer(addr string) *TCPServer {
@@ -32,14 +37,23 @@ func (s *TCPServer) Start() error {
 	return gnet.Run(s, s.Addr, gnet.WithMulticore(true))
 }
 
-func (s *TCPServer) OnBoot(eng gnet.Engine) gnet.Action {
-	s.engine = eng
+func (s *TCPServer) OnBoot(_ gnet.Engine) gnet.Action {
 	logging.Infof("Listening and accepting TCP on %s\n", s.Addr)
 	return gnet.None
 }
 
 func (s *TCPServer) OnOpen(c gnet.Conn) (out []byte, action gnet.Action) {
-	c.SetContext(new(codec.ProtobufCodec))
+	//if remoteArr := c.RemoteAddr(); remoteArr != nil {
+	//	IP := strings.Split(remoteArr.String(), ":")[0]
+	//	// 可增加IP黑名单控制
+	//	logging.Infof("open new connection from %s", IP)
+	//}
+
+	ctx := context.WithValue(context.Background(), "ctx", &ConnContext{
+		Authed: false,
+		Codec:  new(codec.ProtobufCodec),
+	})
+	c.SetContext(ctx)
 
 	atomic.AddInt32(&s.connected, 1)
 	return
@@ -53,17 +67,26 @@ func (s *TCPServer) OnClose(c gnet.Conn, err error) (action gnet.Action) {
 
 	// todo 连接关闭
 
-	return
+	s.connManager.RemoveWithFD(c.Fd())
+	return gnet.Close
 }
 
 func (s *TCPServer) OnTraffic(c gnet.Conn) gnet.Action {
-	codecIns := c.Context().(*codec.ProtobufCodec)
+	connCtx := c.Context().(*ConnContext)
+	codecIns := connCtx.Codec.(*codec.ProtobufCodec)
+
 	buf, err := codecIns.Decode(c)
 	if err != nil {
 		if errors.Is(err, codec.ErrInvalidMagic) { //非法数据包关闭连接，不完整的包继续处理
 			return gnet.Close
 		}
 		return gnet.None
+	}
+
+	if !connCtx.Authed {
+		// todo 未授权，仅接受认证数据
+	} else {
+		// todo 已授权，处理业务
 	}
 
 	_ = goroutine.Default().Submit(func() {

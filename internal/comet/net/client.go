@@ -6,37 +6,61 @@ import (
 )
 
 type Client struct {
-	Conn   *gnet.Conn
-	Authed bool   // 是否认证
-	UID    string // 用户ID
-	DID    string // 设备ID
+	Conn gnet.Conn
+	UID  string // 用户ID
+	DID  string // 设备ID
 }
 
 type ClientManager struct {
-	rwMtx         sync.RWMutex
-	userClientMap map[string][]*Client
+	rwMtx       sync.RWMutex
+	userConnMap map[string][]*Client
+	connMap     map[int]*Client
 }
 
 func (cm *ClientManager) Add(client *Client) {
 	cm.rwMtx.Lock()
 	defer cm.rwMtx.Unlock()
 
-	if ucSlice, ok := cm.userClientMap[client.UID]; !ok {
-		cm.userClientMap[client.UID] = []*Client{client}
-	} else {
-		ucSlice = append(ucSlice, client)
+	cm.connMap[client.Conn.Fd()] = client
+
+	ucSlice := cm.userConnMap[client.UID]
+	if ucSlice == nil {
+		ucSlice = make([]*Client, 0)
 	}
+	cm.userConnMap[client.UID] = append(ucSlice, client)
 }
 
 func (cm *ClientManager) Remove(client *Client) {
 	cm.rwMtx.Lock()
 	defer cm.rwMtx.Unlock()
 
-	if ucSlice, ok := cm.userClientMap[client.UID]; ok && len(ucSlice) > 0 {
+	delete(cm.connMap, client.Conn.Fd())
+
+	ucSlice := cm.userConnMap[client.UID]
+	if len(ucSlice) > 0 {
 		for i, c := range ucSlice {
 			if c == client {
-				ucSlice = append(ucSlice[:i], ucSlice[i+1:]...)
-				cm.userClientMap[client.UID] = ucSlice
+				cm.userConnMap[client.UID] = append(ucSlice[:i], ucSlice[i+1:]...)
+			}
+		}
+	}
+}
+
+func (cm *ClientManager) RemoveWithFD(fd int) {
+	cm.rwMtx.Lock()
+	defer cm.rwMtx.Unlock()
+
+	client := cm.connMap[fd]
+	if client == nil {
+		return
+	}
+
+	delete(cm.connMap, fd)
+
+	if ucSlice := cm.userConnMap[client.UID]; len(ucSlice) > 0 {
+		for i, c := range ucSlice {
+			if c == client {
+				cm.userConnMap[client.UID] = append(ucSlice[:i], ucSlice[i+1:]...)
 			}
 		}
 	}
@@ -46,14 +70,15 @@ func (cm *ClientManager) GetWithUID(uid string) []*Client {
 	cm.rwMtx.RLock()
 	defer cm.rwMtx.RUnlock()
 
-	return cm.userClientMap[uid]
+	return cm.userConnMap[uid]
 }
 
 func (cm *ClientManager) GetWithUIDAndDID(uid, did string) *Client {
 	cm.rwMtx.RLock()
 	defer cm.rwMtx.RUnlock()
 
-	if ucSlice, ok := cm.userClientMap[uid]; ok && len(ucSlice) > 0 {
+	ucSlice := cm.userConnMap[uid]
+	if len(ucSlice) > 0 {
 		for i, c := range ucSlice {
 			if c.DID == did {
 				return ucSlice[i]
@@ -61,4 +86,10 @@ func (cm *ClientManager) GetWithUIDAndDID(uid, did string) *Client {
 		}
 	}
 	return nil
+}
+
+func (cm *ClientManager) GetWithFD(fd int) *Client {
+	cm.rwMtx.RLock()
+	defer cm.rwMtx.RUnlock()
+	return cm.connMap[fd]
 }
