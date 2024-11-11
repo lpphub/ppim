@@ -22,7 +22,7 @@ func TestClient(t *testing.T) {
 
 	payload := &message_pb.ConnectPacket{
 		UserId: "123",
-		Token:  "bbb",
+		Token:  "aaa",
 	}
 
 	msg := &message_pb.Message{

@@ -1,7 +1,6 @@
 package net
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"github.com/panjf2000/gnet/v2"
@@ -29,7 +28,8 @@ type ConnContext struct {
 
 func NewTCPServer(addr string) *TCPServer {
 	return &TCPServer{
-		Addr: fmt.Sprintf("tcp://%s", addr),
+		Addr:        fmt.Sprintf("tcp://%s", addr),
+		connManager: newClientManager(),
 	}
 }
 
@@ -49,10 +49,10 @@ func (s *TCPServer) OnOpen(c gnet.Conn) (out []byte, action gnet.Action) {
 	//	logging.Infof("open new connection from %s", IP)
 	//}
 
-	ctx := context.WithValue(context.Background(), "ctx", &ConnContext{
+	ctx := &ConnContext{
 		Authed: false,
 		Codec:  new(codec.ProtobufCodec),
-	})
+	}
 	c.SetContext(ctx)
 
 	atomic.AddInt32(&s.connected, 1)
@@ -71,9 +71,8 @@ func (s *TCPServer) OnClose(c gnet.Conn, err error) (action gnet.Action) {
 
 func (s *TCPServer) OnTraffic(c gnet.Conn) gnet.Action {
 	connCtx := c.Context().(*ConnContext)
-	codecIns := connCtx.Codec.(*codec.ProtobufCodec)
 
-	buf, err := codecIns.Decode(c)
+	buf, err := connCtx.Codec.Decode(c)
 	if err != nil {
 		if errors.Is(err, codec.ErrInvalidMagic) { //非法数据包关闭连接，不完整的包继续处理
 			return gnet.Close
@@ -96,7 +95,7 @@ func (s *TCPServer) OnTraffic(c gnet.Conn) gnet.Action {
 	})
 
 	// resp ack
-	ack, _ := codecIns.Encode([]byte("haha ack"))
+	ack, _ := connCtx.Codec.Encode([]byte("haha ack"))
 	_, _ = c.Write(ack)
 	return gnet.None
 }

@@ -17,6 +17,13 @@ type ClientManager struct {
 	connMap     map[int]*Client
 }
 
+func newClientManager() *ClientManager {
+	return &ClientManager{
+		userConnMap: make(map[string][]*Client),
+		connMap:     make(map[int]*Client),
+	}
+}
+
 func (cm *ClientManager) Add(client *Client) {
 	cm.rwMtx.Lock()
 	defer cm.rwMtx.Unlock()
