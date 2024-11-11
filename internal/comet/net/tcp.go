@@ -19,13 +19,12 @@ type TCPServer struct {
 	Addr string
 
 	connected int32
-	Conns     map[uint64]*gnet.Conn
+	Client    []*Client
 }
 
 func NewTCPServer(addr string) *TCPServer {
 	return &TCPServer{
-		Addr:  fmt.Sprintf("tcp://%s", addr),
-		Conns: make(map[uint64]*gnet.Conn),
+		Addr: fmt.Sprintf("tcp://%s", addr),
 	}
 }
 
@@ -35,12 +34,11 @@ func (s *TCPServer) Start() error {
 
 func (s *TCPServer) OnBoot(eng gnet.Engine) gnet.Action {
 	s.engine = eng
-	logging.Infof("Listening and serving TCP on %s\n", s.Addr)
+	logging.Infof("Listening and accepting TCP on %s\n", s.Addr)
 	return gnet.None
 }
 
 func (s *TCPServer) OnOpen(c gnet.Conn) (out []byte, action gnet.Action) {
-	//c.SetContext(new(codec.FixedHeadCodec))
 	c.SetContext(new(codec.ProtobufCodec))
 
 	atomic.AddInt32(&s.connected, 1)
