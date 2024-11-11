@@ -1,6 +1,9 @@
 package codec
 
-import "github.com/panjf2000/gnet/v2"
+import (
+	"errors"
+	"github.com/panjf2000/gnet/v2"
+)
 
 type Codec interface {
 	// Encode the given bytes into a codec.
@@ -10,3 +13,7 @@ type Codec interface {
 	// Unpack the codec into bytes.
 	Unpack(buf []byte) ([]byte, error)
 }
+
+var (
+	ErrIncompletePacket = errors.New("incomplete packet")
+)

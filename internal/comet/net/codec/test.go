@@ -14,10 +14,8 @@ const (
 )
 
 var (
-	ErrIncompletePacket = errors.New("incomplete packet")
-	ErrInvalidMagic     = errors.New("invalid magic number")
-
-	magicBytes []byte
+	ErrInvalidMagic = errors.New("invalid magic number")
+	magicBytes      []byte
 )
 
 func init() {
@@ -25,10 +23,10 @@ func init() {
 	binary.BigEndian.PutUint16(magicBytes, uint16(magicNum))
 }
 
-type FixedHeadCodec struct {
+type FixedFrameCodec struct {
 }
 
-func (p FixedHeadCodec) Encode(buf []byte) ([]byte, error) {
+func (p FixedFrameCodec) Encode(buf []byte) ([]byte, error) {
 	offset := magicLen + bodyLen
 	msgLen := offset + len(buf)
 
@@ -40,28 +38,29 @@ func (p FixedHeadCodec) Encode(buf []byte) ([]byte, error) {
 	return data, nil
 }
 
-func (p FixedHeadCodec) Decode(c gnet.Conn) ([]byte, error) {
+func (p FixedFrameCodec) Decode(c gnet.Conn) ([]byte, error) {
 	offset := magicLen + bodyLen
 	buf, _ := c.Peek(offset)
 	if len(buf) < offset {
 		return nil, ErrIncompletePacket
 	}
 	if !bytes.Equal(magicBytes, buf[:magicLen]) {
+		// 丢弃非法数据包
+		_, _ = c.Discard(magicLen)
 		return nil, ErrInvalidMagic
 	}
 
-	bodySize := binary.BigEndian.Uint32(buf[magicLen:offset])
-	msgLen := offset + int(bodySize)
+	payloadLen := binary.BigEndian.Uint32(buf[magicLen:offset])
+	msgLen := offset + int(payloadLen)
 	if c.InboundBuffered() < msgLen {
 		return nil, ErrIncompletePacket
 	}
 
 	buf, _ = c.Next(msgLen)
-	//_, _ = c.Discard(msgLen)
 	return buf[offset:msgLen], nil
 }
 
-func (p FixedHeadCodec) Unpack(buf []byte) ([]byte, error) {
+func (p FixedFrameCodec) Unpack(buf []byte) ([]byte, error) {
 	offset := magicLen + bodyLen
 	if len(buf) < offset {
 		return nil, ErrIncompletePacket

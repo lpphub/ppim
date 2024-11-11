@@ -5,6 +5,12 @@ import (
 	"github.com/panjf2000/gnet/v2"
 )
 
+// ProtobufCodec
+// * BEFORE (300 bytes)              AFTER (304 bytes)
+// * +---------------+               +--------+---------------+
+// * | Protobuf Data |-------------->| Length | Protobuf Data |
+// * | (300 bytes)   |               | 0x12C  | (300 bytes)   |
+// * +---------------+               +--------+---------------+
 type ProtobufCodec struct {
 }
 

@@ -59,8 +59,11 @@ func (s *TCPServer) OnClose(c gnet.Conn, err error) (action gnet.Action) {
 func (s *TCPServer) OnTraffic(c gnet.Conn) gnet.Action {
 	codecIns := c.Context().(*codec.ProtobufCodec)
 	buf, err := codecIns.Decode(c)
-	if errors.Is(err, codec.ErrInvalidMagic) { //非法数据包关闭连接，不完整的包继续处理
-		return gnet.Close
+	if err != nil {
+		if errors.Is(err, codec.ErrInvalidMagic) { //非法数据包关闭连接，不完整的包继续处理
+			return gnet.Close
+		}
+		return gnet.None
 	}
 
 	_ = goroutine.Default().Submit(func() {
