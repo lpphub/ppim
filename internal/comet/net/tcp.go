@@ -65,10 +65,8 @@ func (s *TCPServer) OnClose(c gnet.Conn, err error) (action gnet.Action) {
 	}
 	atomic.AddInt32(&s.connected, -1)
 
-	// todo 连接关闭
-
 	s.connManager.RemoveWithFD(c.Fd())
-	return gnet.Close
+	return
 }
 
 func (s *TCPServer) OnTraffic(c gnet.Conn) gnet.Action {
