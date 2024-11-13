@@ -74,16 +74,19 @@ func (s *TCPServer) OnTraffic(c gnet.Conn) gnet.Action {
 
 	buf, err := connCtx.Codec.Decode(c)
 	if err != nil {
-		if errors.Is(err, codec.ErrInvalidMagic) { //非法数据包关闭连接，不完整的包继续处理
-			return gnet.Close
+		if errors.Is(err, codec.ErrIncompletePacket) {
+			return gnet.None
 		}
-		return gnet.None
+		logging.Errorf("failed to decode, %v", err)
+		return gnet.Close
 	}
 
 	if !connCtx.Authed {
-		// todo 未授权，仅接受认证数据
+		// todo 未授权时，进行授权校验，未通过则关闭连接
+		connCtx.Authed = true
 	} else {
-		// todo 已授权，处理业务
+		// todo 接收消息，处理业务逻辑
+		fmt.Println("第二次")
 	}
 
 	_ = goroutine.Default().Submit(func() {
@@ -93,9 +96,15 @@ func (s *TCPServer) OnTraffic(c gnet.Conn) gnet.Action {
 		_ = proto.Unmarshal(buf, &msg)
 		fmt.Printf("recv data: %s\n", msg.String())
 	})
-
 	// resp ack
 	ack, _ := connCtx.Codec.Encode([]byte("haha ack"))
 	_, _ = c.Write(ack)
+
+	if c.InboundBuffered() > 0 {
+		if err = c.Wake(nil); err != nil { // wake up the connection manually to avoid missing the leftover data
+			logging.Errorf("failed to wake up the connection, %v", err)
+			return gnet.Close
+		}
+	}
 	return gnet.None
 }

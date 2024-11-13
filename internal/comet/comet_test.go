@@ -7,6 +7,7 @@ import (
 	"ppim/api/message_pb"
 	"ppim/internal/comet/net/codec"
 	"testing"
+	"time"
 )
 
 func TestServe(t *testing.T) {
@@ -20,25 +21,29 @@ func TestClient(t *testing.T) {
 		return
 	}
 
-	payload := &message_pb.ConnectPacket{
-		UserId: "123",
-		Token:  "aaa",
-	}
-
-	msg := &message_pb.Message{
-		MsgType: message_pb.MsgType_CONNECT,
-		Payload: &message_pb.Message_ConnectPacket{
-			ConnectPacket: payload,
-		},
-	}
-	pbData, _ := proto.Marshal(msg)
-
 	codecIns := new(codec.ProtobufCodec)
-	buf, _ := codecIns.Encode(pbData)
-	//buf, _ := codecIns.Encode([]byte("hello tcp 3222"))
-	_, err = c.Write(buf)
-	if err != nil {
-		fmt.Println(err.Error())
+
+	for i := range 5 {
+		payload := &message_pb.ConnectPacket{
+			UserId: fmt.Sprintf("uid-%d", i),
+			Token:  "aaa",
+		}
+
+		msg := &message_pb.Message{
+			MsgType: message_pb.MsgType_CONNECT,
+			Payload: &message_pb.Message_ConnectPacket{
+				ConnectPacket: payload,
+			},
+		}
+		pbData, _ := proto.Marshal(msg)
+
+		buf, _ := codecIns.Encode(pbData)
+		_, err = c.Write(buf)
+		if err != nil {
+			fmt.Println(err.Error())
+		}
+
+		time.Sleep(1 * time.Second)
 	}
 
 	ack := make([]byte, 1024)

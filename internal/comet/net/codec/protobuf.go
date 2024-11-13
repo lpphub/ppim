@@ -38,6 +38,7 @@ func (p ProtobufCodec) Decode(c gnet.Conn) ([]byte, error) {
 	}
 
 	buf, _ = c.Next(msgLen)
+	// todo check protobuf, discard buf on error
 	return buf[_pbHeaderLen:], nil
 }
 
