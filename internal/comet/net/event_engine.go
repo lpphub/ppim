@@ -6,7 +6,6 @@ import (
 	"github.com/golang/protobuf/proto"
 	"github.com/panjf2000/gnet/v2"
 	"github.com/panjf2000/gnet/v2/pkg/logging"
-	"github.com/panjf2000/gnet/v2/pkg/pool/goroutine"
 	"ppim/api/message_pb"
 	"ppim/internal/comet/net/codec"
 	"sync/atomic"
@@ -14,7 +13,8 @@ import (
 
 type EventEngine struct {
 	gnet.BuiltinEventEngine
-	context *ServerContext
+	context   *ServerContext
+	processor *Processor
 }
 
 type EventConnContext struct {
@@ -23,7 +23,12 @@ type EventConnContext struct {
 }
 
 func newEventEngine(context *ServerContext) *EventEngine {
-	return &EventEngine{context: context}
+	return &EventEngine{
+		context: context,
+		processor: &Processor{
+			context: context,
+		},
+	}
 }
 
 func (e *EventEngine) start() error {
@@ -48,7 +53,7 @@ func (e *EventEngine) OnOpen(c gnet.Conn) (out []byte, action gnet.Action) {
 	}
 	c.SetContext(ctx)
 
-	atomic.AddInt32(&e.context.Connected, 1)
+	atomic.AddInt32(&e.context.online, 1)
 	return
 }
 
@@ -56,16 +61,16 @@ func (e *EventEngine) OnClose(c gnet.Conn, err error) (action gnet.Action) {
 	if err != nil {
 		logging.Infof("error occurred on connection=%s, %v\n", c.RemoteAddr().String(), err)
 	}
-	atomic.AddInt32(&e.context.Connected, -1)
+	atomic.AddInt32(&e.context.online, -1)
 
 	e.context.connManager.RemoveWithFD(c.Fd())
 	return
 }
 
-func (e *EventEngine) OnTraffic(c gnet.Conn) gnet.Action {
-	connCtx := c.Context().(*EventConnContext)
+func (e *EventEngine) OnTraffic(_c gnet.Conn) gnet.Action {
+	connCtx := _c.Context().(*EventConnContext)
 
-	buf, err := connCtx.Codec.Decode(c)
+	buf, err := connCtx.Codec.Decode(_c)
 	if err != nil {
 		if errors.Is(err, codec.ErrIncompletePacket) {
 			return gnet.None
@@ -74,27 +79,35 @@ func (e *EventEngine) OnTraffic(c gnet.Conn) gnet.Action {
 		return gnet.Close
 	}
 
+	var msg message_pb.Message
+	_ = proto.Unmarshal(buf, &msg)
+	fmt.Printf("recv data: %s\n", msg.String())
+
 	if !connCtx.Authed {
-		// todo 未授权时，进行授权校验，未通过则关闭连接
-		connCtx.Authed = true
+		if err = e.processor.Auth(_c, msg.GetConnectPacket()); err != nil {
+			logging.Errorf("failed to auth the connection, %v", err)
+			return gnet.Close
+		}
+		return gnet.None
 	} else {
-		// todo 接收消息，处理业务逻辑
-		fmt.Println("第二次")
+		// todo 连接消息数据分发
+		switch msg.MsgType {
+		case message_pb.MsgType_PING:
+			err = e.processor.Ping(_c, msg.GetPingPacket())
+		case message_pb.MsgType_SEND:
+			err = nil
+		default:
+			logging.Errorf("unknown msg type")
+		}
+
+		if err != nil {
+			logging.Errorf("failed to handle msg, %v", err)
+			return gnet.None
+		}
 	}
 
-	_ = goroutine.Default().Submit(func() {
-		// todo 异步处理业务
-
-		var msg message_pb.Message
-		_ = proto.Unmarshal(buf, &msg)
-		fmt.Printf("recv data: %s\n", msg.String())
-	})
-	// resp ack
-	ack, _ := connCtx.Codec.Encode([]byte("haha ack"))
-	_, _ = c.Write(ack)
-
-	if c.InboundBuffered() > 0 {
-		if err = c.Wake(nil); err != nil { // wake up the connection manually to avoid missing the leftover data
+	if _c.InboundBuffered() > 0 {
+		if err = _c.Wake(nil); err != nil { // wake up the connection manually to avoid missing the leftover data
 			logging.Errorf("failed to wake up the connection, %v", err)
 			return gnet.Close
 		}

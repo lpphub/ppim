@@ -5,8 +5,8 @@ import (
 )
 
 type TCPServer struct {
-	Addr      string
-	Connected int32
+	Addr   string
+	online int32
 
 	connManager *ClientManager
 	engine      *EventEngine

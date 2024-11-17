@@ -1,6 +1,7 @@
 package net
 
 import (
+	"errors"
 	"github.com/panjf2000/gnet/v2"
 	"sync"
 )
@@ -15,6 +16,39 @@ type ClientManager struct {
 	rwMtx       sync.RWMutex
 	userConnMap map[string][]*Client
 	connMap     map[int]*Client
+}
+
+var (
+	ErrConnContextNil = errors.New("客户端连接上下文为空")
+)
+
+func (c *Client) getConnContext() (*EventConnContext, error) {
+	ctx, ok := c.Conn.Context().(*EventConnContext)
+	if !ok {
+		return nil, ErrConnContextNil
+	}
+	return ctx, nil
+}
+
+func (c *Client) Write(data []byte) (int, error) {
+	ctx, err := c.getConnContext()
+	if err != nil {
+		return 0, err
+	}
+	buf, err := ctx.Codec.Encode(data)
+	if err != nil {
+		return 0, err
+	}
+	return c.Conn.Write(buf)
+}
+
+func (c *Client) SetAuthResult(authed bool) error {
+	ctx, err := c.getConnContext()
+	if err != nil {
+		return err
+	}
+	ctx.Authed = authed
+	return nil
 }
 
 func newClientManager() *ClientManager {

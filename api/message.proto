@@ -21,15 +21,21 @@ message Message {
 
   oneof payload {
     ConnectPacket connectPacket = 2;
-    PingPacket pingPacket = 3;
-    PongPacket pongPacket = 4;
-    SendPacket sendPacket = 5;
+    ConnectAckPacket connectAckPacket = 3;
+    PingPacket pingPacket = 4;
+    PongPacket pongPacket = 5;
+    SendPacket sendPacket = 6;
   }
 }
 
 message ConnectPacket {
   string uid = 1;
   string token = 2;
+  string did = 3;
+}
+
+message ConnectAckPacket {
+  bool ok = 1;
 }
 
 message PingPacket {

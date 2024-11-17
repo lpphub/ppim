@@ -4,12 +4,16 @@ package logic;
 
 option go_package = "./logic;logic";
 
-message PingReq {}
-
-message PongResp {
-  string msg = 1;
+message AuthReq {
+  string uid = 1;
+  string token = 2;
 }
 
-service Ping {
-  rpc Ping(PingReq) returns (PongResp);
+message AuthResp {
+  bool ok = 1;
+  string msg = 2;
+}
+
+service Auth {
+  rpc Auth(AuthReq) returns (AuthResp);
 }
