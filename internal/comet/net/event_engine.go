@@ -11,16 +11,18 @@ import (
 	"sync/atomic"
 )
 
-type EventEngine struct {
-	gnet.BuiltinEventEngine
-	context   *ServerContext
-	processor *Processor
-}
+type (
+	EventEngine struct {
+		gnet.BuiltinEventEngine
+		context   *ServerContext
+		processor *Processor
+	}
 
-type EventConnContext struct {
-	Codec  codec.Codec
-	Authed bool
-}
+	EventConnContext struct {
+		Codec  codec.Codec
+		Authed bool
+	}
+)
 
 func newEventEngine(context *ServerContext) *EventEngine {
 	return &EventEngine{

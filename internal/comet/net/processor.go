@@ -2,6 +2,7 @@ package net
 
 import (
 	"errors"
+	"fmt"
 	"github.com/golang/protobuf/proto"
 	"github.com/panjf2000/gnet/v2"
 	"ppim/api/message_pb"
@@ -13,7 +14,7 @@ type Processor struct {
 
 var (
 	ErrAuthParamEmpty = errors.New("授权参数为空")
-	ErrAuthFailure    = errors.New("授权失败")
+	ErrAuthFailure    = errors.New("授权校验失败")
 )
 
 func (p *Processor) Auth(conn gnet.Conn, packet *message_pb.ConnectPacket) error {
@@ -22,11 +23,12 @@ func (p *Processor) Auth(conn gnet.Conn, packet *message_pb.ConnectPacket) error
 		did   = packet.GetDid()
 		token = packet.GetToken()
 	)
-	if uid == "" || token == "" {
+	if uid == "" || did == "" || token == "" {
 		return ErrAuthParamEmpty
 	}
+	fmt.Printf("auth param: uid=%s, did=%s, token=%s\n", uid, did, token)
 	// todo 授权rpc接口
-	authed := uid == "admin" && token == "123456"
+	authed := uid == "123" && token == "aaa"
 	if !authed {
 		return ErrAuthFailure
 	}
@@ -56,6 +58,8 @@ func (p *Processor) Auth(conn gnet.Conn, packet *message_pb.ConnectPacket) error
 }
 
 func (p *Processor) Ping(c gnet.Conn, _ *message_pb.PingPacket) error {
+	fmt.Printf("收到ping请求: %s\n", c.RemoteAddr().String())
+
 	client := p.context.connManager.GetWithFD(c.Fd())
 	if client != nil {
 		pong := &message_pb.Message{

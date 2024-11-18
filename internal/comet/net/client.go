@@ -6,17 +6,19 @@ import (
 	"sync"
 )
 
-type Client struct {
-	Conn gnet.Conn
-	UID  string // 用户ID
-	DID  string // 设备ID
-}
+type (
+	Client struct {
+		Conn gnet.Conn
+		UID  string // 用户ID
+		DID  string // 设备ID
+	}
 
-type ClientManager struct {
-	rwMtx       sync.RWMutex
-	userConnMap map[string][]*Client
-	connMap     map[int]*Client
-}
+	ClientManager struct {
+		rwMtx       sync.RWMutex
+		userConnMap map[string][]*Client
+		connMap     map[int]*Client
+	}
+)
 
 var (
 	ErrConnContextNil = errors.New("客户端连接上下文为空")
