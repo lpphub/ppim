@@ -2,7 +2,7 @@ package http
 
 import (
 	"github.com/gin-gonic/gin"
-	"ppim/internal/logic/srv"
+	"ppim/internal/logic/http/srv"
 )
 
 var (
@@ -23,6 +23,6 @@ func registerRoutes(r *gin.Engine) {
 	u := r.Group("/user")
 	{
 		u.GET("/get", user.GetOne)
-		u.POST("/post", user.Create)
+		u.POST("/register", user.Register)
 	}
 }

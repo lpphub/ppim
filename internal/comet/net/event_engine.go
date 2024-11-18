@@ -80,7 +80,6 @@ func (e *EventEngine) OnTraffic(_c gnet.Conn) gnet.Action {
 		logging.Errorf("failed to decode, %v", err)
 		return gnet.Close
 	}
-
 	var msg message_pb.Message
 	_ = proto.Unmarshal(buf, &msg)
 	fmt.Printf("recv data: %s\n", msg.String())
@@ -92,18 +91,8 @@ func (e *EventEngine) OnTraffic(_c gnet.Conn) gnet.Action {
 		}
 		return gnet.None
 	} else {
-		// todo 连接消息数据分发
-		switch msg.MsgType {
-		case message_pb.MsgType_PING:
-			err = e.processor.Ping(_c, msg.GetPingPacket())
-		case message_pb.MsgType_SEND:
-			err = nil
-		default:
-			logging.Errorf("unknown msg type")
-		}
-
-		if err != nil {
-			logging.Errorf("failed to handle msg, %v", err)
+		if err = e.processor.Process(_c, &msg); err != nil {
+			logging.Errorf("failed to process msg, %v", err)
 			return gnet.None
 		}
 	}

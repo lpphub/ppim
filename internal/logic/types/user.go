@@ -1,14 +1,9 @@
 package types
 
-type UserGetOneResp struct {
-	UID    int64  `json:"uid"`
+type UserDTO struct {
+	UID    string `json:"uid"`
+	DID    string `json:"did"`
 	Name   string `json:"name"`
-	Mobile string `json:"mobile"`
-	Email  string `json:"email"`
-}
-
-type UserCreateReq struct {
-	Name   string `json:"name"`
-	Mobile string `json:"mobile"`
-	Email  string `json:"email"`
+	Avatar string `json:"avatar"`
+	Token  string `json:"token,omitempty"`
 }

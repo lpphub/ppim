@@ -5,9 +5,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/lpphub/golib/render"
 	"github.com/lpphub/golib/zlog"
-	"github.com/spf13/cast"
 	"go.mongodb.org/mongo-driver/mongo"
-	"ppim/internal/logic/srv"
+	"ppim/internal/logic/http/srv"
 	"ppim/internal/logic/types"
 	"ppim/pkg/errs"
 )
@@ -22,7 +21,7 @@ func (h UserHandler) GetOne(ctx *gin.Context) {
 		render.JsonWithError(ctx, errs.ErrInvalidParam)
 		return
 	}
-	if u, err := h.Srv.GetOne(ctx, cast.ToInt64(uid)); err != nil {
+	if u, err := h.Srv.GetOne(ctx, uid); err != nil {
 		zlog.Error(ctx, err.Error())
 		if errors.Is(err, mongo.ErrNoDocuments) {
 			render.JsonWithError(ctx, errs.ErrRecordNotFound)
@@ -34,18 +33,18 @@ func (h UserHandler) GetOne(ctx *gin.Context) {
 	}
 }
 
-func (h UserHandler) Create(ctx *gin.Context) {
-	var req types.UserCreateReq
+func (h UserHandler) Register(ctx *gin.Context) {
+	var req types.UserDTO
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		zlog.Error(ctx, err.Error())
 		render.JsonWithError(ctx, errs.ErrInvalidParam)
 		return
 	}
 
-	if uid, err := h.Srv.Create(ctx, req); err != nil {
+	if err := h.Srv.Register(ctx, req); err != nil {
 		zlog.Error(ctx, err.Error())
 		render.JsonWithError(ctx, errs.ErrServerInternal)
 	} else {
-		render.JsonWithSuccess(ctx, gin.H{"uid": cast.ToString(uid)})
+		render.JsonWithSuccess(ctx, nil)
 	}
 }

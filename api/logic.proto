@@ -6,12 +6,13 @@ option go_package = "./logic;logic";
 
 message AuthReq {
   string uid = 1;
-  string token = 2;
+  string did = 2;
+  string token = 3;
 }
 
 message AuthResp {
   bool ok = 1;
-  string msg = 2;
+  optional string msg = 2;
 }
 
 service Auth {

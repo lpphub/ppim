@@ -41,9 +41,9 @@ func (p *Processor) Auth(conn gnet.Conn, packet *message_pb.ConnectPacket) error
 	_ = client.SetAuthResult(true)
 	p.context.connManager.Add(client)
 
-	//响应ack
+	// connect ack
 	ack := &message_pb.Message{
-		MsgType: message_pb.MsgType_CONNECT,
+		MsgType: message_pb.MsgType_CONNECT_ACK,
 		Payload: &message_pb.Message_ConnectAckPacket{
 			ConnectAckPacket: &message_pb.ConnectAckPacket{
 				Ok: true,
@@ -57,7 +57,21 @@ func (p *Processor) Auth(conn gnet.Conn, packet *message_pb.ConnectPacket) error
 	return nil
 }
 
-func (p *Processor) Ping(c gnet.Conn, _ *message_pb.PingPacket) error {
+func (p *Processor) Process(_c gnet.Conn, msg *message_pb.Message) error {
+	// todo 数据分发
+	var err error
+	switch msg.MsgType {
+	case message_pb.MsgType_PING:
+		err = p.ping(_c, msg.GetPingPacket())
+	case message_pb.MsgType_SEND:
+		err = nil
+	default:
+		err = errors.New("unknown message type")
+	}
+	return err
+}
+
+func (p *Processor) ping(c gnet.Conn, _ *message_pb.PingPacket) error {
 	fmt.Printf("收到ping请求: %s\n", c.RemoteAddr().String())
 
 	client := p.context.connManager.GetWithFD(c.Fd())

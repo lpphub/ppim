@@ -19,7 +19,7 @@ func NewGrpcServer() *GrpcServer {
 }
 
 func (s *GrpcServer) registerServer() {
-	logic.RegisterPingServer(s.srv, &pingServer{})
+	logic.RegisterAuthServer(s.srv, &authService{})
 }
 
 func (s *GrpcServer) Start() {
