@@ -1,11 +1,13 @@
 package net
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"github.com/golang/protobuf/proto"
 	"github.com/panjf2000/gnet/v2"
 	"ppim/api/message_pb"
+	"ppim/internal/comet/rpc"
 )
 
 type Processor struct {
@@ -28,7 +30,7 @@ func (p *Processor) Auth(conn gnet.Conn, packet *message_pb.ConnectPacket) error
 	}
 	fmt.Printf("auth param: uid=%s, did=%s, token=%s\n", uid, did, token)
 	// todo 授权rpc接口
-	authed := uid == "123" && token == "aaa"
+	authed, _ := new(rpc.AuthSrv).Auth(context.Background(), uid, did, token)
 	if !authed {
 		return ErrAuthFailure
 	}
