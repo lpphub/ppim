@@ -35,7 +35,8 @@ func newEventEngine(context *ServerContext) *EventEngine {
 }
 
 func (e *EventEngine) start() error {
-	return gnet.Run(e, e.context.Addr, gnet.WithMulticore(true))
+	return gnet.Run(e, e.context.Addr, gnet.WithMulticore(true), gnet.WithReusePort(true),
+		gnet.WithTicker(true))
 }
 
 func (e *EventEngine) OnBoot(_ gnet.Engine) gnet.Action {
@@ -107,8 +108,9 @@ func (e *EventEngine) OnTraffic(_c gnet.Conn) gnet.Action {
 
 func (e *EventEngine) OnTick() (delay time.Duration, action gnet.Action) {
 	cm := e.context.connManager
+	interval := time.Now().Add(-5 * time.Minute)
 	for i, c := range cm.connMap {
-		if time.Now().Add(-5 * time.Minute).After(c.HeartbeatLastTime) { // 超过5分钟未收到心跳
+		if interval.After(c.HeartbeatLastTime) { // 超过5分钟未收到心跳
 			cm.RemoveWithFD(i)
 		}
 	}
