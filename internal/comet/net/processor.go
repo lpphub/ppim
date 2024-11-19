@@ -8,6 +8,7 @@ import (
 	"github.com/panjf2000/gnet/v2"
 	"ppim/api/message_pb"
 	"ppim/internal/comet/rpc"
+	"time"
 )
 
 type Processor struct {
@@ -36,9 +37,10 @@ func (p *Processor) Auth(conn gnet.Conn, packet *message_pb.ConnectPacket) error
 	}
 
 	client := &Client{
-		Conn: conn,
-		UID:  uid,
-		DID:  did,
+		Conn:              conn,
+		UID:               uid,
+		DID:               did,
+		HeartbeatLastTime: time.Now(),
 	}
 	_ = client.SetAuthResult(true)
 	p.context.connManager.Add(client)
@@ -78,6 +80,8 @@ func (p *Processor) ping(c gnet.Conn, _ *message_pb.PingPacket) error {
 
 	client := p.context.connManager.GetWithFD(c.Fd())
 	if client != nil {
+		client.HeartbeatLastTime = time.Now()
+
 		pong := &message_pb.Message{
 			MsgType: message_pb.MsgType_PONG,
 			Payload: &message_pb.Message_PongPacket{

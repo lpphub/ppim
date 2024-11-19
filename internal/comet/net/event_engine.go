@@ -106,5 +106,12 @@ func (e *EventEngine) OnTraffic(_c gnet.Conn) gnet.Action {
 }
 
 func (e *EventEngine) OnTick() (delay time.Duration, action gnet.Action) {
+	cm := e.context.connManager
+	for i, c := range cm.connMap {
+		if time.Now().Add(-5 * time.Minute).After(c.HeartbeatLastTime) { // 超过5分钟未收到心跳
+			cm.RemoveWithFD(i)
+		}
+	}
+	delay = 3 * time.Minute
 	return
 }

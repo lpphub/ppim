@@ -4,13 +4,15 @@ import (
 	"errors"
 	"github.com/panjf2000/gnet/v2"
 	"sync"
+	"time"
 )
 
 type (
 	Client struct {
-		Conn gnet.Conn
-		UID  string // 用户ID
-		DID  string // 设备ID
+		Conn              gnet.Conn
+		UID               string    // 用户ID
+		DID               string    // 设备ID
+		HeartbeatLastTime time.Time // 最后心跳时间
 	}
 
 	ClientManager struct {

@@ -1,7 +1,6 @@
 package global
 
 import (
-	"github.com/bwmarrin/snowflake"
 	"github.com/lpphub/golib/env"
 	"github.com/lpphub/golib/zlog"
 	"github.com/redis/go-redis/v9"
@@ -28,10 +27,9 @@ import (
 //}
 
 var (
-	Conf      conf.Config
-	Mongo     *mongo.Database
-	Redis     *redis.Client
-	Snowflake *snowflake.Node
+	Conf  conf.Config
+	Mongo *mongo.Database
+	Redis *redis.Client
 )
 
 func PreInit() {
@@ -51,7 +49,6 @@ func InitGlobalCtx() {
 
 	initDb()
 	initCache()
-	Snowflake, _ = snowflake.NewNode(1)
 }
 
 func Clear() {
