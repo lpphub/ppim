@@ -23,6 +23,7 @@ func (srv *UserSrv) GetOne(ctx *gin.Context, uid string) (resp *types.UserDTO, e
 	}
 	resp = &types.UserDTO{
 		UID:    uid,
+		DID:    user.DID,
 		Name:   user.Name,
 		Avatar: user.Avatar,
 	}
