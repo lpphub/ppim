@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/bwmarrin/snowflake"
 	"github.com/golang/protobuf/proto"
 	"github.com/panjf2000/gnet/v2"
 	"ppim/api/message_pb"
@@ -12,13 +13,22 @@ import (
 )
 
 type Processor struct {
-	context *ServerContext
+	context        *ServerContext
+	msgIDGenerator *snowflake.Node
 }
 
 var (
 	ErrAuthParamEmpty = errors.New("授权参数为空")
 	ErrAuthFailure    = errors.New("授权校验失败")
 )
+
+func newProcessor(context *ServerContext) *Processor {
+	node, _ := snowflake.NewNode(1)
+	return &Processor{
+		context:        context,
+		msgIDGenerator: node,
+	}
+}
 
 func (p *Processor) Auth(conn gnet.Conn, packet *message_pb.ConnectPacket) error {
 	var (

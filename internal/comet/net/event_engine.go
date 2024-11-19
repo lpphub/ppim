@@ -27,10 +27,8 @@ type (
 
 func newEventEngine(context *ServerContext) *EventEngine {
 	return &EventEngine{
-		context: context,
-		processor: &Processor{
-			context: context,
-		},
+		context:   context,
+		processor: newProcessor(context),
 	}
 }
 
