@@ -29,8 +29,8 @@ func (p *Processor) Auth(conn gnet.Conn, packet *message_pb.ConnectPacket) error
 		return ErrAuthParamEmpty
 	}
 	fmt.Printf("auth param: uid=%s, did=%s, token=%s\n", uid, did, token)
-	// todo 授权rpc接口
-	authed, _ := new(rpc.AuthSrv).Auth(context.Background(), uid, did, token)
+
+	authed, _ := rpc.Caller.AuthClient.Auth(context.Background(), uid, did, token)
 	if !authed {
 		return ErrAuthFailure
 	}

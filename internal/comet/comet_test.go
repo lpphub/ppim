@@ -28,6 +28,7 @@ func TestClient(t *testing.T) {
 		Payload: &message_pb.Message_ConnectPacket{
 			ConnectPacket: &message_pb.ConnectPacket{
 				Uid:   "123",
+				Did:   "d123",
 				Token: "aaa",
 			},
 		},

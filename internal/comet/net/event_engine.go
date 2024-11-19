@@ -9,6 +9,7 @@ import (
 	"ppim/api/message_pb"
 	"ppim/internal/comet/net/codec"
 	"sync/atomic"
+	"time"
 )
 
 type (
@@ -89,11 +90,9 @@ func (e *EventEngine) OnTraffic(_c gnet.Conn) gnet.Action {
 			logging.Errorf("failed to auth the connection, %v", err)
 			return gnet.Close
 		}
-		return gnet.None
 	} else {
 		if err = e.processor.Process(_c, &msg); err != nil {
 			logging.Errorf("failed to process msg, %v", err)
-			return gnet.None
 		}
 	}
 
@@ -104,4 +103,8 @@ func (e *EventEngine) OnTraffic(_c gnet.Conn) gnet.Action {
 		}
 	}
 	return gnet.None
+}
+
+func (e *EventEngine) OnTick() (delay time.Duration, action gnet.Action) {
+	return
 }
