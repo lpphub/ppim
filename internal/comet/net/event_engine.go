@@ -2,7 +2,6 @@ package net
 
 import (
 	"errors"
-	"fmt"
 	"github.com/golang/protobuf/proto"
 	"github.com/panjf2000/gnet/v2"
 	"github.com/panjf2000/gnet/v2/pkg/logging"
@@ -82,7 +81,7 @@ func (e *EventEngine) OnTraffic(_c gnet.Conn) gnet.Action {
 	}
 	var msg message_pb.Message
 	_ = proto.Unmarshal(buf, &msg)
-	fmt.Printf("recv data: %s\n", msg.String())
+	logging.Debugf("recv data: %s", msg.String())
 
 	if !connCtx.Authed {
 		if err = e.processor.Auth(_c, msg.GetConnectPacket()); err != nil {
@@ -105,8 +104,8 @@ func (e *EventEngine) OnTraffic(_c gnet.Conn) gnet.Action {
 }
 
 func (e *EventEngine) OnTick() (delay time.Duration, action gnet.Action) {
-	cm := e.context.connManager
 	interval := time.Now().Add(-5 * time.Minute)
+	cm := e.context.connManager
 	for i, c := range cm.connMap {
 		if interval.After(c.HeartbeatLastTime) { // 超过5分钟未收到心跳
 			cm.RemoveWithFD(i)

@@ -7,6 +7,7 @@ import (
 	"github.com/bwmarrin/snowflake"
 	"github.com/golang/protobuf/proto"
 	"github.com/panjf2000/gnet/v2"
+	"github.com/panjf2000/gnet/v2/pkg/pool/goroutine"
 	"ppim/api/message_pb"
 	"ppim/internal/comet/rpc"
 	"time"
@@ -20,9 +21,11 @@ type Processor struct {
 var (
 	ErrAuthParamEmpty = errors.New("授权参数为空")
 	ErrAuthFailure    = errors.New("授权校验失败")
+	ErrConnNotFound   = errors.New("连接不存在")
 )
 
 func newProcessor(context *ServerContext) *Processor {
+	// todo 集群模式时需兼容
 	node, _ := snowflake.NewNode(1)
 	return &Processor{
 		context:        context,
@@ -56,14 +59,9 @@ func (p *Processor) Auth(conn gnet.Conn, packet *message_pb.ConnectPacket) error
 	p.context.connManager.Add(client)
 
 	// connect ack
-	ack := &message_pb.Message{
-		MsgType: message_pb.MsgType_CONNECT_ACK,
-		Payload: &message_pb.Message_ConnectAckPacket{
-			ConnectAckPacket: &message_pb.ConnectAckPacket{
-				Ok: true,
-			},
-		},
-	}
+	ack := message_pb.PacketConnectAck(&message_pb.ConnectAckPacket{
+		Ok: true,
+	})
 	data, _ := proto.Marshal(ack)
 	if _, err := client.Write(data); err != nil {
 		return err
@@ -71,46 +69,41 @@ func (p *Processor) Auth(conn gnet.Conn, packet *message_pb.ConnectPacket) error
 	return nil
 }
 
-func (p *Processor) Process(_c gnet.Conn, msg *message_pb.Message) error {
-	// todo 数据分发
-	var err error
-	switch msg.MsgType {
-	case message_pb.MsgType_PING:
-		err = p.ping(_c, msg.GetPingPacket())
-	case message_pb.MsgType_SEND:
-		err = nil
-	default:
-		err = errors.New("unknown message type")
+func (p *Processor) Process(conn gnet.Conn, msg *message_pb.Message) error {
+	// 取得连接客户端
+	client := p.context.connManager.GetWithFD(conn.Fd())
+	if client == nil {
+		return ErrConnNotFound
 	}
+
+	// 异步处理业务
+	err := goroutine.Default().Submit(func() {
+		// 消息分发
+		var err error
+		switch msg.MsgType {
+		case message_pb.MsgType_PING:
+			err = p.ping(client, msg.GetPingPacket())
+		case message_pb.MsgType_SEND:
+			err = nil
+		default:
+			err = errors.New("unknown message type")
+		}
+		if err != nil {
+			fmt.Printf("process message error: %v\n", err)
+		}
+	})
 	return err
 }
 
-func (p *Processor) ping(c gnet.Conn, _ *message_pb.PingPacket) error {
-	fmt.Printf("收到ping请求: %s\n", c.RemoteAddr().String())
+func (p *Processor) ping(_c *Client, _ *message_pb.PingPacket) error {
+	fmt.Printf("UID=[%s] 收到ping请求\n", _c.UID)
+	_c.HeartbeatLastTime = time.Now()
 
-	client := p.context.connManager.GetWithFD(c.Fd())
-	if client != nil {
-		client.HeartbeatLastTime = time.Now()
+	pongData, _ := proto.Marshal(message_pb.PacketPong(&message_pb.PongPacket{}))
 
-		pong := &message_pb.Message{
-			MsgType: message_pb.MsgType_PONG,
-			Payload: &message_pb.Message_PongPacket{
-				PongPacket: &message_pb.PongPacket{},
-			},
-		}
-		pongData, _ := proto.Marshal(pong)
-
-		_, err := client.Write(pongData)
-		if err != nil {
-			return err
-		}
+	_, err := _c.Write(pongData)
+	if err != nil {
+		return err
 	}
 	return nil
-}
-
-func (p *Processor) pushMsg() {
-	//_ = goroutine.Default().Submit(func() {
-	//	// todo 异步处理业务
-	//
-	//})
 }
