@@ -119,3 +119,143 @@ var Auth_ServiceDesc = grpc.ServiceDesc{
 	Streams:  []grpc.StreamDesc{},
 	Metadata: "logic.proto",
 }
+
+const (
+	Online_Register_FullMethodName   = "/logic.Online/Register"
+	Online_Unregister_FullMethodName = "/logic.Online/Unregister"
+)
+
+// OnlineClient is the client API for Online service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+type OnlineClient interface {
+	Register(ctx context.Context, in *OnlineReq, opts ...grpc.CallOption) (*OnlineResp, error)
+	Unregister(ctx context.Context, in *OnlineReq, opts ...grpc.CallOption) (*OnlineResp, error)
+}
+
+type onlineClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewOnlineClient(cc grpc.ClientConnInterface) OnlineClient {
+	return &onlineClient{cc}
+}
+
+func (c *onlineClient) Register(ctx context.Context, in *OnlineReq, opts ...grpc.CallOption) (*OnlineResp, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(OnlineResp)
+	err := c.cc.Invoke(ctx, Online_Register_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *onlineClient) Unregister(ctx context.Context, in *OnlineReq, opts ...grpc.CallOption) (*OnlineResp, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(OnlineResp)
+	err := c.cc.Invoke(ctx, Online_Unregister_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// OnlineServer is the server API for Online service.
+// All implementations must embed UnimplementedOnlineServer
+// for forward compatibility.
+type OnlineServer interface {
+	Register(context.Context, *OnlineReq) (*OnlineResp, error)
+	Unregister(context.Context, *OnlineReq) (*OnlineResp, error)
+	mustEmbedUnimplementedOnlineServer()
+}
+
+// UnimplementedOnlineServer must be embedded to have
+// forward compatible implementations.
+//
+// NOTE: this should be embedded by value instead of pointer to avoid a nil
+// pointer dereference when methods are called.
+type UnimplementedOnlineServer struct{}
+
+func (UnimplementedOnlineServer) Register(context.Context, *OnlineReq) (*OnlineResp, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Register not implemented")
+}
+func (UnimplementedOnlineServer) Unregister(context.Context, *OnlineReq) (*OnlineResp, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Unregister not implemented")
+}
+func (UnimplementedOnlineServer) mustEmbedUnimplementedOnlineServer() {}
+func (UnimplementedOnlineServer) testEmbeddedByValue()                {}
+
+// UnsafeOnlineServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to OnlineServer will
+// result in compilation errors.
+type UnsafeOnlineServer interface {
+	mustEmbedUnimplementedOnlineServer()
+}
+
+func RegisterOnlineServer(s grpc.ServiceRegistrar, srv OnlineServer) {
+	// If the following call pancis, it indicates UnimplementedOnlineServer was
+	// embedded by pointer and is nil.  This will cause panics if an
+	// unimplemented method is ever invoked, so we test this at initialization
+	// time to prevent it from happening at runtime later due to I/O.
+	if t, ok := srv.(interface{ testEmbeddedByValue() }); ok {
+		t.testEmbeddedByValue()
+	}
+	s.RegisterService(&Online_ServiceDesc, srv)
+}
+
+func _Online_Register_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(OnlineReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(OnlineServer).Register(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Online_Register_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(OnlineServer).Register(ctx, req.(*OnlineReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Online_Unregister_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(OnlineReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(OnlineServer).Unregister(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Online_Unregister_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(OnlineServer).Unregister(ctx, req.(*OnlineReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+// Online_ServiceDesc is the grpc.ServiceDesc for Online service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var Online_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "logic.Online",
+	HandlerType: (*OnlineServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "Register",
+			Handler:    _Online_Register_Handler,
+		},
+		{
+			MethodName: "Unregister",
+			Handler:    _Online_Unregister_Handler,
+		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "logic.proto",
+}

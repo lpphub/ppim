@@ -44,7 +44,7 @@ func (p *Processor) Auth(conn gnet.Conn, packet *message_pb.ConnectPacket) error
 	}
 	fmt.Printf("auth param: uid=%s, did=%s, token=%s\n", uid, did, token)
 
-	authed, _ := rpc.Caller().AuthClient.Auth(context.Background(), uid, did, token)
+	authed, _ := rpc.Caller().AuthSrv.Auth(context.Background(), uid, did, token)
 	if !authed {
 		return ErrAuthFailure
 	}

@@ -6,7 +6,10 @@ import (
 )
 
 type GrpcCaller struct {
-	AuthClient *AuthSrv
+	conn *grpc.ClientConn //global conn
+
+	AuthSrv   *AuthSrv
+	OnlineSrv *OnlineSrv
 }
 
 var (
@@ -14,12 +17,14 @@ var (
 )
 
 func RegisterGrpcClient(addr string) error {
-	conn, err := grpc.NewClient(addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	_conn, err := grpc.NewClient(addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		return err
 	}
 	caller = &GrpcCaller{
-		AuthClient: &AuthSrv{conn: conn},
+		conn:      _conn,
+		AuthSrv:   &AuthSrv{},
+		OnlineSrv: &OnlineSrv{},
 	}
 	return nil
 }
