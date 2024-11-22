@@ -8,10 +8,10 @@ enum MsgType {
   UNKNOWN = 0;
   CONNECT = 1;
   CONNECT_ACK = 2;
-  SEND = 3;
-  SEND_ACK = 4;
-  RECEIVE = 5;
-  RECEIVE_ACK = 6;
+  SEND = 3;             // 发送消息 (c2s)
+  SEND_ACK = 4;         // 发送消息 ack (s2c)
+  RECEIVE = 5;          // 接收消息 (s2c)
+  RECEIVE_ACK = 6;      // 接收消息 ack (c2s)
   PING = 7;
   PONG = 8;
   DISCONNECT = 9;
@@ -26,6 +26,9 @@ message Message {
     PingPacket pingPacket = 4;
     PongPacket pongPacket = 5;
     SendPacket sendPacket = 6;
+    SendAckPacket sendAckPacket = 7;
+    ReceivePacket receivePacket = 8;
+    ReceiveAckPacket receiveAckPacket = 9;
   }
 }
 
@@ -48,3 +51,11 @@ message PongPacket {
 message SendPacket {
   string content = 1;
 }
+
+message SendAckPacket {}
+
+message ReceivePacket {
+  string content = 1;
+}
+
+message ReceiveAckPacket {}

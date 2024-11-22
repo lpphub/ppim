@@ -10,7 +10,7 @@ type GrpcCaller struct {
 }
 
 var (
-	Caller *GrpcCaller
+	caller *GrpcCaller
 )
 
 func RegisterGrpcClient(addr string) error {
@@ -18,9 +18,12 @@ func RegisterGrpcClient(addr string) error {
 	if err != nil {
 		return err
 	}
-
-	Caller = &GrpcCaller{
+	caller = &GrpcCaller{
 		AuthClient: &AuthSrv{conn: conn},
 	}
 	return nil
+}
+
+func Caller() *GrpcCaller {
+	return caller
 }

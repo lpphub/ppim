@@ -44,7 +44,7 @@ func (p *Processor) Auth(conn gnet.Conn, packet *message_pb.ConnectPacket) error
 	}
 	fmt.Printf("auth param: uid=%s, did=%s, token=%s\n", uid, did, token)
 
-	authed, _ := rpc.Caller.AuthClient.Auth(context.Background(), uid, did, token)
+	authed, _ := rpc.Caller().AuthClient.Auth(context.Background(), uid, did, token)
 	if !authed {
 		return ErrAuthFailure
 	}
@@ -84,7 +84,9 @@ func (p *Processor) Process(conn gnet.Conn, msg *message_pb.Message) error {
 		case message_pb.MsgType_PING:
 			err = p.ping(client, msg.GetPingPacket())
 		case message_pb.MsgType_SEND:
-			err = nil
+			err = p.send(client, msg.GetSendPacket())
+		case message_pb.MsgType_RECEIVE_ACK:
+			err = p.receiveAck(client, msg.GetReceiveAckPacket())
 		default:
 			err = errors.New("unknown message type")
 		}
@@ -105,5 +107,20 @@ func (p *Processor) ping(_c *Client, _ *message_pb.PingPacket) error {
 	if err != nil {
 		return err
 	}
+	return nil
+}
+
+func (p *Processor) send(_c *Client, msg *message_pb.SendPacket) error {
+	// todo 接收客户端投递的消息
+	// 1. 消息存储
+	// 2. 消息在线投递
+	// 3. 响应ack
+	return nil
+}
+
+func (p *Processor) receiveAck(_c *Client, msg *message_pb.ReceiveAckPacket) error {
+	// todo 接收客户端收到消息的确认
+	// 1. 更新消息状态
+	// 2. 结束
 	return nil
 }

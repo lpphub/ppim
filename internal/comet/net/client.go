@@ -73,22 +73,8 @@ func (cm *ClientManager) Add(client *Client) {
 		ucSlice = make([]*Client, 0)
 	}
 	cm.userConnMap[client.UID] = append(ucSlice, client)
-}
 
-func (cm *ClientManager) Remove(client *Client) {
-	cm.rwMtx.Lock()
-	defer cm.rwMtx.Unlock()
-
-	delete(cm.connMap, client.Conn.Fd())
-
-	ucSlice := cm.userConnMap[client.UID]
-	if len(ucSlice) > 0 {
-		for i, c := range ucSlice {
-			if c == client {
-				cm.userConnMap[client.UID] = append(ucSlice[:i], ucSlice[i+1:]...)
-			}
-		}
-	}
+	// todo 将连接信息通过rpc注册到online
 }
 
 func (cm *ClientManager) RemoveWithFD(fd int) {
@@ -109,6 +95,7 @@ func (cm *ClientManager) RemoveWithFD(fd int) {
 			}
 		}
 	}
+	// todo 将连接信息通过rpc从online上删除
 }
 
 func (cm *ClientManager) GetWithUID(uid string) []*Client {
