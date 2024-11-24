@@ -9,7 +9,6 @@ import (
 
 func Serve() {
 	global.InitGlobalCtx()
-	defer global.Clear()
 
 	go func() {
 		grpc := rpc.NewGrpcServer()

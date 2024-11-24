@@ -1,19 +1,19 @@
 package errs
 
-import "github.com/lpphub/golib/render"
+import "github.com/lpphub/golib/web"
 
 var (
-	ErrServerInternal = render.Error{
+	ErrServerInternal = web.Error{
 		Code: -1,
 		Msg:  "server internal error",
 	}
 
-	ErrInvalidParam = render.Error{
+	ErrInvalidParam = web.Error{
 		Code: 1001,
 		Msg:  "invalid param",
 	}
 
-	ErrRecordNotFound = render.Error{
+	ErrRecordNotFound = web.Error{
 		Code: 2001,
 		Msg:  "record not found",
 	}

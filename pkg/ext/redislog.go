@@ -4,9 +4,8 @@ import (
 	"context"
 	"fmt"
 	"github.com/gin-gonic/gin"
-	"github.com/lpphub/golib/zlog"
+	"github.com/lpphub/golib/logger/glog"
 	"github.com/redis/go-redis/v9"
-	"go.uber.org/zap"
 	"time"
 )
 
@@ -27,13 +26,10 @@ func (RedisLogHook) ProcessHook(next redis.ProcessHook) redis.ProcessHook {
 			msg = "redis do error: " + err.Error()
 		}
 		if c, ok := ctx.(*gin.Context); ok && c != nil {
-			fields := []zap.Field{
-				zap.String("logId", zlog.GetLogId(c)),
-				zap.String("url", c.Request.URL.Path),
-				zap.String("command", fmt.Sprintf("%s", joinArgs(1024, cmd.Args()))),
-				zap.Float64("cost", float64(end.Sub(start).Nanoseconds()/1e4)/100.0),
-			}
-			zlog.ZapLogger.Info(msg, fields...)
+			glog.FromGinCtx(c).Info().CallerSkipFrame(-1).
+				Str("command", fmt.Sprintf("%s", joinArgs(1024, cmd.Args()))).
+				Float64("cost_ms", float64(end.Sub(start).Nanoseconds()/1e4)/100.0).
+				Msg(msg)
 		}
 		return err
 	}

@@ -2,7 +2,7 @@ package global
 
 import (
 	"github.com/lpphub/golib/env"
-	"github.com/lpphub/golib/zlog"
+	"github.com/lpphub/golib/logger"
 	"github.com/redis/go-redis/v9"
 	"go.mongodb.org/mongo-driver/mongo"
 	"log"
@@ -41,7 +41,7 @@ func PreInit() {
 	env.LoadConf(configFile, &Conf)
 
 	// 日志配置
-	zlog.InitLog(zlog.WithLogPath(Conf.Log.Path))
+	logger.Setup(logger.WithFilename(Conf.Log.Path))
 }
 
 func InitGlobalCtx() {
@@ -49,8 +49,4 @@ func InitGlobalCtx() {
 
 	initDb()
 	initCache()
-}
-
-func Clear() {
-	zlog.Close()
 }

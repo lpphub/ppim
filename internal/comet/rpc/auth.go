@@ -2,6 +2,7 @@ package rpc
 
 import (
 	"context"
+	"github.com/lpphub/golib/logger"
 	"ppim/api/logic"
 )
 
@@ -15,7 +16,7 @@ func (srv *AuthSrv) Auth(ctx context.Context, uid, did, token string) (bool, err
 		Token: token,
 	})
 	if err != nil {
-		// TODO: log
+		logger.Err(ctx, err, "rpc - auth error")
 		return false, err
 	}
 	return resp.Ok, nil

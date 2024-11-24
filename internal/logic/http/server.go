@@ -2,8 +2,7 @@ package http
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/lpphub/golib/render"
-	"github.com/lpphub/golib/ware"
+	"github.com/lpphub/golib/web"
 	"net/http"
 	"ppim/pkg/errs"
 	"ppim/pkg/ext"
@@ -23,14 +22,14 @@ func NewApiServer() *ApiServer {
 }
 
 func bootstraps(r *gin.Engine) {
-	ware.Bootstraps(r, ware.BootstrapConf{
+	web.Bootstraps(r, web.BootstrapConf{
 		Cors: true,
-		AccessLog: ware.AccessLogConfig{
+		AccessLog: web.AccessLogConfig{
 			Enable:    true,
 			SkipPaths: []string{"/metrics"},
 		},
 		CustomRecovery: func(ctx *gin.Context, err any) {
-			render.JsonWithError(ctx, errs.ErrServerInternal)
+			web.JsonWithError(ctx, errs.ErrServerInternal)
 		},
 	})
 
@@ -42,7 +41,7 @@ func (s *ApiServer) Start() {
 		Addr:    ":8080",
 		Handler: s.engine.Handler(),
 	}
-	ware.ListenAndServe(srv)
+	web.ListenAndServe(srv)
 }
 
 func (s *ApiServer) Stop() {
