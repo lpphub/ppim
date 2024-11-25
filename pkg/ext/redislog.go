@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/gin-gonic/gin"
-	"github.com/lpphub/golib/logger/glog"
+	"github.com/lpphub/golib/logger/logx"
 	"github.com/redis/go-redis/v9"
 	"time"
 )
@@ -26,7 +26,7 @@ func (RedisLogHook) ProcessHook(next redis.ProcessHook) redis.ProcessHook {
 			msg = "redis do error: " + err.Error()
 		}
 		if c, ok := ctx.(*gin.Context); ok && c != nil {
-			glog.FromGinCtx(c).Info().CallerSkipFrame(-1).
+			logx.WithGinCtx(c).Info().CallerSkipFrame(-1).
 				Str("command", fmt.Sprintf("%s", joinArgs(1024, cmd.Args()))).
 				Float64("cost_ms", float64(end.Sub(start).Nanoseconds()/1e4)/100.0).
 				Msg(msg)

@@ -41,7 +41,7 @@ func PreInit() {
 	env.LoadConf(configFile, &Conf)
 
 	// 日志配置
-	logger.Setup(logger.WithFilename(Conf.Log.Path))
+	logger.Setup()
 }
 
 func InitGlobalCtx() {

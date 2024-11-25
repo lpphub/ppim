@@ -1,8 +1,10 @@
 package net
 
 import (
+	"context"
 	"errors"
 	"github.com/panjf2000/gnet/v2"
+	"ppim/internal/comet/rpc"
 	"sync"
 	"time"
 )
@@ -74,7 +76,8 @@ func (cm *ClientManager) Add(client *Client) {
 	}
 	cm.userConnMap[client.UID] = append(ucSlice, client)
 
-	// todo 将连接信息通过rpc注册到online
+	// 登记online
+	_ = rpc.Caller().OnlineSrv.Register(context.Background(), client.UID, client.DID, "", "")
 }
 
 func (cm *ClientManager) RemoveWithFD(fd int) {
@@ -95,7 +98,9 @@ func (cm *ClientManager) RemoveWithFD(fd int) {
 			}
 		}
 	}
-	// todo 将连接信息通过rpc从online上删除
+
+	// 注销online
+	_ = rpc.Caller().OnlineSrv.UnRegister(context.Background(), client.UID, client.DID, "", "")
 }
 
 func (cm *ClientManager) GetWithUID(uid string) []*Client {

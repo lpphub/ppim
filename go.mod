@@ -6,14 +6,14 @@ require (
 	github.com/bwmarrin/snowflake v0.3.0
 	github.com/gin-gonic/gin v1.10.0
 	github.com/golang/protobuf v1.5.4
-	github.com/lpphub/golib v0.0.0-20241124092842-82c9582a3c65
+	github.com/lpphub/golib v0.0.0-20241125144123-bc77b4e174c3
 	github.com/panjf2000/gnet/v2 v2.6.2
 	github.com/prometheus/client_golang v1.20.5
 	github.com/redis/go-redis/v9 v9.7.0
 	github.com/spf13/cobra v1.8.1
 	go.mongodb.org/mongo-driver v1.17.1
 	google.golang.org/grpc v1.68.0
-	google.golang.org/protobuf v1.35.1
+	google.golang.org/protobuf v1.35.2
 )
 
 require (

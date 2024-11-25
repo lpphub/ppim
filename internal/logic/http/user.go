@@ -3,7 +3,7 @@ package http
 import (
 	"errors"
 	"github.com/gin-gonic/gin"
-	"github.com/lpphub/golib/logger/glog"
+	"github.com/lpphub/golib/logger/logx"
 	"github.com/lpphub/golib/web"
 	"go.mongodb.org/mongo-driver/mongo"
 	"ppim/internal/logic/http/srv"
@@ -22,7 +22,7 @@ func (h UserHandler) GetOne(ctx *gin.Context) {
 		return
 	}
 	if u, err := h.Srv.GetOne(ctx, uid); err != nil {
-		glog.Error(ctx, err.Error())
+		logx.Error(ctx, err.Error())
 		if errors.Is(err, mongo.ErrNoDocuments) {
 			web.JsonWithError(ctx, errs.ErrRecordNotFound)
 		} else {
@@ -36,13 +36,13 @@ func (h UserHandler) GetOne(ctx *gin.Context) {
 func (h UserHandler) Register(ctx *gin.Context) {
 	var req types.UserDTO
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		glog.Error(ctx, err.Error())
+		logx.Error(ctx, err.Error())
 		web.JsonWithError(ctx, errs.ErrInvalidParam)
 		return
 	}
 
 	if err := h.Srv.Register(ctx, req); err != nil {
-		glog.Error(ctx, err.Error())
+		logx.Error(ctx, err.Error())
 		web.JsonWithError(ctx, errs.ErrServerInternal)
 	} else {
 		web.JsonWithSuccess(ctx, nil)
