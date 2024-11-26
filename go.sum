@@ -72,8 +72,8 @@ github.com/kylelemons/godebug v1.1.0 h1:RPNrshWIDI6G2gRW9EHilWtl7Z6Sb1BR0xunSBf0
 github.com/kylelemons/godebug v1.1.0/go.mod h1:9/0rRGxNHcop5bhtWyNeEfOS8JIWk580+fNqagV/RAw=
 github.com/leodido/go-urn v1.4.0 h1:WT9HwE9SGECu3lg4d/dIA+jxlljEa1/ffXKmRjqdmIQ=
 github.com/leodido/go-urn v1.4.0/go.mod h1:bvxc+MVxLKB4z00jd1z+Dvzr47oO32F/QSNjSBOlFxI=
-github.com/lpphub/golib v0.0.0-20241125144123-bc77b4e174c3 h1:gG04o+XNzNIMTQVhzeKCEKNPo7lEuzYCvdfmBFJgT5E=
-github.com/lpphub/golib v0.0.0-20241125144123-bc77b4e174c3/go.mod h1:NA2M472QsO8ZI0Eg9bU450wzJ2Hp9ZZNG0g2EwK4P5o=
+github.com/lpphub/golib v0.0.0-20241126010928-5976e4480e6b h1:ujYNum1MJRXghGIdyTPVyl+7FRAD0XzEt5Gp1Q4yWyM=
+github.com/lpphub/golib v0.0.0-20241126010928-5976e4480e6b/go.mod h1:NA2M472QsO8ZI0Eg9bU450wzJ2Hp9ZZNG0g2EwK4P5o=
 github.com/magiconair/properties v1.8.7 h1:IeQXZAiQcpL9mgcAe1Nu6cX9LLw6ExEHKjN0VQdvPDY=
 github.com/magiconair/properties v1.8.7/go.mod h1:Dhd985XPs7jluiymwWYZ0G4Z61jb3vdS329zhj2hYo0=
 github.com/mattn/go-colorable v0.1.13 h1:fFA4WZxdEF4tXPZVKMLwD8oUnCTTo08duU7wxecdEvA=

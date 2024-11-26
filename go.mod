@@ -6,7 +6,7 @@ require (
 	github.com/bwmarrin/snowflake v0.3.0
 	github.com/gin-gonic/gin v1.10.0
 	github.com/golang/protobuf v1.5.4
-	github.com/lpphub/golib v0.0.0-20241125144123-bc77b4e174c3
+	github.com/lpphub/golib v0.0.0-20241126010928-5976e4480e6b
 	github.com/panjf2000/gnet/v2 v2.6.2
 	github.com/prometheus/client_golang v1.20.5
 	github.com/redis/go-redis/v9 v9.7.0

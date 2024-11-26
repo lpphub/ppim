@@ -3,6 +3,7 @@ package net
 import (
 	"context"
 	"errors"
+	"github.com/lpphub/golib/logger"
 	"github.com/panjf2000/gnet/v2"
 	"ppim/internal/comet/rpc"
 	"sync"
@@ -77,7 +78,7 @@ func (cm *ClientManager) Add(client *Client) {
 	cm.userConnMap[client.UID] = append(ucSlice, client)
 
 	// 登记online
-	_ = rpc.Caller().OnlineSrv.Register(context.Background(), client.UID, client.DID, "", "")
+	_ = rpc.Caller().OnlineSrv.Register(logger.WithCtx(context.TODO()), client.UID, client.DID, "", "")
 }
 
 func (cm *ClientManager) RemoveWithFD(fd int) {
@@ -100,7 +101,7 @@ func (cm *ClientManager) RemoveWithFD(fd int) {
 	}
 
 	// 注销online
-	_ = rpc.Caller().OnlineSrv.UnRegister(context.Background(), client.UID, client.DID, "", "")
+	_ = rpc.Caller().OnlineSrv.UnRegister(logger.WithCtx(context.TODO()), client.UID, client.DID, "", "")
 }
 
 func (cm *ClientManager) GetWithUID(uid string) []*Client {

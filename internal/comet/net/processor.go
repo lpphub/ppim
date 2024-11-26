@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/bwmarrin/snowflake"
 	"github.com/golang/protobuf/proto"
+	"github.com/lpphub/golib/logger"
 	"github.com/panjf2000/gnet/v2"
 	"github.com/panjf2000/gnet/v2/pkg/pool/goroutine"
 	"ppim/api/message_pb"
@@ -44,7 +45,7 @@ func (p *Processor) Auth(conn gnet.Conn, packet *message_pb.ConnectPacket) error
 	}
 	fmt.Printf("auth param: uid=%s, did=%s, token=%s\n", uid, did, token)
 
-	authed, _ := rpc.Caller().AuthSrv.Auth(context.Background(), uid, did, token)
+	authed, _ := rpc.Caller().AuthSrv.Auth(logger.WithCtx(context.TODO()), uid, did, token)
 	if !authed {
 		return ErrAuthFailure
 	}
