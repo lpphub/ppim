@@ -49,7 +49,11 @@ message PongPacket {
 }
 
 message SendPacket {
-  string content = 1;
+  uint32 msgType = 1;
+  string msgSeq = 2;
+  bytes payload = 3;
+  string fromUid = 4;
+  string toUid = 5;
 }
 
 message SendAckPacket {

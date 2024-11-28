@@ -15,17 +15,17 @@ type User struct {
 	Avatar string `bson:"avatar"`
 }
 
-func (u *User) useCollection() *mongo.Collection {
+func (u *User) Collection() *mongo.Collection {
 	return global.Mongo.Collection("user")
 }
 
 func (u *User) GetOne(ctx context.Context, uid string) error {
 	filter := bson.D{{"uid", uid}}
-	err := u.useCollection().FindOne(ctx, filter).Decode(u)
+	err := u.Collection().FindOne(ctx, filter).Decode(u)
 	return err
 }
 
 func (u *User) Insert(ctx context.Context) error {
-	_, err := u.useCollection().InsertOne(ctx, u)
+	_, err := u.Collection().InsertOne(ctx, u)
 	return err
 }
