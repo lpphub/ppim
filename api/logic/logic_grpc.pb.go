@@ -19,343 +19,215 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	Auth_Auth_FullMethodName = "/logic.Auth/Auth"
+	Logic_Auth_FullMethodName       = "/logic.Logic/Auth"
+	Logic_Register_FullMethodName   = "/logic.Logic/Register"
+	Logic_Unregister_FullMethodName = "/logic.Logic/Unregister"
+	Logic_Send_FullMethodName       = "/logic.Logic/Send"
 )
 
-// AuthClient is the client API for Auth service.
+// LogicClient is the client API for Logic service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
-type AuthClient interface {
+type LogicClient interface {
 	Auth(ctx context.Context, in *AuthReq, opts ...grpc.CallOption) (*AuthResp, error)
+	Register(ctx context.Context, in *OnlineReq, opts ...grpc.CallOption) (*OnlineResp, error)
+	Unregister(ctx context.Context, in *OnlineReq, opts ...grpc.CallOption) (*OnlineResp, error)
+	Send(ctx context.Context, in *MessageReq, opts ...grpc.CallOption) (*MessageResp, error)
 }
 
-type authClient struct {
+type logicClient struct {
 	cc grpc.ClientConnInterface
 }
 
-func NewAuthClient(cc grpc.ClientConnInterface) AuthClient {
-	return &authClient{cc}
+func NewLogicClient(cc grpc.ClientConnInterface) LogicClient {
+	return &logicClient{cc}
 }
 
-func (c *authClient) Auth(ctx context.Context, in *AuthReq, opts ...grpc.CallOption) (*AuthResp, error) {
+func (c *logicClient) Auth(ctx context.Context, in *AuthReq, opts ...grpc.CallOption) (*AuthResp, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(AuthResp)
-	err := c.cc.Invoke(ctx, Auth_Auth_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, Logic_Auth_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-// AuthServer is the server API for Auth service.
-// All implementations must embed UnimplementedAuthServer
-// for forward compatibility.
-type AuthServer interface {
-	Auth(context.Context, *AuthReq) (*AuthResp, error)
-	mustEmbedUnimplementedAuthServer()
+func (c *logicClient) Register(ctx context.Context, in *OnlineReq, opts ...grpc.CallOption) (*OnlineResp, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(OnlineResp)
+	err := c.cc.Invoke(ctx, Logic_Register_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
 }
 
-// UnimplementedAuthServer must be embedded to have
+func (c *logicClient) Unregister(ctx context.Context, in *OnlineReq, opts ...grpc.CallOption) (*OnlineResp, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(OnlineResp)
+	err := c.cc.Invoke(ctx, Logic_Unregister_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *logicClient) Send(ctx context.Context, in *MessageReq, opts ...grpc.CallOption) (*MessageResp, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(MessageResp)
+	err := c.cc.Invoke(ctx, Logic_Send_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// LogicServer is the server API for Logic service.
+// All implementations must embed UnimplementedLogicServer
+// for forward compatibility.
+type LogicServer interface {
+	Auth(context.Context, *AuthReq) (*AuthResp, error)
+	Register(context.Context, *OnlineReq) (*OnlineResp, error)
+	Unregister(context.Context, *OnlineReq) (*OnlineResp, error)
+	Send(context.Context, *MessageReq) (*MessageResp, error)
+	mustEmbedUnimplementedLogicServer()
+}
+
+// UnimplementedLogicServer must be embedded to have
 // forward compatible implementations.
 //
 // NOTE: this should be embedded by value instead of pointer to avoid a nil
 // pointer dereference when methods are called.
-type UnimplementedAuthServer struct{}
+type UnimplementedLogicServer struct{}
 
-func (UnimplementedAuthServer) Auth(context.Context, *AuthReq) (*AuthResp, error) {
+func (UnimplementedLogicServer) Auth(context.Context, *AuthReq) (*AuthResp, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Auth not implemented")
 }
-func (UnimplementedAuthServer) mustEmbedUnimplementedAuthServer() {}
-func (UnimplementedAuthServer) testEmbeddedByValue()              {}
+func (UnimplementedLogicServer) Register(context.Context, *OnlineReq) (*OnlineResp, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Register not implemented")
+}
+func (UnimplementedLogicServer) Unregister(context.Context, *OnlineReq) (*OnlineResp, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Unregister not implemented")
+}
+func (UnimplementedLogicServer) Send(context.Context, *MessageReq) (*MessageResp, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Send not implemented")
+}
+func (UnimplementedLogicServer) mustEmbedUnimplementedLogicServer() {}
+func (UnimplementedLogicServer) testEmbeddedByValue()               {}
 
-// UnsafeAuthServer may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to AuthServer will
+// UnsafeLogicServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to LogicServer will
 // result in compilation errors.
-type UnsafeAuthServer interface {
-	mustEmbedUnimplementedAuthServer()
+type UnsafeLogicServer interface {
+	mustEmbedUnimplementedLogicServer()
 }
 
-func RegisterAuthServer(s grpc.ServiceRegistrar, srv AuthServer) {
-	// If the following call pancis, it indicates UnimplementedAuthServer was
+func RegisterLogicServer(s grpc.ServiceRegistrar, srv LogicServer) {
+	// If the following call pancis, it indicates UnimplementedLogicServer was
 	// embedded by pointer and is nil.  This will cause panics if an
 	// unimplemented method is ever invoked, so we test this at initialization
 	// time to prevent it from happening at runtime later due to I/O.
 	if t, ok := srv.(interface{ testEmbeddedByValue() }); ok {
 		t.testEmbeddedByValue()
 	}
-	s.RegisterService(&Auth_ServiceDesc, srv)
+	s.RegisterService(&Logic_ServiceDesc, srv)
 }
 
-func _Auth_Auth_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Logic_Auth_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(AuthReq)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(AuthServer).Auth(ctx, in)
+		return srv.(LogicServer).Auth(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: Auth_Auth_FullMethodName,
+		FullMethod: Logic_Auth_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AuthServer).Auth(ctx, req.(*AuthReq))
+		return srv.(LogicServer).Auth(ctx, req.(*AuthReq))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-// Auth_ServiceDesc is the grpc.ServiceDesc for Auth service.
-// It's only intended for direct use with grpc.RegisterService,
-// and not to be introspected or modified (even as a copy)
-var Auth_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "logic.Auth",
-	HandlerType: (*AuthServer)(nil),
-	Methods: []grpc.MethodDesc{
-		{
-			MethodName: "Auth",
-			Handler:    _Auth_Auth_Handler,
-		},
-	},
-	Streams:  []grpc.StreamDesc{},
-	Metadata: "logic.proto",
-}
-
-const (
-	Online_Register_FullMethodName   = "/logic.Online/Register"
-	Online_Unregister_FullMethodName = "/logic.Online/Unregister"
-)
-
-// OnlineClient is the client API for Online service.
-//
-// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
-type OnlineClient interface {
-	Register(ctx context.Context, in *OnlineReq, opts ...grpc.CallOption) (*OnlineResp, error)
-	Unregister(ctx context.Context, in *OnlineReq, opts ...grpc.CallOption) (*OnlineResp, error)
-}
-
-type onlineClient struct {
-	cc grpc.ClientConnInterface
-}
-
-func NewOnlineClient(cc grpc.ClientConnInterface) OnlineClient {
-	return &onlineClient{cc}
-}
-
-func (c *onlineClient) Register(ctx context.Context, in *OnlineReq, opts ...grpc.CallOption) (*OnlineResp, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(OnlineResp)
-	err := c.cc.Invoke(ctx, Online_Register_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *onlineClient) Unregister(ctx context.Context, in *OnlineReq, opts ...grpc.CallOption) (*OnlineResp, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(OnlineResp)
-	err := c.cc.Invoke(ctx, Online_Unregister_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-// OnlineServer is the server API for Online service.
-// All implementations must embed UnimplementedOnlineServer
-// for forward compatibility.
-type OnlineServer interface {
-	Register(context.Context, *OnlineReq) (*OnlineResp, error)
-	Unregister(context.Context, *OnlineReq) (*OnlineResp, error)
-	mustEmbedUnimplementedOnlineServer()
-}
-
-// UnimplementedOnlineServer must be embedded to have
-// forward compatible implementations.
-//
-// NOTE: this should be embedded by value instead of pointer to avoid a nil
-// pointer dereference when methods are called.
-type UnimplementedOnlineServer struct{}
-
-func (UnimplementedOnlineServer) Register(context.Context, *OnlineReq) (*OnlineResp, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Register not implemented")
-}
-func (UnimplementedOnlineServer) Unregister(context.Context, *OnlineReq) (*OnlineResp, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Unregister not implemented")
-}
-func (UnimplementedOnlineServer) mustEmbedUnimplementedOnlineServer() {}
-func (UnimplementedOnlineServer) testEmbeddedByValue()                {}
-
-// UnsafeOnlineServer may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to OnlineServer will
-// result in compilation errors.
-type UnsafeOnlineServer interface {
-	mustEmbedUnimplementedOnlineServer()
-}
-
-func RegisterOnlineServer(s grpc.ServiceRegistrar, srv OnlineServer) {
-	// If the following call pancis, it indicates UnimplementedOnlineServer was
-	// embedded by pointer and is nil.  This will cause panics if an
-	// unimplemented method is ever invoked, so we test this at initialization
-	// time to prevent it from happening at runtime later due to I/O.
-	if t, ok := srv.(interface{ testEmbeddedByValue() }); ok {
-		t.testEmbeddedByValue()
-	}
-	s.RegisterService(&Online_ServiceDesc, srv)
-}
-
-func _Online_Register_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Logic_Register_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(OnlineReq)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(OnlineServer).Register(ctx, in)
+		return srv.(LogicServer).Register(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: Online_Register_FullMethodName,
+		FullMethod: Logic_Register_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(OnlineServer).Register(ctx, req.(*OnlineReq))
+		return srv.(LogicServer).Register(ctx, req.(*OnlineReq))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Online_Unregister_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Logic_Unregister_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(OnlineReq)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(OnlineServer).Unregister(ctx, in)
+		return srv.(LogicServer).Unregister(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: Online_Unregister_FullMethodName,
+		FullMethod: Logic_Unregister_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(OnlineServer).Unregister(ctx, req.(*OnlineReq))
+		return srv.(LogicServer).Unregister(ctx, req.(*OnlineReq))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-// Online_ServiceDesc is the grpc.ServiceDesc for Online service.
-// It's only intended for direct use with grpc.RegisterService,
-// and not to be introspected or modified (even as a copy)
-var Online_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "logic.Online",
-	HandlerType: (*OnlineServer)(nil),
-	Methods: []grpc.MethodDesc{
-		{
-			MethodName: "Register",
-			Handler:    _Online_Register_Handler,
-		},
-		{
-			MethodName: "Unregister",
-			Handler:    _Online_Unregister_Handler,
-		},
-	},
-	Streams:  []grpc.StreamDesc{},
-	Metadata: "logic.proto",
-}
-
-const (
-	Message_Send_FullMethodName = "/logic.Message/Send"
-)
-
-// MessageClient is the client API for Message service.
-//
-// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
-type MessageClient interface {
-	Send(ctx context.Context, in *MessageReq, opts ...grpc.CallOption) (*MessageResp, error)
-}
-
-type messageClient struct {
-	cc grpc.ClientConnInterface
-}
-
-func NewMessageClient(cc grpc.ClientConnInterface) MessageClient {
-	return &messageClient{cc}
-}
-
-func (c *messageClient) Send(ctx context.Context, in *MessageReq, opts ...grpc.CallOption) (*MessageResp, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(MessageResp)
-	err := c.cc.Invoke(ctx, Message_Send_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-// MessageServer is the server API for Message service.
-// All implementations must embed UnimplementedMessageServer
-// for forward compatibility.
-type MessageServer interface {
-	Send(context.Context, *MessageReq) (*MessageResp, error)
-	mustEmbedUnimplementedMessageServer()
-}
-
-// UnimplementedMessageServer must be embedded to have
-// forward compatible implementations.
-//
-// NOTE: this should be embedded by value instead of pointer to avoid a nil
-// pointer dereference when methods are called.
-type UnimplementedMessageServer struct{}
-
-func (UnimplementedMessageServer) Send(context.Context, *MessageReq) (*MessageResp, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Send not implemented")
-}
-func (UnimplementedMessageServer) mustEmbedUnimplementedMessageServer() {}
-func (UnimplementedMessageServer) testEmbeddedByValue()                 {}
-
-// UnsafeMessageServer may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to MessageServer will
-// result in compilation errors.
-type UnsafeMessageServer interface {
-	mustEmbedUnimplementedMessageServer()
-}
-
-func RegisterMessageServer(s grpc.ServiceRegistrar, srv MessageServer) {
-	// If the following call pancis, it indicates UnimplementedMessageServer was
-	// embedded by pointer and is nil.  This will cause panics if an
-	// unimplemented method is ever invoked, so we test this at initialization
-	// time to prevent it from happening at runtime later due to I/O.
-	if t, ok := srv.(interface{ testEmbeddedByValue() }); ok {
-		t.testEmbeddedByValue()
-	}
-	s.RegisterService(&Message_ServiceDesc, srv)
-}
-
-func _Message_Send_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Logic_Send_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(MessageReq)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(MessageServer).Send(ctx, in)
+		return srv.(LogicServer).Send(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: Message_Send_FullMethodName,
+		FullMethod: Logic_Send_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(MessageServer).Send(ctx, req.(*MessageReq))
+		return srv.(LogicServer).Send(ctx, req.(*MessageReq))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-// Message_ServiceDesc is the grpc.ServiceDesc for Message service.
+// Logic_ServiceDesc is the grpc.ServiceDesc for Logic service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
-var Message_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "logic.Message",
-	HandlerType: (*MessageServer)(nil),
+var Logic_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "logic.Logic",
+	HandlerType: (*LogicServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
+			MethodName: "Auth",
+			Handler:    _Logic_Auth_Handler,
+		},
+		{
+			MethodName: "Register",
+			Handler:    _Logic_Register_Handler,
+		},
+		{
+			MethodName: "Unregister",
+			Handler:    _Logic_Unregister_Handler,
+		},
+		{
 			MethodName: "Send",
-			Handler:    _Message_Send_Handler,
+			Handler:    _Logic_Send_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

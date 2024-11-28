@@ -18,7 +18,7 @@ func Test_Auth(t *testing.T) {
 	}
 	defer conn.Close()
 
-	client := logic.NewAuthClient(conn)
+	client := logic.NewLogicClient(conn)
 
 	resp, err := client.Auth(context.Background(), &logic.AuthReq{
 		Uid:   "456",

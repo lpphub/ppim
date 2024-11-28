@@ -44,7 +44,7 @@ func (p *Processor) Auth(conn gnet.Conn, packet *message_pb.ConnectPacket) error
 	ctx := logger.WithCtx(context.Background())
 	logger.Infof(ctx, "conn auth param: uid=%s, did=%s, token=%s", uid, did, token)
 
-	authed, _ := rpc.Caller().AuthSrv.Auth(ctx, uid, did, token)
+	authed, _ := rpc.Caller().Auth(ctx, uid, did, token)
 	if !authed {
 		ack, _ := proto.Marshal(message_pb.PacketConnectAck(&message_pb.ConnectAckPacket{
 			Code: message_pb.ConnAuthFail,
@@ -113,7 +113,18 @@ func (p *Processor) ping(_c *Client, _ *message_pb.PingPacket) error {
 	return nil
 }
 
-func (p *Processor) send(_c *Client, msg *message_pb.SendPacket) error {
+func (p *Processor) send(_c *Client, message *message_pb.SendPacket) error {
+	//msgId := p.msgIDGenerator.Generate().String()
+	//
+	//msg := &logic.MessageReq{
+	//	FromUid: _c.UID,
+	//	ToUid:   "",
+	//	MsgId:   msgId,
+	//	MsgType: 1,
+	//	MsgSeq:  "122",
+	//	MsgBody: "hello",
+	//}
+
 	// todo 接收客户端投递的消息
 	// 1. 消息存储
 

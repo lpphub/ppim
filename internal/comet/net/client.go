@@ -11,6 +11,7 @@ import (
 type (
 	Client struct {
 		Conn              gnet.Conn
+		mu                sync.RWMutex
 		UID               string    // 用户ID
 		DID               string    // 设备ID
 		HeartbeatLastTime time.Time // 最后心跳时间
@@ -36,6 +37,9 @@ func (c *Client) getConnContext() (*EventConnContext, error) {
 }
 
 func (c *Client) Write(data []byte) (int, error) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
 	ctx, err := c.getConnContext()
 	if err != nil {
 		return 0, err
@@ -76,7 +80,7 @@ func (cm *ClientManager) Add(client *Client) {
 	cm.userConnMap[client.UID] = append(ucSlice, client)
 
 	// 登记online
-	_ = rpc.Caller().OnlineSrv.Register(rpc.Context(), client.UID, client.DID, "", "")
+	_ = rpc.Caller().Register(rpc.Context(), client.UID, client.DID, "", "")
 }
 
 func (cm *ClientManager) RemoveWithFD(fd int) {
@@ -99,7 +103,7 @@ func (cm *ClientManager) RemoveWithFD(fd int) {
 	}
 
 	// 注销online
-	_ = rpc.Caller().OnlineSrv.UnRegister(rpc.Context(), client.UID, client.DID, "", "")
+	_ = rpc.Caller().UnRegister(rpc.Context(), client.UID, client.DID, "", "")
 }
 
 func (cm *ClientManager) GetWithUID(uid string) []*Client {

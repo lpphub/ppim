@@ -15,10 +15,6 @@ message AuthResp {
   optional string msg = 2;
 }
 
-service Auth {
-  rpc Auth(AuthReq) returns (AuthResp);
-}
-
 message OnlineReq {
   string uid = 1;
   string did = 2;
@@ -31,17 +27,13 @@ message OnlineResp {
   optional string msg = 2;
 }
 
-service Online {
-  rpc Register(OnlineReq) returns (OnlineResp);
-  rpc Unregister(OnlineReq) returns (OnlineResp);
-}
-
 message MessageReq {
   string fromUid = 1;
   string toUid = 2;
-  uint32 msgType = 3;
-  string msgSeq = 4;
-  string msgBody = 5;
+  string msgId = 3;
+  uint32 msgType = 4;
+  string msgSeq = 5;
+  string msgBody = 6;
 }
 
 message MessageResp {
@@ -49,6 +41,9 @@ message MessageResp {
   optional string msg = 2;
 }
 
-service Message {
+service Logic {
+  rpc Auth(AuthReq) returns (AuthResp);
+  rpc Register(OnlineReq) returns (OnlineResp);
+  rpc Unregister(OnlineReq) returns (OnlineResp);
   rpc Send(MessageReq) returns (MessageResp);
 }
