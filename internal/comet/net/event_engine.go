@@ -5,7 +5,7 @@ import (
 	"github.com/golang/protobuf/proto"
 	"github.com/lpphub/golib/logger"
 	"github.com/panjf2000/gnet/v2"
-	"ppim/api/message_pb"
+	"ppim/api/protocol"
 	"ppim/internal/comet/net/codec"
 	"sync/atomic"
 	"time"
@@ -79,7 +79,7 @@ func (e *EventEngine) OnTraffic(_c gnet.Conn) gnet.Action {
 		logger.Log().Err(err).Msg("failed to decode")
 		return gnet.Close
 	}
-	var msg message_pb.Message
+	var msg protocol.Message
 	_ = proto.Unmarshal(buf, &msg)
 	logger.Log().Debug().Msgf("recv data: %s", msg.String())
 

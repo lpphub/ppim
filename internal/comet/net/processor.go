@@ -8,7 +8,7 @@ import (
 	"github.com/lpphub/golib/logger"
 	"github.com/panjf2000/gnet/v2"
 	"github.com/panjf2000/gnet/v2/pkg/pool/goroutine"
-	"ppim/api/message_pb"
+	"ppim/api/protocol"
 	"ppim/internal/comet/rpc"
 	"time"
 )
@@ -32,7 +32,7 @@ func newProcessor(context *ServerContext) *Processor {
 	}
 }
 
-func (p *Processor) Auth(conn gnet.Conn, packet *message_pb.ConnectPacket) error {
+func (p *Processor) Auth(conn gnet.Conn, packet *protocol.ConnectPacket) error {
 	var (
 		uid   = packet.GetUid()
 		did   = packet.GetDid()
@@ -46,8 +46,8 @@ func (p *Processor) Auth(conn gnet.Conn, packet *message_pb.ConnectPacket) error
 
 	authed, _ := rpc.Caller().Auth(ctx, uid, did, token)
 	if !authed {
-		ack, _ := proto.Marshal(message_pb.PacketConnectAck(&message_pb.ConnectAckPacket{
-			Code: message_pb.ConnAuthFail,
+		ack, _ := proto.Marshal(protocol.PacketConnectAck(&protocol.ConnectAckPacket{
+			Code: protocol.ConnAuthFail,
 		}))
 		if _, err := conn.Write(ack); err != nil {
 			logger.Err(ctx, err, "")
@@ -65,8 +65,8 @@ func (p *Processor) Auth(conn gnet.Conn, packet *message_pb.ConnectPacket) error
 	_ = client.SetAuthResult(true)
 	p.context.connManager.Add(client)
 
-	ack, _ := proto.Marshal(message_pb.PacketConnectAck(&message_pb.ConnectAckPacket{
-		Code: message_pb.OK,
+	ack, _ := proto.Marshal(protocol.PacketConnectAck(&protocol.ConnectAckPacket{
+		Code: protocol.OK,
 	}))
 	if _, err := client.Write(ack); err != nil {
 		logger.Err(ctx, err, "")
@@ -75,7 +75,7 @@ func (p *Processor) Auth(conn gnet.Conn, packet *message_pb.ConnectPacket) error
 	return nil
 }
 
-func (p *Processor) Process(conn gnet.Conn, msg *message_pb.Message) error {
+func (p *Processor) Process(conn gnet.Conn, msg *protocol.Message) error {
 	// 取得连接客户端
 	client := p.context.connManager.GetWithFD(conn.Fd())
 	if client == nil {
@@ -86,11 +86,11 @@ func (p *Processor) Process(conn gnet.Conn, msg *message_pb.Message) error {
 	err := goroutine.Default().Submit(func() {
 		var err error
 		switch msg.MsgType {
-		case message_pb.MsgType_PING:
+		case protocol.MsgType_PING:
 			err = p.ping(client, msg.GetPingPacket())
-		case message_pb.MsgType_SEND:
+		case protocol.MsgType_SEND:
 			err = p.send(client, msg.GetSendPacket())
-		case message_pb.MsgType_RECEIVE_ACK:
+		case protocol.MsgType_RECEIVE_ACK:
 			err = p.receiveAck(client, msg.GetReceiveAckPacket())
 		default:
 			err = errors.New("unknown message type")
@@ -102,18 +102,18 @@ func (p *Processor) Process(conn gnet.Conn, msg *message_pb.Message) error {
 	return err
 }
 
-func (p *Processor) ping(_c *Client, _ *message_pb.PingPacket) error {
+func (p *Processor) ping(_c *Client, _ *protocol.PingPacket) error {
 	logger.Log().Debug().Msgf("UID=[%s] 收到ping请求", _c.UID)
 	_c.HeartbeatLastTime = time.Now()
 
-	pongData, _ := proto.Marshal(message_pb.PacketPong(&message_pb.PongPacket{}))
+	pongData, _ := proto.Marshal(protocol.PacketPong(&protocol.PongPacket{}))
 	if _, err := _c.Write(pongData); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (p *Processor) send(_c *Client, message *message_pb.SendPacket) error {
+func (p *Processor) send(_c *Client, message *protocol.SendPacket) error {
 	//msgId := p.msgIDGenerator.Generate().String()
 	//
 	//msg := &logic.MessageReq{
@@ -133,7 +133,7 @@ func (p *Processor) send(_c *Client, message *message_pb.SendPacket) error {
 	return nil
 }
 
-func (p *Processor) receiveAck(_c *Client, msg *message_pb.ReceiveAckPacket) error {
+func (p *Processor) receiveAck(_c *Client, msg *protocol.ReceiveAckPacket) error {
 	// todo 接收客户端收到消息的确认
 	// 1. 更新消息状态
 	// 2. 结束

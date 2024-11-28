@@ -80,7 +80,7 @@ func (cm *ClientManager) Add(client *Client) {
 	cm.userConnMap[client.UID] = append(ucSlice, client)
 
 	// 登记online
-	_ = rpc.Caller().Register(rpc.Context(), client.UID, client.DID, "", "")
+	_ = rpc.Caller().Register(rpc.Context(), client.UID, client.DID)
 }
 
 func (cm *ClientManager) RemoveWithFD(fd int) {
@@ -103,7 +103,7 @@ func (cm *ClientManager) RemoveWithFD(fd int) {
 	}
 
 	// 注销online
-	_ = rpc.Caller().UnRegister(rpc.Context(), client.UID, client.DID, "", "")
+	_ = rpc.Caller().UnRegister(rpc.Context(), client.UID, client.DID)
 }
 
 func (cm *ClientManager) GetWithUID(uid string) []*Client {

@@ -1,4 +1,4 @@
-package message_pb
+package protocol
 
 const (
 	OK           = iota

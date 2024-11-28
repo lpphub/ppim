@@ -54,12 +54,13 @@ func (c *GrpcCaller) Auth(ctx context.Context, uid, did, token string) (bool, er
 	return resp.Code == 0, nil
 }
 
-func (c *GrpcCaller) Register(ctx context.Context, uid, did, topic, ip string) error {
+func (c *GrpcCaller) Register(ctx context.Context, uid, did string) error {
+	// todo: 获取当前节点对应的topic及ip
 	_, err := c.logic.Register(ctx, &logic.OnlineReq{
 		Uid:   uid,
 		Did:   did,
-		Topic: topic,
-		Ip:    ip,
+		Topic: "topic",
+		Ip:    "ip",
 	})
 	if err != nil {
 		logger.Err(ctx, err, "")
@@ -68,12 +69,12 @@ func (c *GrpcCaller) Register(ctx context.Context, uid, did, topic, ip string) e
 	return nil
 }
 
-func (c *GrpcCaller) UnRegister(ctx context.Context, uid, did, topic, ip string) error {
+func (c *GrpcCaller) UnRegister(ctx context.Context, uid, did string) error {
 	_, err := c.logic.Unregister(ctx, &logic.OnlineReq{
 		Uid:   uid,
 		Did:   did,
-		Topic: topic,
-		Ip:    ip,
+		Topic: "topic",
+		Ip:    "ip",
 	})
 	if err != nil {
 		logger.Err(ctx, err, "")
