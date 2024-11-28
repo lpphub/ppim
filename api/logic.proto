@@ -11,7 +11,7 @@ message AuthReq {
 }
 
 message AuthResp {
-  bool ok = 1;
+  uint32 code = 1;
   optional string msg = 2;
 }
 
@@ -27,11 +27,28 @@ message OnlineReq {
 }
 
 message OnlineResp {
-  bool ok = 1;
+  uint32 code = 1;
   optional string msg = 2;
 }
 
 service Online {
   rpc Register(OnlineReq) returns (OnlineResp);
   rpc Unregister(OnlineReq) returns (OnlineResp);
+}
+
+message MessageReq {
+  string fromUid = 1;
+  string toUid = 2;
+  uint32 msgType = 3;
+  string msgSeq = 4;
+  string msgBody = 5;
+}
+
+message MessageResp {
+  uint32 code = 1;
+  optional string msg = 2;
+}
+
+service Message {
+  rpc Send(MessageReq) returns (MessageResp);
 }

@@ -1,6 +1,8 @@
 package rpc
 
 import (
+	"context"
+	"github.com/lpphub/golib/logger"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"sync"
@@ -36,4 +38,8 @@ func RegisterGrpcClient(addr string) (err error) {
 
 func Caller() *GrpcCaller {
 	return caller
+}
+
+func Context() context.Context {
+	return logger.WithCtx(context.Background())
 }

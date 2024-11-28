@@ -19,5 +19,5 @@ func (srv *AuthSrv) Auth(ctx context.Context, uid, did, token string) (bool, err
 		logger.Err(ctx, err, "rpc - auth error")
 		return false, err
 	}
-	return resp.Ok, nil
+	return resp.Code == 0, nil
 }

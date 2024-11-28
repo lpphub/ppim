@@ -3,7 +3,6 @@ package net
 import (
 	"context"
 	"errors"
-	"fmt"
 	"github.com/bwmarrin/snowflake"
 	"github.com/golang/protobuf/proto"
 	"github.com/lpphub/golib/logger"
@@ -21,7 +20,6 @@ type Processor struct {
 
 var (
 	ErrAuthParamEmpty = errors.New("授权参数为空")
-	ErrAuthFailure    = errors.New("授权校验失败")
 	ErrConnNotFound   = errors.New("连接不存在")
 )
 
@@ -43,11 +41,19 @@ func (p *Processor) Auth(conn gnet.Conn, packet *message_pb.ConnectPacket) error
 	if uid == "" || did == "" || token == "" {
 		return ErrAuthParamEmpty
 	}
-	fmt.Printf("auth param: uid=%s, did=%s, token=%s\n", uid, did, token)
+	ctx := logger.WithCtx(context.Background())
+	logger.Infof(ctx, "conn auth param: uid=%s, did=%s, token=%s", uid, did, token)
 
-	authed, _ := rpc.Caller().AuthSrv.Auth(logger.WithCtx(context.TODO()), uid, did, token)
+	authed, _ := rpc.Caller().AuthSrv.Auth(ctx, uid, did, token)
 	if !authed {
-		return ErrAuthFailure
+		ack, _ := proto.Marshal(message_pb.PacketConnectAck(&message_pb.ConnectAckPacket{
+			Code: message_pb.ConnAuthFail,
+		}))
+		if _, err := conn.Write(ack); err != nil {
+			logger.Err(ctx, err, "")
+			return err
+		}
+		return nil
 	}
 
 	client := &Client{
@@ -59,12 +65,11 @@ func (p *Processor) Auth(conn gnet.Conn, packet *message_pb.ConnectPacket) error
 	_ = client.SetAuthResult(true)
 	p.context.connManager.Add(client)
 
-	// connect ack
-	ack := message_pb.PacketConnectAck(&message_pb.ConnectAckPacket{
-		Ok: true,
-	})
-	data, _ := proto.Marshal(ack)
-	if _, err := client.Write(data); err != nil {
+	ack, _ := proto.Marshal(message_pb.PacketConnectAck(&message_pb.ConnectAckPacket{
+		Code: message_pb.OK,
+	}))
+	if _, err := client.Write(ack); err != nil {
+		logger.Err(ctx, err, "")
 		return err
 	}
 	return nil
@@ -79,7 +84,6 @@ func (p *Processor) Process(conn gnet.Conn, msg *message_pb.Message) error {
 
 	// 异步处理业务
 	err := goroutine.Default().Submit(func() {
-		// 消息分发
 		var err error
 		switch msg.MsgType {
 		case message_pb.MsgType_PING:
@@ -92,20 +96,18 @@ func (p *Processor) Process(conn gnet.Conn, msg *message_pb.Message) error {
 			err = errors.New("unknown message type")
 		}
 		if err != nil {
-			fmt.Printf("process message error: %v\n", err)
+			logger.Log().Error().Msgf("process message error: %v", err)
 		}
 	})
 	return err
 }
 
 func (p *Processor) ping(_c *Client, _ *message_pb.PingPacket) error {
-	fmt.Printf("UID=[%s] 收到ping请求\n", _c.UID)
+	logger.Log().Debug().Msgf("UID=[%s] 收到ping请求", _c.UID)
 	_c.HeartbeatLastTime = time.Now()
 
 	pongData, _ := proto.Marshal(message_pb.PacketPong(&message_pb.PongPacket{}))
-
-	_, err := _c.Write(pongData)
-	if err != nil {
+	if _, err := _c.Write(pongData); err != nil {
 		return err
 	}
 	return nil
@@ -114,6 +116,7 @@ func (p *Processor) ping(_c *Client, _ *message_pb.PingPacket) error {
 func (p *Processor) send(_c *Client, msg *message_pb.SendPacket) error {
 	// todo 接收客户端投递的消息
 	// 1. 消息存储
+
 	// 2. 消息在线投递
 	// 3. 响应ack
 	return nil

@@ -39,7 +39,7 @@ message ConnectPacket {
 }
 
 message ConnectAckPacket {
-  bool ok = 1;
+  int32 code = 1;
 }
 
 message PingPacket {
@@ -52,10 +52,14 @@ message SendPacket {
   string content = 1;
 }
 
-message SendAckPacket {}
+message SendAckPacket {
+  int32 code = 1;
+}
 
 message ReceivePacket {
   string content = 1;
 }
 
-message ReceiveAckPacket {}
+message ReceiveAckPacket {
+  int32 code = 1;
+}

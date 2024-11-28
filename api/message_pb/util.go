@@ -1,5 +1,10 @@
 package message_pb
 
+const (
+	OK           = iota
+	ConnAuthFail // 连接认证失败
+)
+
 func PacketConnectAck(connAck *ConnectAckPacket) *Message {
 	return &Message{
 		MsgType: MsgType_CONNECT_ACK,

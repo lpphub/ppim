@@ -22,7 +22,7 @@ func (ol *onlineService) Register(ctx context.Context, req *logic.OnlineReq) (*l
 	if err != nil {
 		return nil, err
 	}
-	return &logic.OnlineResp{Ok: true}, nil
+	return &logic.OnlineResp{Code: 0}, nil
 }
 
 func (ol *onlineService) UnRegister(ctx context.Context, req *logic.OnlineReq) (*logic.OnlineResp, error) {
@@ -31,7 +31,7 @@ func (ol *onlineService) UnRegister(ctx context.Context, req *logic.OnlineReq) (
 	if err != nil {
 		return nil, err
 	}
-	return &logic.OnlineResp{Ok: true}, nil
+	return &logic.OnlineResp{Code: 0}, nil
 }
 
 func (*onlineService) buildOnlineVal(_ context.Context, req *logic.OnlineReq) string {

@@ -15,9 +15,12 @@ func (s *authService) Auth(ctx context.Context, req *logic.AuthReq) (*logic.Auth
 	if err := user.GetOne(ctx, req.Uid); err != nil {
 		return nil, err
 	}
-	authed := user.DID == req.Did && user.Token == req.Token
+	code := 0
+	if user.DID != req.Did || user.Token != req.Token {
+		code = 1 // 鉴权失败
+	}
 	resp := &logic.AuthResp{
-		Ok: authed,
+		Code: uint32(code),
 	}
 	return resp, nil
 }
