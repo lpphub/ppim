@@ -3,8 +3,8 @@ package net
 import (
 	"errors"
 	"github.com/golang/protobuf/proto"
+	"github.com/lpphub/golib/logger"
 	"github.com/panjf2000/gnet/v2"
-	"github.com/panjf2000/gnet/v2/pkg/logging"
 	"ppim/api/message_pb"
 	"ppim/internal/comet/net/codec"
 	"sync/atomic"
@@ -37,7 +37,7 @@ func (e *EventEngine) start() error {
 }
 
 func (e *EventEngine) OnBoot(_ gnet.Engine) gnet.Action {
-	logging.Infof("Listening and accepting TCP on %s\n", e.context.Addr)
+	logger.Log().Info().Msgf("Listening and accepting TCP on %s", e.context.Addr)
 	return gnet.None
 }
 
@@ -45,7 +45,7 @@ func (e *EventEngine) OnOpen(c gnet.Conn) (out []byte, action gnet.Action) {
 	//if remoteArr := c.RemoteAddr(); remoteArr != nil {
 	//	IP := strings.Split(remoteArr.String(), ":")[0]
 	//	// 可增加IP黑名单控制
-	//	logging.Infof("open new connection from %s", IP)
+	//	logger.Log().Info().Msgf("open new connection from %s", IP)
 	//}
 
 	ctx := &EventConnContext{
@@ -60,7 +60,7 @@ func (e *EventEngine) OnOpen(c gnet.Conn) (out []byte, action gnet.Action) {
 
 func (e *EventEngine) OnClose(c gnet.Conn, err error) (action gnet.Action) {
 	if err != nil {
-		logging.Infof("error occurred on connection=%s, %v\n", c.RemoteAddr().String(), err)
+		logger.Log().Err(err).Msgf("error occurred on connection=%s", c.RemoteAddr().String())
 	}
 	atomic.AddInt32(&e.context.online, -1)
 
@@ -76,27 +76,27 @@ func (e *EventEngine) OnTraffic(_c gnet.Conn) gnet.Action {
 		if errors.Is(err, codec.ErrIncompletePacket) {
 			return gnet.None
 		}
-		logging.Errorf("failed to decode, %v", err)
+		logger.Log().Err(err).Msg("failed to decode")
 		return gnet.Close
 	}
 	var msg message_pb.Message
 	_ = proto.Unmarshal(buf, &msg)
-	logging.Debugf("recv data: %s", msg.String())
+	logger.Log().Debug().Msgf("recv data: %s", msg.String())
 
 	if !connCtx.Authed {
 		if err = e.processor.Auth(_c, msg.GetConnectPacket()); err != nil {
-			logging.Errorf("failed to auth the connection, %v", err)
+			logger.Log().Err(err).Msg("failed to auth the connection")
 			return gnet.Close
 		}
 	} else {
 		if err = e.processor.Process(_c, &msg); err != nil {
-			logging.Errorf("failed to process msg, %v", err)
+			logger.Log().Err(err).Msg("failed to process msg")
 		}
 	}
 
 	if _c.InboundBuffered() > 0 {
 		if err = _c.Wake(nil); err != nil { // wake up the connection manually to avoid missing the leftover data
-			logging.Errorf("failed to wake up the connection, %v", err)
+			logger.Log().Err(err).Msg("failed to wake up the connection")
 			return gnet.Close
 		}
 	}
