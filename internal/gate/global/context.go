@@ -4,7 +4,7 @@ import (
 	"github.com/lpphub/golib/env"
 	"github.com/lpphub/golib/logger"
 	"path/filepath"
-	"ppim/internal/comet/conf"
+	"ppim/internal/gate/conf"
 )
 
 var (
@@ -13,7 +13,7 @@ var (
 
 func Init() {
 	// 加载配置文件
-	configFile := filepath.Join("config", "comet.yml")
+	configFile := filepath.Join("config", "gate.yml")
 	env.LoadConf(configFile, &Conf)
 
 	// 配置日志

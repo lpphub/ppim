@@ -2,7 +2,7 @@ package main
 
 import (
 	"github.com/spf13/cobra"
-	"ppim/internal/comet"
+	"ppim/internal/gate"
 )
 
 func main() {
@@ -10,7 +10,7 @@ func main() {
 		Use:   "main",
 		Short: "Main Function",
 		Run: func(cmd *cobra.Command, args []string) {
-			comet.Serve()
+			gate.Serve()
 		},
 	}
 

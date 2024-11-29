@@ -1,11 +1,11 @@
-package comet
+package gate
 
 import (
 	"fmt"
 	"github.com/golang/protobuf/proto"
 	"net"
 	"ppim/api/message_pb"
-	"ppim/internal/comet/net/codec"
+	"ppim/internal/gate/net/codec"
 	"testing"
 	"time"
 )

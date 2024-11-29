@@ -3,7 +3,7 @@ package net
 import (
 	"errors"
 	"github.com/panjf2000/gnet/v2"
-	"ppim/internal/comet/rpc"
+	"ppim/internal/gate/rpc"
 	"sync"
 	"time"
 )

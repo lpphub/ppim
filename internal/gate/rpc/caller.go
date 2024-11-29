@@ -56,7 +56,7 @@ func (c *GrpcCaller) Auth(ctx context.Context, uid, did, token string) (bool, er
 
 func (c *GrpcCaller) Register(ctx context.Context, uid, did string) error {
 	// todo: 获取当前节点对应的topic及ip
-	_, err := c.logic.Register(ctx, &logic.OnlineReq{
+	_, err := c.logic.Register(ctx, &logic.RouterReq{
 		Uid:   uid,
 		Did:   did,
 		Topic: "topic",
@@ -70,7 +70,7 @@ func (c *GrpcCaller) Register(ctx context.Context, uid, did string) error {
 }
 
 func (c *GrpcCaller) UnRegister(ctx context.Context, uid, did string) error {
-	_, err := c.logic.Unregister(ctx, &logic.OnlineReq{
+	_, err := c.logic.Unregister(ctx, &logic.RouterReq{
 		Uid:   uid,
 		Did:   did,
 		Topic: "topic",

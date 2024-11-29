@@ -9,7 +9,7 @@ import (
 	"github.com/panjf2000/gnet/v2"
 	"github.com/panjf2000/gnet/v2/pkg/pool/goroutine"
 	"ppim/api/protocol"
-	"ppim/internal/comet/rpc"
+	"ppim/internal/gate/rpc"
 	"time"
 )
 

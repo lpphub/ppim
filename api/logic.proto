@@ -15,14 +15,14 @@ message AuthResp {
   optional string msg = 2;
 }
 
-message OnlineReq {
+message RouterReq {
   string uid = 1;
   string did = 2;
   string ip = 3;
   string topic = 4;
 }
 
-message OnlineResp {
+message RouterResp {
   uint32 code = 1;
   optional string msg = 2;
 }
@@ -43,7 +43,7 @@ message MessageResp {
 
 service Logic {
   rpc Auth(AuthReq) returns (AuthResp);
-  rpc Register(OnlineReq) returns (OnlineResp);
-  rpc Unregister(OnlineReq) returns (OnlineResp);
+  rpc Register(RouterReq) returns (RouterResp);
+  rpc Unregister(RouterReq) returns (RouterResp);
   rpc Send(MessageReq) returns (MessageResp);
 }

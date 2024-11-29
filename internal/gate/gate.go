@@ -1,9 +1,9 @@
-package comet
+package gate
 
 import (
-	"ppim/internal/comet/global"
-	"ppim/internal/comet/net"
-	"ppim/internal/comet/rpc"
+	"ppim/internal/gate/global"
+	"ppim/internal/gate/net"
+	"ppim/internal/gate/rpc"
 )
 
 func Serve() {

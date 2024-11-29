@@ -30,8 +30,8 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type LogicClient interface {
 	Auth(ctx context.Context, in *AuthReq, opts ...grpc.CallOption) (*AuthResp, error)
-	Register(ctx context.Context, in *OnlineReq, opts ...grpc.CallOption) (*OnlineResp, error)
-	Unregister(ctx context.Context, in *OnlineReq, opts ...grpc.CallOption) (*OnlineResp, error)
+	Register(ctx context.Context, in *RouterReq, opts ...grpc.CallOption) (*RouterResp, error)
+	Unregister(ctx context.Context, in *RouterReq, opts ...grpc.CallOption) (*RouterResp, error)
 	Send(ctx context.Context, in *MessageReq, opts ...grpc.CallOption) (*MessageResp, error)
 }
 
@@ -53,9 +53,9 @@ func (c *logicClient) Auth(ctx context.Context, in *AuthReq, opts ...grpc.CallOp
 	return out, nil
 }
 
-func (c *logicClient) Register(ctx context.Context, in *OnlineReq, opts ...grpc.CallOption) (*OnlineResp, error) {
+func (c *logicClient) Register(ctx context.Context, in *RouterReq, opts ...grpc.CallOption) (*RouterResp, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(OnlineResp)
+	out := new(RouterResp)
 	err := c.cc.Invoke(ctx, Logic_Register_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -63,9 +63,9 @@ func (c *logicClient) Register(ctx context.Context, in *OnlineReq, opts ...grpc.
 	return out, nil
 }
 
-func (c *logicClient) Unregister(ctx context.Context, in *OnlineReq, opts ...grpc.CallOption) (*OnlineResp, error) {
+func (c *logicClient) Unregister(ctx context.Context, in *RouterReq, opts ...grpc.CallOption) (*RouterResp, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(OnlineResp)
+	out := new(RouterResp)
 	err := c.cc.Invoke(ctx, Logic_Unregister_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -88,8 +88,8 @@ func (c *logicClient) Send(ctx context.Context, in *MessageReq, opts ...grpc.Cal
 // for forward compatibility.
 type LogicServer interface {
 	Auth(context.Context, *AuthReq) (*AuthResp, error)
-	Register(context.Context, *OnlineReq) (*OnlineResp, error)
-	Unregister(context.Context, *OnlineReq) (*OnlineResp, error)
+	Register(context.Context, *RouterReq) (*RouterResp, error)
+	Unregister(context.Context, *RouterReq) (*RouterResp, error)
 	Send(context.Context, *MessageReq) (*MessageResp, error)
 	mustEmbedUnimplementedLogicServer()
 }
@@ -104,10 +104,10 @@ type UnimplementedLogicServer struct{}
 func (UnimplementedLogicServer) Auth(context.Context, *AuthReq) (*AuthResp, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Auth not implemented")
 }
-func (UnimplementedLogicServer) Register(context.Context, *OnlineReq) (*OnlineResp, error) {
+func (UnimplementedLogicServer) Register(context.Context, *RouterReq) (*RouterResp, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Register not implemented")
 }
-func (UnimplementedLogicServer) Unregister(context.Context, *OnlineReq) (*OnlineResp, error) {
+func (UnimplementedLogicServer) Unregister(context.Context, *RouterReq) (*RouterResp, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Unregister not implemented")
 }
 func (UnimplementedLogicServer) Send(context.Context, *MessageReq) (*MessageResp, error) {
@@ -153,7 +153,7 @@ func _Logic_Auth_Handler(srv interface{}, ctx context.Context, dec func(interfac
 }
 
 func _Logic_Register_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(OnlineReq)
+	in := new(RouterReq)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -165,13 +165,13 @@ func _Logic_Register_Handler(srv interface{}, ctx context.Context, dec func(inte
 		FullMethod: Logic_Register_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(LogicServer).Register(ctx, req.(*OnlineReq))
+		return srv.(LogicServer).Register(ctx, req.(*RouterReq))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _Logic_Unregister_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(OnlineReq)
+	in := new(RouterReq)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -183,7 +183,7 @@ func _Logic_Unregister_Handler(srv interface{}, ctx context.Context, dec func(in
 		FullMethod: Logic_Unregister_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(LogicServer).Unregister(ctx, req.(*OnlineReq))
+		return srv.(LogicServer).Unregister(ctx, req.(*RouterReq))
 	}
 	return interceptor(ctx, in, info, handler)
 }

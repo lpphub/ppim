@@ -6,7 +6,7 @@ import (
 	"github.com/lpphub/golib/logger"
 	"github.com/panjf2000/gnet/v2"
 	"ppim/api/protocol"
-	"ppim/internal/comet/net/codec"
+	"ppim/internal/gate/net/codec"
 	"sync/atomic"
 	"time"
 )
