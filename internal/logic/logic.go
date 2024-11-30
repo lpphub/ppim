@@ -11,8 +11,8 @@ func Serve() {
 	global.InitGlobalCtx()
 
 	go func() {
-		grpc := rpc.NewRpcServer()
-		grpc.Start()
+		rpcsrv := rpc.NewRpcServer()
+		rpcsrv.Start()
 	}()
 
 	api := http.NewApiServer()

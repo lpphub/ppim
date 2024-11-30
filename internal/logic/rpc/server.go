@@ -17,7 +17,7 @@ type RpcServer struct {
 
 func NewRpcServer() *RpcServer {
 	return &RpcServer{
-		addr:     ":9090",
+		addr:     "localhost:9090",
 		etcdAddr: []string{"localhost:2379"},
 		etcdPath: "/rpcx",
 		srv:      server.NewServer(),
@@ -40,7 +40,7 @@ func (s *RpcServer) Start() {
 
 func setupEtcdRegisterPlugin(s *RpcServer) {
 	r := &serverplugin.EtcdV3RegisterPlugin{
-		ServiceAddress: fmt.Sprintf("tcp@localhost%s", s.addr),
+		ServiceAddress: fmt.Sprintf("tcp@%s", s.addr),
 		EtcdServers:    s.etcdAddr,
 		BasePath:       s.etcdPath,
 		UpdateInterval: time.Minute,
