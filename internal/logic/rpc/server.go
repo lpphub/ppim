@@ -2,40 +2,56 @@ package rpc
 
 import (
 	"fmt"
-	"google.golang.org/grpc"
-	"log"
-	"net"
-	"ppim/api/logic"
+	"github.com/lpphub/golib/logger"
+	"github.com/rpcxio/rpcx-etcd/serverplugin"
+	"github.com/smallnest/rpcx/server"
+	"time"
 )
 
-type GrpcServer struct {
-	srv *grpc.Server
+type RpcServer struct {
+	addr     string
+	etcdAddr []string
+	etcdPath string
+	srv      *server.Server
 }
 
-func NewGrpcServer() *GrpcServer {
-	return &GrpcServer{
-		srv: grpc.NewServer(),
+func NewRpcServer() *RpcServer {
+	return &RpcServer{
+		addr:     ":9090",
+		etcdAddr: []string{"localhost:2379"},
+		etcdPath: "/rpcx",
+		srv:      server.NewServer(),
 	}
 }
 
-func (s *GrpcServer) registerServer() {
-	logic.RegisterLogicServer(s.srv, &logicService{})
+func (s *RpcServer) registerServer() {
+	_ = s.srv.RegisterName("logic", new(logicService), "")
 }
 
-func (s *GrpcServer) Start() {
+func (s *RpcServer) Start() {
+	setupEtcdRegisterPlugin(s)
 	s.registerServer()
 
-	lis, err := net.Listen("tcp", ":9090")
-	if err != nil {
-		panic(fmt.Sprintf("grpc server listen err:%v\n", err))
-	}
-
-	log.Printf("Listening and serving GRPC on %s\n", lis.Addr().String())
-	if err = s.srv.Serve(lis); err != nil {
-		panic(fmt.Sprintf("grpc server start failed, err:%v\n", err))
+	logger.Log().Info().Msgf("Listening and serving RPC on %s", s.addr)
+	if err := s.srv.Serve("tcp", s.addr); err != nil {
+		panic(fmt.Sprintf("rpc server start failed, err:%v\n", err))
 	}
 }
 
-func (s *GrpcServer) Stop() {
-	s.srv.GracefulStop()
+func setupEtcdRegisterPlugin(s *RpcServer) {
+	r := &serverplugin.EtcdV3RegisterPlugin{
+		ServiceAddress: fmt.Sprintf("tcp@localhost%s", s.addr),
+		EtcdServers:    s.etcdAddr,
+		BasePath:       s.etcdPath,
+		UpdateInterval: time.Minute,
+		//Metrics:        metrics.NewRegistry(),
+	}
+	if err := r.Start(); err != nil {
+		logger.Log().Err(err).Msg("failed to start etcd")
+	}
+	s.srv.Plugins.Add(r)
+}
+
+func (s *RpcServer) Stop() {
+	_ = s.srv.Close()
 }
