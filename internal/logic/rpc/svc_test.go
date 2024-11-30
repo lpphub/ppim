@@ -2,7 +2,6 @@ package rpc
 
 import (
 	"context"
-	"fmt"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"log"
@@ -26,9 +25,9 @@ func Test_Auth(t *testing.T) {
 		Token: "bbb",
 	})
 	if err != nil {
-		log.Fatalf("调用失败: %v", err)
+		t.Fatalf("调用失败: %v", err)
 		return
 	}
-	fmt.Printf("%v\n", resp)
+	t.Logf("%v\n", resp.Code)
 
 }
