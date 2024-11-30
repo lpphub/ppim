@@ -3,37 +3,47 @@ package rpc
 import (
 	"context"
 	"github.com/lpphub/golib/logger"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
-	"ppim/api/logic"
+	etcdclient "github.com/rpcxio/rpcx-etcd/client"
+	"github.com/smallnest/rpcx/client"
+	"ppim/api/rpctypes"
 	"sync"
 )
 
-type GrpcCaller struct {
-	logic logic.LogicClient
+type RpcCaller struct {
+	logic client.XClient
 }
 
 var (
-	caller *GrpcCaller
+	caller *RpcCaller
 	once   sync.Once
 )
 
-func RegisterGrpcClient(addr string) (err error) {
+const (
+	etcdPath    = "/rpcx"
+	serviceName = "logic"
+
+	methodAuth       = "Auth"
+	methodRegister   = "Register"
+	methodUnRegister = "UnRegister"
+)
+
+func RegisterRpcClient(addr string) (err error) {
 	once.Do(func() {
-		_conn, cerr := grpc.NewClient(addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
-		if cerr != nil {
-			err = cerr
+		discovery, derr := etcdclient.NewEtcdV3Discovery(etcdPath, serviceName, []string{addr}, false, nil)
+		if derr != nil {
+			err = derr
 			return
 		}
+		logic := client.NewXClient(serviceName, client.Failtry, client.RandomSelect, discovery, client.DefaultOption)
 
-		caller = &GrpcCaller{
-			logic: logic.NewLogicClient(_conn),
+		caller = &RpcCaller{
+			logic: logic,
 		}
 	})
 	return
 }
 
-func Caller() *GrpcCaller {
+func Caller() *RpcCaller {
 	return caller
 }
 
@@ -41,12 +51,15 @@ func Context() context.Context {
 	return logger.WithCtx(context.Background())
 }
 
-func (c *GrpcCaller) Auth(ctx context.Context, uid, did, token string) (bool, error) {
-	resp, err := c.logic.Auth(ctx, &logic.AuthReq{
+func (c *RpcCaller) Auth(ctx context.Context, uid, did, token string) (bool, error) {
+	req := &rpctypes.AuthReq{
 		Uid:   uid,
 		Did:   did,
 		Token: token,
-	})
+	}
+	resp := &rpctypes.AuthResp{}
+
+	err := c.logic.Call(ctx, methodAuth, req, resp)
 	if err != nil {
 		logger.Err(ctx, err, "rpc - auth error")
 		return false, err
@@ -54,14 +67,15 @@ func (c *GrpcCaller) Auth(ctx context.Context, uid, did, token string) (bool, er
 	return resp.Code == 0, nil
 }
 
-func (c *GrpcCaller) Register(ctx context.Context, uid, did string) error {
+func (c *RpcCaller) Register(ctx context.Context, uid, did string) error {
 	// todo: 获取当前节点对应的topic及ip
-	_, err := c.logic.Register(ctx, &logic.RouterReq{
-		Uid:   uid,
-		Did:   did,
-		Topic: "topic",
-		Ip:    "ip",
-	})
+	req := &rpctypes.RouterReq{
+		Uid: uid,
+		Did: did,
+	}
+	resp := &rpctypes.RouterReq{}
+
+	err := c.logic.Call(ctx, methodRegister, req, resp)
 	if err != nil {
 		logger.Err(ctx, err, "")
 		return err
@@ -69,13 +83,14 @@ func (c *GrpcCaller) Register(ctx context.Context, uid, did string) error {
 	return nil
 }
 
-func (c *GrpcCaller) UnRegister(ctx context.Context, uid, did string) error {
-	_, err := c.logic.Unregister(ctx, &logic.RouterReq{
-		Uid:   uid,
-		Did:   did,
-		Topic: "topic",
-		Ip:    "ip",
-	})
+func (c *RpcCaller) UnRegister(ctx context.Context, uid, did string) error {
+	req := &rpctypes.RouterReq{
+		Uid: uid,
+		Did: did,
+	}
+	resp := &rpctypes.RouterReq{}
+
+	err := c.logic.Call(ctx, methodUnRegister, req, resp)
 	if err != nil {
 		logger.Err(ctx, err, "")
 		return err

@@ -2,18 +2,22 @@ package rpc
 
 import (
 	"context"
+	etcdclient "github.com/rpcxio/rpcx-etcd/client"
 	"github.com/smallnest/rpcx/client"
+	"ppim/api/rpctypes"
 	"testing"
 )
 
 func Test_Auth(t *testing.T) {
-	req := &AuthReq{
+	req := &rpctypes.AuthReq{
 		Uid: "123",
 		Did: "bbc",
 	}
-	resp := &AuthResp{}
+	resp := &rpctypes.AuthResp{}
 
-	discovery, _ := client.NewPeer2PeerDiscovery("tcp@localhost:9090", "")
+	//discovery, _ := client.NewPeer2PeerDiscovery("tcp@localhost:9090", "")
+	discovery, _ := etcdclient.NewEtcdV3Discovery("/rpcx", "logic", []string{"localhost:2379"}, false, nil)
+
 	xclient := client.NewXClient("logic", client.Failtry, client.RandomSelect, discovery, client.DefaultOption)
 	defer xclient.Close()
 

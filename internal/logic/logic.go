@@ -11,7 +11,7 @@ func Serve() {
 	global.InitGlobalCtx()
 
 	go func() {
-		grpc := rpc.NewGrpcServer()
+		grpc := rpc.NewRpcServer()
 		grpc.Start()
 	}()
 

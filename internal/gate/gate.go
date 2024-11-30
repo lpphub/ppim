@@ -9,7 +9,7 @@ import (
 func Serve() {
 	global.Init()
 
-	if err := rpc.RegisterGrpcClient(global.Conf.Grpc.Addr); err != nil {
+	if err := rpc.RegisterRpcClient(global.Conf.Grpc.Addr); err != nil {
 		panic(err.Error())
 	}
 
