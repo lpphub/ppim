@@ -11,10 +11,10 @@ func Serve() {
 	global.InitGlobalCtx()
 
 	go func() {
-		rpcsrv := rpc.NewRpcServer()
+		rpcsrv := rpc.NewRpcServer(global.Conf.Server.Rpc, global.Conf.Server.Etcd)
 		rpcsrv.Start()
 	}()
 
-	api := http.NewApiServer()
+	api := http.NewApiServer(global.Conf.Server.Api)
 	api.Start()
 }

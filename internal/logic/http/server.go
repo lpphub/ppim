@@ -9,14 +9,16 @@ import (
 )
 
 type ApiServer struct {
+	addr   string
 	engine *gin.Engine
 }
 
-func NewApiServer() *ApiServer {
+func NewApiServer(addr string) *ApiServer {
 	r := gin.New()
 	bootstraps(r)
 	registerRoutes(r)
 	return &ApiServer{
+		addr:   addr,
 		engine: r,
 	}
 }
@@ -38,7 +40,7 @@ func bootstraps(r *gin.Engine) {
 
 func (s *ApiServer) Start() {
 	srv := &http.Server{
-		Addr:    ":8080",
+		Addr:    s.addr,
 		Handler: s.engine.Handler(),
 	}
 	web.ListenAndServe(srv)

@@ -6,6 +6,7 @@ import (
 	etcdclient "github.com/rpcxio/rpcx-etcd/client"
 	"github.com/smallnest/rpcx/client"
 	"ppim/api/rpctypes"
+	"strings"
 	"sync"
 )
 
@@ -29,7 +30,7 @@ const (
 
 func RegisterRpcClient(addr string) (err error) {
 	once.Do(func() {
-		discovery, derr := etcdclient.NewEtcdV3Discovery(etcdPath, serviceName, []string{addr}, false, nil)
+		discovery, derr := etcdclient.NewEtcdV3Discovery(etcdPath, serviceName, strings.Split(addr, ","), false, nil)
 		if derr != nil {
 			err = derr
 			return

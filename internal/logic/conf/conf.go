@@ -1,9 +1,16 @@
 package conf
 
 type Config struct {
-	Mongo mongoConf
-	Redis redisConf
-	Log   logConf
+	Server serverConf
+	Mongo  mongoConf
+	Redis  redisConf
+	Log    logConf
+}
+
+type serverConf struct {
+	Api  string `yml:"api"`
+	Rpc  string `yml:"rpc"`
+	Etcd string `yml:"etcd"`
 }
 
 type mongoConf struct {

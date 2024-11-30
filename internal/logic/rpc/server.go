@@ -5,6 +5,7 @@ import (
 	"github.com/lpphub/golib/logger"
 	"github.com/rpcxio/rpcx-etcd/serverplugin"
 	"github.com/smallnest/rpcx/server"
+	"strings"
 	"time"
 )
 
@@ -15,10 +16,10 @@ type RpcServer struct {
 	srv      *server.Server
 }
 
-func NewRpcServer() *RpcServer {
+func NewRpcServer(addr, etcd string) *RpcServer {
 	return &RpcServer{
-		addr:     "localhost:9090",
-		etcdAddr: []string{"localhost:2379"},
+		addr:     addr,
+		etcdAddr: strings.Split(etcd, ","),
 		etcdPath: "/rpcx",
 		srv:      server.NewServer(),
 	}

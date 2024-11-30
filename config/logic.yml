@@ -1,9 +1,14 @@
 mongo:
-  addr: 127.0.0.1:27017
-  database: ppim
-  user: root
-  password: 123456
+  addr: "127.0.0.1:27017"
+  database: "ppim"
+  user: "root"
+  password: "123456"
 
 redis:
-  addr: 127.0.0.1:6379
-  db: 0
+  addr: "127.0.0.1:6379"
+  db: "0"
+
+server:
+  api: "127.0.0.1:8080"
+  rpc: "127.0.0.1:9090"
+  etcd: "127.0.0.1:2379"

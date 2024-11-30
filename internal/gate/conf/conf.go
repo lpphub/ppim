@@ -1,9 +1,10 @@
 package conf
 
 type Config struct {
-	Grpc grpcConf
+	Server serverConf
 }
 
-type grpcConf struct {
-	Addr string `yml:"addr"`
+type serverConf struct {
+	Tcp  string `yml:"tcp"`
+	Etcd string `yml:"etcd"`
 }

@@ -9,11 +9,11 @@ import (
 func Serve() {
 	global.Init()
 
-	if err := rpc.RegisterRpcClient(global.Conf.Grpc.Addr); err != nil {
+	if err := rpc.RegisterRpcClient(global.Conf.Server.Etcd); err != nil {
 		panic(err.Error())
 	}
 
-	tcp := net.NewTCPServer(":5050")
+	tcp := net.NewTCPServer(global.Conf.Server.Tcp)
 	if err := tcp.Start(); err != nil {
 		panic(err.Error())
 	}
