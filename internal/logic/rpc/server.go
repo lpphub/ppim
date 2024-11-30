@@ -2,40 +2,35 @@ package rpc
 
 import (
 	"fmt"
-	"google.golang.org/grpc"
-	"log"
-	"net"
-	"ppim/api/logic"
+	"github.com/lpphub/golib/logger"
+	"github.com/smallnest/rpcx/server"
 )
 
-type GrpcServer struct {
-	srv *grpc.Server
+type RpcServer struct {
+	addr string
+	srv  *server.Server
 }
 
-func NewGrpcServer() *GrpcServer {
-	return &GrpcServer{
-		srv: grpc.NewServer(),
+func NewGrpcServer() *RpcServer {
+	return &RpcServer{
+		addr: ":9090",
+		srv:  server.NewServer(),
 	}
 }
 
-func (s *GrpcServer) registerServer() {
-	logic.RegisterLogicServer(s.srv, &logicService{})
+func (s *RpcServer) registerServer() {
+	_ = s.srv.RegisterName("logic", new(logicService), "")
 }
 
-func (s *GrpcServer) Start() {
+func (s *RpcServer) Start() {
 	s.registerServer()
 
-	lis, err := net.Listen("tcp", ":9090")
-	if err != nil {
-		panic(fmt.Sprintf("grpc server listen err:%v\n", err))
-	}
-
-	log.Printf("Listening and serving GRPC on %s\n", lis.Addr().String())
-	if err = s.srv.Serve(lis); err != nil {
-		panic(fmt.Sprintf("grpc server start failed, err:%v\n", err))
+	logger.Log().Info().Msgf("Listening and serving RPC on %s", s.addr)
+	if err := s.srv.Serve("tcp", s.addr); err != nil {
+		panic(fmt.Sprintf("rpc server start failed, err:%v\n", err))
 	}
 }
 
-func (s *GrpcServer) Stop() {
-	s.srv.GracefulStop()
+func (s *RpcServer) Stop() {
+	_ = s.srv.Close()
 }
