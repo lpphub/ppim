@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/golang/protobuf/proto"
 	"net"
-	"ppim/api/message_pb"
+	"ppim/api/protocol"
 	"ppim/internal/gate/net/codec"
 	"testing"
 	"time"
@@ -23,12 +23,12 @@ func TestClient(t *testing.T) {
 
 	codecIns := new(codec.ProtobufCodec)
 
-	msg := &message_pb.Message{
-		MsgType: message_pb.MsgType_CONNECT,
-		Payload: &message_pb.Message_ConnectPacket{
-			ConnectPacket: &message_pb.ConnectPacket{
+	msg := &protocol.Message{
+		MsgType: protocol.MsgType_CONNECT,
+		Payload: &protocol.Message_ConnectPacket{
+			ConnectPacket: &protocol.ConnectPacket{
 				Uid:   "123",
-				Did:   "d123",
+				Did:   "ios01",
 				Token: "aaa",
 			},
 		},
@@ -41,22 +41,23 @@ func TestClient(t *testing.T) {
 		fmt.Println(err.Error())
 	}
 
-	var ackMsg message_pb.Message
-	ackBuf := make([]byte, 1024)
+	ackBuf := make([]byte, 2048)
 	_, _ = c.Read(ackBuf)
-
 	b, _ := codecIns.Unpack(ackBuf)
+
+	var ackMsg protocol.Message
 	_ = proto.Unmarshal(b, &ackMsg)
 	fmt.Printf("%v\n", &ackMsg)
 
-	if ackMsg.GetConnectAckPacket().GetOk() {
+	if ackMsg.GetConnectAckPacket().GetCode() == 0 {
 		fmt.Println("connect success")
 
-		for range 3 {
-			ping := &message_pb.Message{
-				MsgType: message_pb.MsgType_PING,
-				Payload: &message_pb.Message_PingPacket{
-					PingPacket: &message_pb.PingPacket{},
+		for range 20 {
+			fmt.Println("ping request...")
+			ping := &protocol.Message{
+				MsgType: protocol.MsgType_PING,
+				Payload: &protocol.Message_PingPacket{
+					PingPacket: &protocol.PingPacket{},
 				},
 			}
 

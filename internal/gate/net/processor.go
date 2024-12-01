@@ -49,7 +49,14 @@ func (p *Processor) Auth(conn gnet.Conn, packet *protocol.ConnectPacket) error {
 		ack, _ := proto.Marshal(protocol.PacketConnectAck(&protocol.ConnectAckPacket{
 			Code: protocol.ConnAuthFail,
 		}))
-		if _, err := conn.Write(ack); err != nil {
+
+		connCtx := conn.Context().(*EventConnContext)
+		ackBuf, err := connCtx.Codec.Encode(ack)
+		if err != nil {
+			logger.Err(ctx, err, "decode err")
+			return err
+		}
+		if _, err = conn.Write(ackBuf); err != nil {
 			logger.Err(ctx, err, "")
 			return err
 		}
