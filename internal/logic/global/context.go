@@ -48,5 +48,5 @@ func InitGlobalCtx() {
 	PreInit()
 
 	initDb()
-	initCache()
+	initRedis()
 }

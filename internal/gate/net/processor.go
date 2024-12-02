@@ -9,6 +9,7 @@ import (
 	"github.com/panjf2000/gnet/v2"
 	"github.com/panjf2000/gnet/v2/pkg/pool/goroutine"
 	"ppim/api/protocol"
+	"ppim/api/rpctypes"
 	"ppim/internal/gate/rpc"
 	"time"
 )
@@ -123,19 +124,25 @@ func (p *Processor) ping(_c *Client, _ *protocol.PingPacket) error {
 }
 
 func (p *Processor) send(_c *Client, message *protocol.SendPacket) error {
-	//msgId := p.msgIDGenerator.Generate().String()
-	//
-	//msg := &logic.MessageReq{
-	//	FromUid: _c.UID,
-	//	ToUid:   "",
-	//	MsgId:   msgId,
-	//	MsgType: 1,
-	//	MsgSeq:  "122",
-	//	MsgBody: "hello",
-	//}
+	var (
+		msgId             = p.msgIDGenerator.Generate().String()
+		msgSeq            = uint64(1) // todo 消息序列号
+		conversationID, _ = GenConversationID(_c.UID, message.ToID, message.ConversationType)
+	)
+	msg := &rpctypes.MessageReq{
+		FromID:           _c.UID,
+		ToID:             message.ToID,
+		ConversationType: message.ConversationType,
+		ConversationID:   conversationID,
+		MsgID:            msgId,
+		Sequence:         msgSeq,
+		MsgType:          message.Payload.MsgType,
+		Content:          message.Payload.Content,
+	}
+	logger.Log().Debug().Msgf("UID=[%s]发送消息: %v", _c.UID, msg)
 
 	// todo 接收客户端投递的消息
-	// 1. 消息存储
+	// 1. 消息存储（）
 
 	// 2. 消息在线投递
 	// 3. 响应ack
