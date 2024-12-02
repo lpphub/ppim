@@ -20,3 +20,16 @@ type RouterReq struct {
 
 type RouterResp struct {
 }
+
+type MessageReq struct {
+	ToID             string
+	FromID           string
+	ConversationType string
+	MsgID            string
+	MsgType          int
+	Content          string
+}
+
+type MessageResp struct {
+	Sequence uint64
+}
