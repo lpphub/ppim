@@ -16,6 +16,7 @@ import (
 type Processor struct {
 	context        *ServerContext
 	msgIDGenerator *snowflake.Node
+	workerPool     *goroutine.Pool
 }
 
 var (
@@ -29,6 +30,7 @@ func newProcessor(context *ServerContext) *Processor {
 	return &Processor{
 		context:        context,
 		msgIDGenerator: node,
+		workerPool:     goroutine.Default(),
 	}
 }
 
@@ -53,7 +55,7 @@ func (p *Processor) Auth(conn gnet.Conn, packet *protocol.ConnectPacket) error {
 		connCtx := conn.Context().(*EventConnContext)
 		ackBuf, err := connCtx.Codec.Encode(ack)
 		if err != nil {
-			logger.Err(ctx, err, "decode err")
+			logger.Err(ctx, err, "failed to decode")
 			return err
 		}
 		if _, err = conn.Write(ackBuf); err != nil {
@@ -90,7 +92,7 @@ func (p *Processor) Process(conn gnet.Conn, msg *protocol.Message) error {
 	}
 
 	// 异步处理业务
-	err := goroutine.Default().Submit(func() {
+	err := p.workerPool.Submit(func() {
 		var err error
 		switch msg.MsgType {
 		case protocol.MsgType_PING:
