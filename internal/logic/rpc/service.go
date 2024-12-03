@@ -2,17 +2,15 @@ package rpc
 
 import (
 	"context"
-	"fmt"
+	"github.com/jinzhu/copier"
+	"github.com/lpphub/golib/logger"
 	"ppim/api/rpctypes"
-	"ppim/internal/logic/global"
 	"ppim/internal/logic/model"
+	"ppim/internal/logic/srv"
+	"ppim/internal/logic/types"
 )
 
 type logicService struct{}
-
-const (
-	cacheRouteUid = "router:%s"
-)
 
 func (s *logicService) Auth(ctx context.Context, req *rpctypes.AuthReq, resp *rpctypes.AuthResp) error {
 	user := new(model.User)
@@ -30,23 +28,20 @@ func (s *logicService) Auth(ctx context.Context, req *rpctypes.AuthReq, resp *rp
 }
 
 func (s *logicService) Register(ctx context.Context, req *rpctypes.RouterReq, _ *rpctypes.RouterResp) error {
-	onlineVal := buildRouterVal(ctx, req)
-	err := global.Redis.SAdd(ctx, fmt.Sprintf(cacheRouteUid, req.Uid), onlineVal).Err()
-	if err != nil {
-		return err
-	}
-	return nil
+	var ol types.OnlineDTO
+	_ = copier.Copy(&ol, req)
+	return srv.OnSrv.Register(ctx, &ol)
 }
 
 func (s *logicService) UnRegister(ctx context.Context, req *rpctypes.RouterReq, _ *rpctypes.RouterResp) error {
-	onlineVal := buildRouterVal(ctx, req)
-	err := global.Redis.SRem(ctx, fmt.Sprintf(cacheRouteUid, req.Uid), onlineVal).Err()
-	if err != nil {
-		return err
-	}
-	return nil
+	var ol types.OnlineDTO
+	_ = copier.Copy(&ol, req)
+	return srv.OnSrv.UnRegister(ctx, &ol)
 }
 
-func buildRouterVal(_ context.Context, req *rpctypes.RouterReq) string {
-	return fmt.Sprintf("%s_%s_%s_%s", req.Uid, req.Did, req.Topic, req.Ip)
+func (s *logicService) SendMsg(ctx context.Context, req *rpctypes.MessageReq, _ *rpctypes.MessageResp) error {
+	logger.Infof(ctx, "send msg param: %v", req)
+	var msg types.MessageDTO
+	_ = copier.Copy(&msg, req)
+	return srv.MsgSrv.HandleMsg(ctx, &msg)
 }

@@ -6,12 +6,13 @@ require (
 	github.com/bwmarrin/snowflake v0.3.0
 	github.com/gin-gonic/gin v1.10.0
 	github.com/golang/protobuf v1.5.4
+	github.com/jinzhu/copier v0.4.0
 	github.com/lpphub/golib v0.0.0-20241202053251-11548c494559
 	github.com/panjf2000/gnet/v2 v2.6.2
 	github.com/prometheus/client_golang v1.20.5
 	github.com/redis/go-redis/v9 v9.7.0
 	github.com/rpcxio/rpcx-etcd v0.4.4
-	github.com/smallnest/rpcx v1.8.35
+	github.com/smallnest/rpcx v1.8.36
 	github.com/spf13/cobra v1.8.1
 	go.mongodb.org/mongo-driver v1.17.1
 	google.golang.org/protobuf v1.35.2

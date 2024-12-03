@@ -3,6 +3,7 @@ package protocol
 const (
 	OK           = iota
 	ConnAuthFail // 连接认证失败
+	SendFail     // 发送失败
 )
 
 func PacketConnectAck(connAck *ConnectAckPacket) *Message {
@@ -18,6 +19,15 @@ func PacketPong(pong *PongPacket) *Message {
 		MsgType: MsgType_PONG,
 		Payload: &Message_PongPacket{
 			PongPacket: pong,
+		},
+	}
+}
+
+func PacketSendAck(sendAck *SendAckPacket) *Message {
+	return &Message{
+		MsgType: MsgType_SEND_ACK,
+		Payload: &Message_SendAckPacket{
+			SendAckPacket: sendAck,
 		},
 	}
 }

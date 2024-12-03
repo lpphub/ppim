@@ -27,11 +27,10 @@ type MessageReq struct {
 	ConversationType string
 	ConversationID   string
 	MsgID            string
-	Sequence         uint64
+	MsgSeq           uint64
 	MsgType          int32
 	Content          string
 }
 
 type MessageResp struct {
-	Sequence uint64
 }

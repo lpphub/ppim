@@ -26,6 +26,7 @@ const (
 	methodAuth       = "Auth"
 	methodRegister   = "Register"
 	methodUnRegister = "UnRegister"
+	methodSendMsg    = "SendMsg"
 )
 
 func RegisterRpcClient(addr string) (err error) {
@@ -97,4 +98,16 @@ func (c *RpcCaller) UnRegister(ctx context.Context, uid, did string) error {
 		return err
 	}
 	return nil
+}
+
+func (c *RpcCaller) SendMsg(ctx context.Context, msg *rpctypes.MessageReq) (*rpctypes.MessageResp, error) {
+	req := msg
+	resp := &rpctypes.MessageResp{}
+
+	err := c.logic.Call(ctx, methodSendMsg, req, resp)
+	if err != nil {
+		logger.Err(ctx, err, "")
+		return nil, err
+	}
+	return resp, nil
 }

@@ -8,16 +8,18 @@ import (
 	"github.com/lpphub/golib/logger"
 	"github.com/panjf2000/gnet/v2"
 	"github.com/panjf2000/gnet/v2/pkg/pool/goroutine"
+	"github.com/spf13/cast"
 	"ppim/api/protocol"
 	"ppim/api/rpctypes"
+	"ppim/internal/chat"
 	"ppim/internal/gate/rpc"
 	"time"
 )
 
 type Processor struct {
 	context        *ServerContext
-	msgIDGenerator *snowflake.Node
 	workerPool     *goroutine.Pool
+	msgIDGenerator *snowflake.Node
 }
 
 var (
@@ -92,23 +94,20 @@ func (p *Processor) Process(conn gnet.Conn, msg *protocol.Message) error {
 		return ErrConnNotFound
 	}
 
-	// 异步处理业务
-	err := p.workerPool.Submit(func() {
-		var err error
-		switch msg.MsgType {
-		case protocol.MsgType_PING:
-			err = p.ping(client, msg.GetPingPacket())
-		case protocol.MsgType_SEND:
-			err = p.send(client, msg.GetSendPacket())
-		case protocol.MsgType_RECEIVE_ACK:
-			err = p.receiveAck(client, msg.GetReceiveAckPacket())
-		default:
-			err = errors.New("unknown message type")
-		}
-		if err != nil {
-			logger.Log().Error().Msgf("process message error: %v", err)
-		}
-	})
+	var err error
+	switch msg.MsgType {
+	case protocol.MsgType_PING:
+		err = p.ping(client, msg.GetPingPacket())
+	case protocol.MsgType_SEND:
+		err = p.send(client, msg.GetSendPacket())
+	case protocol.MsgType_RECEIVE_ACK:
+		err = p.receiveAck(client, msg.GetReceiveAckPacket())
+	default:
+		err = errors.New("unknown message type")
+	}
+	if err != nil {
+		logger.Log().Error().Msgf("process message error: %v", err)
+	}
 	return err
 }
 
@@ -117,17 +116,15 @@ func (p *Processor) ping(_c *Client, _ *protocol.PingPacket) error {
 	_c.HeartbeatLastTime = time.Now()
 
 	pongData, _ := proto.Marshal(protocol.PacketPong(&protocol.PongPacket{}))
-	if _, err := _c.Write(pongData); err != nil {
-		return err
-	}
-	return nil
+	_, err := _c.Write(pongData)
+	return err
 }
 
 func (p *Processor) send(_c *Client, message *protocol.SendPacket) error {
 	var (
 		msgId             = p.msgIDGenerator.Generate().String()
-		msgSeq            = uint64(1) // todo 消息序列号
-		conversationID, _ = GenConversationID(_c.UID, message.ToID, message.ConversationType)
+		msgSeq            = cast.ToUint64(msgId) // todo 消息序列号（先暂用msgId简单替代, 后可建seq服务）
+		conversationID, _ = chat.GenConversationID(_c.UID, message.ToID, message.ConversationType)
 	)
 	msg := &rpctypes.MessageReq{
 		FromID:           _c.UID,
@@ -135,18 +132,35 @@ func (p *Processor) send(_c *Client, message *protocol.SendPacket) error {
 		ConversationType: message.ConversationType,
 		ConversationID:   conversationID,
 		MsgID:            msgId,
-		Sequence:         msgSeq,
+		MsgSeq:           msgSeq,
 		MsgType:          message.Payload.MsgType,
 		Content:          message.Payload.Content,
 	}
 	logger.Log().Debug().Msgf("UID=[%s]发送消息: %v", _c.UID, msg)
 
-	// todo 接收客户端投递的消息
-	// 1. 消息存储（）
+	// 异步处理业务
+	err := p.workerPool.Submit(func() {
+		ctx := logger.WithCtx(context.Background())
 
-	// 2. 消息在线投递
-	// 3. 响应ack
-	return nil
+		var bytes []byte
+		_, err := rpc.Caller().SendMsg(ctx, msg)
+		if err != nil {
+			logger.Err(ctx, err, "rpc - send msg error")
+
+			bytes, _ = proto.Marshal(protocol.PacketSendAck(&protocol.SendAckPacket{
+				Code: protocol.SendFail,
+			}))
+		} else {
+			bytes, _ = proto.Marshal(protocol.PacketSendAck(&protocol.SendAckPacket{
+				Code: protocol.OK,
+			}))
+		}
+
+		if _, err = _c.Write(bytes); err != nil {
+			logger.Err(ctx, err, "write ack error: send msg")
+		}
+	})
+	return err
 }
 
 func (p *Processor) receiveAck(_c *Client, msg *protocol.ReceiveAckPacket) error {
