@@ -1,4 +1,4 @@
-package model
+package store
 
 import (
 	"context"
@@ -19,10 +19,10 @@ func (u *User) Collection() *mongo.Collection {
 	return global.Mongo.Collection("user")
 }
 
-func (u *User) GetOne(ctx context.Context, uid string) error {
+func (u *User) GetOne(ctx context.Context, uid string) (*User, error) {
 	filter := bson.D{{"uid", uid}}
 	err := u.Collection().FindOne(ctx, filter).Decode(u)
-	return err
+	return u, err
 }
 
 func (u *User) Insert(ctx context.Context) error {

@@ -5,16 +5,16 @@ import (
 	"github.com/jinzhu/copier"
 	"github.com/lpphub/golib/logger"
 	"ppim/api/rpctypes"
-	"ppim/internal/logic/model"
 	"ppim/internal/logic/srv"
+	"ppim/internal/logic/store"
 	"ppim/internal/logic/types"
 )
 
 type logicService struct{}
 
 func (s *logicService) Auth(ctx context.Context, req *rpctypes.AuthReq, resp *rpctypes.AuthResp) error {
-	user := new(model.User)
-	if err := user.GetOne(ctx, req.Uid); err != nil {
+	user, err := new(store.User).GetOne(ctx, req.Uid)
+	if err != nil {
 		return err
 	}
 	code := 0

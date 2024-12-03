@@ -3,7 +3,7 @@ package srv
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/lpphub/golib/logger/logx"
-	"ppim/internal/logic/model"
+	"ppim/internal/logic/store"
 	"ppim/internal/logic/types"
 )
 
@@ -16,8 +16,7 @@ func NewUserSrv() *UserSrv {
 
 func (srv *UserSrv) GetOne(ctx *gin.Context, uid string) (resp *types.UserDTO, err error) {
 	logx.Infof(ctx, "uid: %s", uid)
-	user := &model.User{}
-	err = user.GetOne(ctx, uid)
+	user, err := new(store.User).GetOne(ctx, uid)
 	if err != nil {
 		return
 	}
@@ -32,7 +31,7 @@ func (srv *UserSrv) GetOne(ctx *gin.Context, uid string) (resp *types.UserDTO, e
 
 func (srv *UserSrv) Register(ctx *gin.Context, req types.UserDTO) error {
 	logx.Infof(ctx, "user register param: %v", req)
-	doc := model.User{
+	doc := store.User{
 		UID:    req.UID,
 		DID:    req.DID,
 		Token:  req.Token,

@@ -5,7 +5,7 @@ import (
 	"github.com/lpphub/golib/logger"
 	"ppim/internal/chat"
 	"ppim/internal/logic/global"
-	"ppim/internal/logic/model"
+	"ppim/internal/logic/store"
 	"ppim/internal/logic/types"
 	"time"
 )
@@ -16,7 +16,7 @@ var MsgSrv = &MessageSrv{}
 
 func (s *MessageSrv) HandleMsg(ctx context.Context, msg *types.MessageDTO) error {
 	// todo 1. 消息持久化
-	mm := &model.Message{
+	mm := &store.Message{
 		MsgId:            msg.MsgID,
 		MsgType:          msg.MsgType,
 		Content:          msg.Content,
@@ -40,7 +40,7 @@ func (s *MessageSrv) HandleMsg(ctx context.Context, msg *types.MessageDTO) error
 		}
 	} else if msg.ConversationType == chat.ConvGroup {
 		// 获取群组所有在线成员
-		members, err := new(model.Group).ListMembers(ctx, msg.ToID)
+		members, err := new(store.Group).ListMembers(ctx, msg.ToID)
 		if err != nil {
 			return err
 		}
