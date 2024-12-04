@@ -28,6 +28,7 @@ type MessageReq struct {
 	ConversationID   string
 	MsgID            string
 	MsgSeq           uint64
+	MsgNo            string
 	MsgType          int32
 	Content          string
 }

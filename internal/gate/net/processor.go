@@ -133,6 +133,7 @@ func (p *Processor) send(_c *Client, message *protocol.SendPacket) error {
 		ConversationID:   conversationID,
 		MsgID:            msgId,
 		MsgSeq:           msgSeq,
+		MsgNo:            message.Payload.MsgNo,
 		MsgType:          message.Payload.MsgType,
 		Content:          message.Payload.Content,
 	}

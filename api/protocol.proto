@@ -56,7 +56,8 @@ message SendPacket {
 
 message Payload {
   int32 msgType = 1;
-  string content = 2;
+  string msgNo = 2;
+  string content = 3;
 }
 
 message SendAckPacket {
