@@ -5,7 +5,7 @@ import (
 	"github.com/jinzhu/copier"
 	"github.com/lpphub/golib/logger"
 	"ppim/api/rpctypes"
-	"ppim/internal/logic/srv"
+	"ppim/internal/logic/service"
 	"ppim/internal/logic/store"
 	"ppim/internal/logic/types"
 )
@@ -30,18 +30,18 @@ func (s *logicService) Auth(ctx context.Context, req *rpctypes.AuthReq, resp *rp
 func (s *logicService) Register(ctx context.Context, req *rpctypes.RouterReq, _ *rpctypes.RouterResp) error {
 	var ol types.OnlineDTO
 	_ = copier.Copy(&ol, req)
-	return srv.OnSrv.Register(ctx, &ol)
+	return service.OnSrv.Register(ctx, &ol)
 }
 
 func (s *logicService) UnRegister(ctx context.Context, req *rpctypes.RouterReq, _ *rpctypes.RouterResp) error {
 	var ol types.OnlineDTO
 	_ = copier.Copy(&ol, req)
-	return srv.OnSrv.UnRegister(ctx, &ol)
+	return service.OnSrv.UnRegister(ctx, &ol)
 }
 
 func (s *logicService) SendMsg(ctx context.Context, req *rpctypes.MessageReq, _ *rpctypes.MessageResp) error {
 	logger.Infof(ctx, "send msg param: %v", req)
 	var msg types.MessageDTO
 	_ = copier.Copy(&msg, req)
-	return srv.MsgSrv.HandleMsg(ctx, &msg)
+	return service.MsgSrv.HandleMsg(ctx, &msg)
 }
