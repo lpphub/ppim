@@ -2,7 +2,6 @@ package srv
 
 import (
 	"context"
-	"github.com/lpphub/golib/logger"
 	"ppim/internal/chat"
 	"ppim/internal/logic/global"
 	"ppim/internal/logic/store"
@@ -15,40 +14,56 @@ type MessageSrv struct{}
 var MsgSrv = &MessageSrv{}
 
 func (s *MessageSrv) HandleMsg(ctx context.Context, msg *types.MessageDTO) error {
-	// todo 1. 消息持久化
+	// 1. 消息持久化
 	mm := &store.Message{
-		MsgId:            msg.MsgID,
+		MsgID:            msg.MsgID,
+		MsgSeq:           msg.MsgSeq,
+		MsgNo:            msg.MsgNo,
 		MsgType:          msg.MsgType,
 		Content:          msg.Content,
+		ConversationID:   msg.ConversationID,
 		ConversationType: msg.ConversationType,
 		FromID:           msg.FromID,
 		ToID:             msg.ToID,
 		CreatedAt:        time.Now(),
 	}
-	err := mm.Insert(ctx)
-	if err != nil {
+	if err := mm.Insert(ctx); err != nil {
 		return err
 	}
 
-	// todo 2. 消息推送（在线）
+	// 2. 消息推送
+	var (
+		onlineReceivers []string
+		offlineUidList  []string
+	)
 	if msg.ConversationType == chat.ConvSingle {
 		online, _ := global.Redis.SMembers(ctx, OnSrv.getOnlineKey(msg.ToID)).Result()
-		if len(online) > 0 {
-			for _, ol := range online {
-				logger.Infof(ctx, "push message to %s", ol)
-			}
+		if len(online) > 0 { // 用户所有在线设备
+			onlineReceivers = append(onlineReceivers, online...)
+		} else {
+			offlineUidList = append(offlineUidList, msg.ToID)
 		}
 	} else if msg.ConversationType == chat.ConvGroup {
-		// 获取群组所有在线成员
 		members, err := new(store.Group).ListMembers(ctx, msg.ToID)
 		if err != nil {
 			return err
 		}
-		logger.Infof(ctx, "push message to %v", members)
-		// todo 选择在线群成员
-
+		// 获取在线成员
+		for _, member := range members {
+			online, _ := global.Redis.SMembers(ctx, OnSrv.getOnlineKey(member)).Result()
+			if len(online) > 0 {
+				onlineReceivers = append(onlineReceivers, online...)
+			} else {
+				offlineUidList = append(offlineUidList, member)
+			}
+		}
+	}
+	if len(onlineReceivers) > 0 {
+		// todo 2.1 推送消息（在线）
 	}
 
-	// todo 3. 消息通知（离线）
+	if len(offlineUidList) > 0 {
+		// todo 2.2 消息通知（离线）
+	}
 	return nil
 }
