@@ -32,38 +32,41 @@ func (s *MessageSrv) HandleMsg(ctx context.Context, msg *types.MessageDTO) error
 	}
 
 	// 2. 消息推送
-	var (
-		onlineReceivers []string
-		offlineUidList  []string
-	)
+	var receivers []string
 	if msg.ConversationType == chat.ConvSingle {
-		online, _ := global.Redis.SMembers(ctx, OnSrv.getOnlineKey(msg.ToID)).Result()
-		if len(online) > 0 { // 用户所有在线设备
-			onlineReceivers = append(onlineReceivers, online...)
-		} else {
-			offlineUidList = append(offlineUidList, msg.ToID)
-		}
+		receivers = append(receivers, msg.ToID)
 	} else if msg.ConversationType == chat.ConvGroup {
 		members, err := new(store.Group).ListMembers(ctx, msg.ToID)
 		if err != nil {
 			return err
 		}
-		// 获取在线成员
-		for _, member := range members {
-			online, _ := global.Redis.SMembers(ctx, OnSrv.getOnlineKey(member)).Result()
-			if len(online) > 0 {
-				onlineReceivers = append(onlineReceivers, online...)
-			} else {
-				offlineUidList = append(offlineUidList, member)
-			}
-		}
+		receivers = append(receivers, members...)
 	}
-	if len(onlineReceivers) > 0 {
-		// todo 2.1 推送消息（在线）
+	if len(receivers) == 0 {
+		return nil
+	}
+	// todo 写扩散 索引每个接收者的最近会话
+	if err := IndexConversation(ctx, receivers, msg); err != nil {
+		return err
 	}
 
-	if len(offlineUidList) > 0 {
-		// todo 2.2 消息通知（离线）
+	var (
+		onlineUserDeviceSlice []string
+		offlineUIDSlice       []string
+	)
+	for _, uid := range receivers {
+		online, _ := global.Redis.SMembers(ctx, OnSrv.getOnlineKey(uid)).Result()
+		if len(online) > 0 {
+			onlineUserDeviceSlice = append(onlineUserDeviceSlice, online...)
+		} else {
+			offlineUIDSlice = append(offlineUIDSlice, uid)
+		}
+	}
+	if len(onlineUserDeviceSlice) > 0 {
+		// todo 推送消息（在线）
+	}
+	if len(offlineUIDSlice) > 0 {
+		// todo 消息通知（离线）
 	}
 	return nil
 }
