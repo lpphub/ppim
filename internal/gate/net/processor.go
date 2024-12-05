@@ -149,11 +149,17 @@ func (p *Processor) send(_c *Client, message *protocol.SendPacket) error {
 			logger.Err(ctx, err, "rpc - send msg error")
 
 			bytes, _ = proto.Marshal(protocol.PacketSendAck(&protocol.SendAckPacket{
-				Code: protocol.SendFail,
+				Code:   protocol.SendFail,
+				MsgNo:  msg.MsgNo,
+				MsgId:  msg.MsgID,
+				MsgSeq: msg.MsgSeq,
 			}))
 		} else {
 			bytes, _ = proto.Marshal(protocol.PacketSendAck(&protocol.SendAckPacket{
-				Code: protocol.OK,
+				Code:   protocol.OK,
+				MsgNo:  msg.MsgNo,
+				MsgId:  msg.MsgID,
+				MsgSeq: msg.MsgSeq,
 			}))
 		}
 

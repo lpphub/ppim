@@ -62,6 +62,9 @@ message Payload {
 
 message SendAckPacket {
   int32 code = 1;
+  string msgNo = 2;
+  string msgId = 3;
+  uint64 msgSeq = 4;
 }
 
 message ReceivePacket {
@@ -70,4 +73,6 @@ message ReceivePacket {
 
 message ReceiveAckPacket {
   int32 code = 1;
+  string msgId = 2;
+  uint64 msgSeq = 3;
 }
