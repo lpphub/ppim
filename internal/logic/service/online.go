@@ -14,8 +14,6 @@ const (
 	cacheRouteUid = "online:%s"
 )
 
-var OnSrv = &OnlineSrv{}
-
 func (s *OnlineSrv) Register(ctx context.Context, ol *types.OnlineDTO) error {
 	err := global.Redis.SAdd(ctx, s.getOnlineKey(ol.Uid), s.buildVal(ctx, ol)).Err()
 	return err

@@ -30,18 +30,18 @@ func (s *logicService) Auth(ctx context.Context, req *rpctypes.AuthReq, resp *rp
 func (s *logicService) Register(ctx context.Context, req *rpctypes.RouterReq, _ *rpctypes.RouterResp) error {
 	var ol types.OnlineDTO
 	_ = copier.Copy(&ol, req)
-	return service.OnSrv.Register(ctx, &ol)
+	return service.Inst().OnlineSrv.Register(ctx, &ol)
 }
 
 func (s *logicService) UnRegister(ctx context.Context, req *rpctypes.RouterReq, _ *rpctypes.RouterResp) error {
 	var ol types.OnlineDTO
 	_ = copier.Copy(&ol, req)
-	return service.OnSrv.UnRegister(ctx, &ol)
+	return service.Inst().OnlineSrv.UnRegister(ctx, &ol)
 }
 
 func (s *logicService) SendMsg(ctx context.Context, req *rpctypes.MessageReq, _ *rpctypes.MessageResp) error {
 	logger.Infof(ctx, "send msg param: %v", req)
 	var msg types.MessageDTO
 	_ = copier.Copy(&msg, req)
-	return service.MsgSrv.HandleMsg(ctx, &msg)
+	return service.Inst().MsgSrv.HandleMsg(ctx, &msg)
 }

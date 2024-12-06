@@ -11,8 +11,6 @@ import (
 
 type MessageSrv struct{}
 
-var MsgSrv = &MessageSrv{}
-
 func (s *MessageSrv) HandleMsg(ctx context.Context, msg *types.MessageDTO) error {
 	// 1. 消息持久化
 	mm := &store.Message{
@@ -46,7 +44,7 @@ func (s *MessageSrv) HandleMsg(ctx context.Context, msg *types.MessageDTO) error
 		return nil
 	}
 	// todo 写扩散 索引每个接收者的最近会话
-	if err := IndexConversation(ctx, receivers, msg); err != nil {
+	if err := svc.ConvSrv.IndexConv(ctx, msg, receivers); err != nil {
 		return err
 	}
 
@@ -55,7 +53,7 @@ func (s *MessageSrv) HandleMsg(ctx context.Context, msg *types.MessageDTO) error
 		offlineUIDSlice       []string
 	)
 	for _, uid := range receivers {
-		online, _ := global.Redis.SMembers(ctx, OnSrv.getOnlineKey(uid)).Result()
+		online, _ := global.Redis.SMembers(ctx, svc.OnlineSrv.getOnlineKey(uid)).Result()
 		if len(online) > 0 {
 			onlineUserDeviceSlice = append(onlineUserDeviceSlice, online...)
 		} else {
