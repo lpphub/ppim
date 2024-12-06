@@ -17,6 +17,7 @@ type Conversation struct {
 	UnreadCount      uint64    `bson:"unread_count"` // 未读消息数
 	LastMsgId        string    `bson:"last_msg_id"`
 	LastMsgSeq       uint64    `bson:"last_msg_seq"`
+	FromID           string    `bson:"from_id"`
 	CreatedAt        time.Time `bson:"created_at"`
 	UpdatedAt        time.Time `bson:"updated_at"`
 }
@@ -38,6 +39,13 @@ func (c *Conversation) Insert(ctx context.Context) error {
 
 func (c *Conversation) Update(ctx context.Context) error {
 	filter := bson.D{{"uid", c.UID}, {"conversation_id", c.ConversationID}}
-	_, err := c.Collection().UpdateOne(ctx, filter, c)
+	//update := bson.D{{"$set", bson.D{
+	//	{"unread_count", c.UnreadCount},
+	//	{"last_msg_id", c.LastMsgId},
+	//	{"last_msg_seq", c.LastMsgSeq},
+	//	{"from_id", c.FromID},
+	//	{"updated_at", time.Now()}},
+	//}}
+	_, err := c.Collection().ReplaceOne(ctx, filter, c)
 	return err
 }

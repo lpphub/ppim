@@ -1,17 +1,32 @@
 package service
 
 import (
-	"hash/adler32"
-	"hash/crc32"
+	"context"
+	"github.com/lpphub/golib/env"
+	"ppim/internal/logic/global"
+	"ppim/internal/logic/types"
+	"ppim/pkg/ext"
 	"testing"
 )
 
 func TestConversationSrv_IndexConversation(t *testing.T) {
-	data := []byte("1235567886")
-	val := adler32.Checksum(data)
-	t.Log(val)
+	env.SetRootPath("../../..")
+	global.InitGlobalCtx()
 
-	val2 := crc32.ChecksumIEEE(data)
-	t.Log(val2)
+	srv := ConversationSrv{
+		segmentLock: *ext.NewSegmentLock(3),
+	}
 
+	msg := &types.MessageDTO{
+		MsgID:            "1235",
+		MsgSeq:           2,
+		MsgNo:            "cli02",
+		MsgType:          1,
+		Content:          "hello2",
+		ConversationID:   "single|123@456",
+		ConversationType: "single",
+		FromID:           "456",
+		ToID:             "123",
+	}
+	srv.indexWithLock(context.TODO(), msg, "456")
 }

@@ -43,7 +43,7 @@ func (s *MessageSrv) HandleMsg(ctx context.Context, msg *types.MessageDTO) error
 	if len(receivers) == 0 {
 		return nil
 	}
-	// todo 写扩散 索引每个接收者的最近会话
+	// 索引会话
 	if err := svc.ConvSrv.IndexConv(ctx, msg, receivers); err != nil {
 		return err
 	}

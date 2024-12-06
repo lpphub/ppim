@@ -2,6 +2,8 @@ package service
 
 import (
 	"context"
+	"errors"
+	"go.mongodb.org/mongo-driver/mongo"
 	"hash/adler32"
 	"ppim/internal/logic/store"
 	"ppim/internal/logic/types"
@@ -28,7 +30,8 @@ func (c *ConversationSrv) IndexConv(ctx context.Context, msg *types.MessageDTO, 
 
 	// 接收者会话
 	for _, uid := range uidSlice {
-		c.indexWithLock(ctx, msg, uid)
+		// todo 控制协程数
+		go c.indexWithLock(ctx, msg, uid)
 	}
 	return nil
 }
@@ -38,8 +41,8 @@ func (c *ConversationSrv) indexWithLock(ctx context.Context, msg *types.MessageD
 	c.segmentLock.Lock(index)
 	defer c.segmentLock.Unlock(index)
 
-	conv, _ := new(store.Conversation).GetOne(ctx, uid, msg.ConversationID)
-	if conv == nil {
+	conv, err := new(store.Conversation).GetOne(ctx, uid, msg.ConversationID)
+	if err != nil && errors.Is(err, mongo.ErrNoDocuments) {
 		conv = &store.Conversation{
 			ConversationID:   msg.ConversationID,
 			ConversationType: msg.ConversationType,
@@ -48,12 +51,14 @@ func (c *ConversationSrv) indexWithLock(ctx context.Context, msg *types.MessageD
 			LastMsgId:        msg.MsgID,
 			LastMsgSeq:       msg.MsgSeq,
 			CreatedAt:        time.Now(),
+			UpdatedAt:        time.Now(),
 		}
 		_ = conv.Insert(ctx)
 	} else {
 		conv.UnreadCount++
 		conv.LastMsgId = msg.MsgID
 		conv.LastMsgSeq = msg.MsgSeq
+		conv.FromID = msg.FromID
 		conv.UpdatedAt = time.Now()
 		_ = conv.Update(ctx)
 	}
