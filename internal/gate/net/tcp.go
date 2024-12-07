@@ -31,6 +31,10 @@ func (s *TCPServer) Start() error {
 	return s.engine.start()
 }
 
+func (s *TCPServer) Stop() {
+	_ = s.engine.stop()
+}
+
 func (s *TCPServer) GetSvc() *ServerContext {
 	return s.context
 }

@@ -7,16 +7,19 @@ require (
 	github.com/gin-gonic/gin v1.10.0
 	github.com/golang/protobuf v1.5.4
 	github.com/jinzhu/copier v0.4.0
+	github.com/json-iterator/go v1.1.12
 	github.com/lpphub/golib v0.0.0-20241202053251-11548c494559
-	github.com/panjf2000/gnet/v2 v2.6.2
+	github.com/panjf2000/gnet/v2 v2.6.3
 	github.com/prometheus/client_golang v1.20.5
 	github.com/redis/go-redis/v9 v9.7.0
 	github.com/rpcxio/rpcx-etcd v0.4.4
+	github.com/segmentio/kafka-go v0.4.47
 	github.com/smallnest/rpcx v1.8.36
 	github.com/spf13/cast v1.7.0
 	github.com/spf13/cobra v1.8.1
 	go.mongodb.org/mongo-driver v1.17.1
 	google.golang.org/protobuf v1.35.2
+
 )
 
 require (
@@ -58,7 +61,6 @@ require (
 	github.com/hashicorp/golang-lru v1.0.2 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
-	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/juju/ratelimit v1.0.2 // indirect
 	github.com/julienschmidt/httprouter v1.3.0 // indirect
 	github.com/kavu/go_reuseport v1.5.0 // indirect
@@ -80,6 +82,7 @@ require (
 	github.com/panjf2000/ants/v2 v2.10.0 // indirect
 	github.com/pelletier/go-toml/v2 v2.2.2 // indirect
 	github.com/philhofer/fwd v1.1.3-0.20240916144458-20a13a1f6b7c // indirect
+	github.com/pierrec/lz4/v4 v4.1.15 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/prometheus/client_model v0.6.1 // indirect
 	github.com/prometheus/common v0.55.0 // indirect

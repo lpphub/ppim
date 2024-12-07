@@ -17,4 +17,5 @@ func Serve() {
 	if err := tcp.Start(); err != nil {
 		panic(err.Error())
 	}
+	defer tcp.Stop()
 }

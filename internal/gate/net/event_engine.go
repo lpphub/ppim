@@ -1,6 +1,7 @@
 package net
 
 import (
+	"context"
 	"errors"
 	"github.com/golang/protobuf/proto"
 	"github.com/lpphub/golib/logger"
@@ -14,6 +15,7 @@ import (
 type (
 	EventEngine struct {
 		gnet.BuiltinEventEngine
+		eng       gnet.Engine
 		svc       *ServerContext
 		processor *Processor
 	}
@@ -32,12 +34,20 @@ func newEventEngine(svc *ServerContext) *EventEngine {
 }
 
 func (e *EventEngine) start() error {
-	return gnet.Run(e, e.svc.Addr, gnet.WithMulticore(true), gnet.WithReusePort(true),
-		gnet.WithTicker(true))
+	return gnet.Run(e, e.svc.Addr,
+		gnet.WithMulticore(true),
+		gnet.WithReusePort(true),
+		gnet.WithTicker(true),
+	)
 }
 
-func (e *EventEngine) OnBoot(_ gnet.Engine) gnet.Action {
+func (e *EventEngine) stop() error {
+	return e.eng.Stop(context.Background())
+}
+
+func (e *EventEngine) OnBoot(eng gnet.Engine) gnet.Action {
 	logger.Log().Info().Msgf("Listening and accepting TCP on %s", e.svc.Addr)
+	e.eng = eng
 	return gnet.None
 }
 
