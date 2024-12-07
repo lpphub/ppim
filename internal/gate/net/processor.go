@@ -11,13 +11,13 @@ import (
 	"github.com/spf13/cast"
 	"ppim/api/protocol"
 	"ppim/api/rpctypes"
-	"ppim/internal/chat"
+	"ppim/internal/clib"
 	"ppim/internal/gate/rpc"
 	"time"
 )
 
 type Processor struct {
-	context        *ServerContext
+	svc            *ServerContext
 	workerPool     *goroutine.Pool
 	msgIDGenerator *snowflake.Node
 }
@@ -27,11 +27,11 @@ var (
 	ErrConnNotFound   = errors.New("连接不存在")
 )
 
-func newProcessor(context *ServerContext) *Processor {
+func newProcessor(svc *ServerContext) *Processor {
 	// todo 集群模式时需兼容
 	node, _ := snowflake.NewNode(1)
 	return &Processor{
-		context:        context,
+		svc:            svc,
 		msgIDGenerator: node,
 		workerPool:     goroutine.Default(),
 	}
@@ -75,7 +75,7 @@ func (p *Processor) Auth(conn gnet.Conn, packet *protocol.ConnectPacket) error {
 		HeartbeatLastTime: time.Now(),
 	}
 	_ = client.SetAuthResult(true)
-	p.context.connManager.Add(client)
+	p.svc.ConnManager.Add(client)
 
 	ack, _ := proto.Marshal(protocol.PacketConnectAck(&protocol.ConnectAckPacket{
 		Code: protocol.OK,
@@ -89,7 +89,7 @@ func (p *Processor) Auth(conn gnet.Conn, packet *protocol.ConnectPacket) error {
 
 func (p *Processor) Process(conn gnet.Conn, msg *protocol.Message) error {
 	// 取得连接客户端
-	client := p.context.connManager.GetWithFD(conn.Fd())
+	client := p.svc.ConnManager.GetWithFD(conn.Fd())
 	if client == nil {
 		return ErrConnNotFound
 	}
@@ -124,7 +124,7 @@ func (p *Processor) send(_c *Client, message *protocol.SendPacket) error {
 	var (
 		msgId             = p.msgIDGenerator.Generate().String()
 		msgSeq            = cast.ToUint64(msgId) // todo 消息序列号（先暂用msgId简单替代, 后可建seq服务）
-		conversationID, _ = chat.GenConversationID(_c.UID, message.ToID, message.ConversationType)
+		conversationID, _ = clib.GenConversationID(_c.UID, message.ToID, message.ConversationType)
 	)
 	msg := &rpctypes.MessageReq{
 		FromID:           _c.UID,

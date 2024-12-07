@@ -38,6 +38,7 @@ func (c *ConversationSrv) IndexConv(ctx context.Context, msg *types.MessageDTO, 
 
 func (c *ConversationSrv) indexWithLock(ctx context.Context, msg *types.MessageDTO, uid string) {
 	index := adler32.Checksum([]byte(uid))
+	// todo 集群模式下，分布式锁
 	c.segmentLock.Lock(index)
 	defer c.segmentLock.Unlock(index)
 
@@ -56,10 +57,12 @@ func (c *ConversationSrv) indexWithLock(ctx context.Context, msg *types.MessageD
 		_ = conv.Insert(ctx)
 	} else {
 		conv.UnreadCount++
-		conv.LastMsgId = msg.MsgID
-		conv.LastMsgSeq = msg.MsgSeq
-		conv.FromID = msg.FromID
 		conv.UpdatedAt = time.Now()
+		if conv.LastMsgSeq < msg.MsgSeq {
+			conv.LastMsgId = msg.MsgID
+			conv.LastMsgSeq = msg.MsgSeq
+			conv.FromID = msg.FromID
+		}
 		_ = conv.Update(ctx)
 	}
 

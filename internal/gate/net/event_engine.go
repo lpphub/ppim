@@ -14,7 +14,7 @@ import (
 type (
 	EventEngine struct {
 		gnet.BuiltinEventEngine
-		context   *ServerContext
+		svc       *ServerContext
 		processor *Processor
 	}
 
@@ -24,20 +24,20 @@ type (
 	}
 )
 
-func newEventEngine(context *ServerContext) *EventEngine {
+func newEventEngine(svc *ServerContext) *EventEngine {
 	return &EventEngine{
-		context:   context,
-		processor: newProcessor(context),
+		svc:       svc,
+		processor: newProcessor(svc),
 	}
 }
 
 func (e *EventEngine) start() error {
-	return gnet.Run(e, e.context.Addr, gnet.WithMulticore(true), gnet.WithReusePort(true),
+	return gnet.Run(e, e.svc.Addr, gnet.WithMulticore(true), gnet.WithReusePort(true),
 		gnet.WithTicker(true))
 }
 
 func (e *EventEngine) OnBoot(_ gnet.Engine) gnet.Action {
-	logger.Log().Info().Msgf("Listening and accepting TCP on %s", e.context.Addr)
+	logger.Log().Info().Msgf("Listening and accepting TCP on %s", e.svc.Addr)
 	return gnet.None
 }
 
@@ -54,7 +54,7 @@ func (e *EventEngine) OnOpen(c gnet.Conn) (out []byte, action gnet.Action) {
 	}
 	c.SetContext(ctx)
 
-	atomic.AddInt32(&e.context.online, 1)
+	atomic.AddInt32(&e.svc.online, 1)
 	return
 }
 
@@ -62,9 +62,9 @@ func (e *EventEngine) OnClose(c gnet.Conn, err error) (action gnet.Action) {
 	if err != nil {
 		logger.Log().Err(err).Msgf("error occurred on connection=%s", c.RemoteAddr().String())
 	}
-	atomic.AddInt32(&e.context.online, -1)
+	atomic.AddInt32(&e.svc.online, -1)
 
-	e.context.connManager.RemoveWithFD(c.Fd())
+	e.svc.ConnManager.RemoveWithFD(c.Fd())
 	return
 }
 
@@ -105,7 +105,7 @@ func (e *EventEngine) OnTraffic(_c gnet.Conn) gnet.Action {
 
 func (e *EventEngine) OnTick() (delay time.Duration, action gnet.Action) {
 	interval := time.Now().Add(-5 * time.Minute)
-	cm := e.context.connManager
+	cm := e.svc.ConnManager
 	for i, c := range cm.connMap {
 		if interval.After(c.HeartbeatLastTime) { // 超过5分钟未收到心跳
 			cm.RemoveWithFD(i)

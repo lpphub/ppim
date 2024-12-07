@@ -1,4 +1,4 @@
-package chat
+package clib
 
 import (
 	"errors"

@@ -1,35 +1,36 @@
 package net
 
-import (
-	"fmt"
-)
+import "fmt"
 
 type TCPServer struct {
-	Addr   string
-	online int32
-
-	connManager *ClientManager
-	engine      *EventEngine
+	context *ServerContext
+	engine  *EventEngine
 }
 
 type ServerContext struct {
-	*TCPServer
+	Addr   string
+	online int32
+
+	ConnManager *ClientManager
 }
 
 func NewTCPServer(addr string) *TCPServer {
-	server := &TCPServer{
-		Addr:        fmt.Sprintf("tcp://%s", addr),
-		connManager: newClientManager(),
-	}
-
 	context := &ServerContext{
-		TCPServer: server,
+		Addr:        fmt.Sprintf("tcp://%s", addr),
+		ConnManager: newClientManager(),
 	}
 
-	server.engine = newEventEngine(context)
+	server := &TCPServer{
+		context: context,
+		engine:  newEventEngine(context),
+	}
 	return server
 }
 
 func (s *TCPServer) Start() error {
 	return s.engine.start()
+}
+
+func (s *TCPServer) GetSvc() *ServerContext {
+	return s.context
 }
