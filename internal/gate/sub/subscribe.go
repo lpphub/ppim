@@ -3,7 +3,7 @@ package sub
 import (
 	"context"
 	"github.com/lpphub/golib/logger"
-	"ppim/internal/clib"
+	"ppim/internal/chatlib"
 	"ppim/internal/gate/net"
 )
 
@@ -15,7 +15,7 @@ func subscriber(ctx context.Context, topic string) {
 
 }
 
-func (s *Subscriber) deliver(ctx context.Context, msg clib.DeliverMsg) {
+func (s *Subscriber) deliver(ctx context.Context, msg chatlib.DeliverMsg) {
 	for _, uid := range msg.ToUID {
 		clients := s.svc.ConnManager.GetWithUID(uid)
 

@@ -1,9 +1,9 @@
-package clib
+package chatlib
 
 import (
 	"errors"
 	"fmt"
-	"github.com/spf13/cast"
+	"hash/adler32"
 )
 
 const (
@@ -15,8 +15,8 @@ const (
 func GenConversationID(from, to, conversationType string) (string, error) {
 	switch conversationType {
 	case ConvSingle:
-		fromID := cast.ToInt64(from)
-		toID := cast.ToInt64(to)
+		fromID := DigitizeUID(from)
+		toID := DigitizeUID(to)
 		if fromID > toID {
 			return fmt.Sprintf("%s|%d@%d", conversationType, fromID, toID), nil
 		}
@@ -25,4 +25,8 @@ func GenConversationID(from, to, conversationType string) (string, error) {
 		return fmt.Sprintf("%s|%s", conversationType, to), nil
 	}
 	return "", errors.New("unknown conversation type")
+}
+
+func DigitizeUID(uid string) uint32 {
+	return adler32.Checksum([]byte(uid))
 }

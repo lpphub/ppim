@@ -11,7 +11,7 @@ import (
 	"github.com/spf13/cast"
 	"ppim/api/protocol"
 	"ppim/api/rpctypes"
-	"ppim/internal/clib"
+	"ppim/internal/chatlib"
 	"ppim/internal/gate/rpc"
 	"time"
 )
@@ -124,7 +124,7 @@ func (p *Processor) send(_c *Client, message *protocol.SendPacket) error {
 	var (
 		msgId             = p.msgIDGenerator.Generate().String()
 		msgSeq            = cast.ToUint64(msgId) // todo 消息序列号（先暂用msgId简单替代, 后可建seq服务）
-		conversationID, _ = clib.GenConversationID(_c.UID, message.ToID, message.ConversationType)
+		conversationID, _ = chatlib.GenConversationID(_c.UID, message.ToID, message.ConversationType)
 	)
 	msg := &rpctypes.MessageReq{
 		FromID:           _c.UID,

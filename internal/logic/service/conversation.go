@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"go.mongodb.org/mongo-driver/mongo"
-	"hash/adler32"
+	"ppim/internal/chatlib"
 	"ppim/internal/logic/store"
 	"ppim/internal/logic/types"
 	"ppim/pkg/ext"
@@ -37,7 +37,7 @@ func (c *ConversationSrv) IndexConv(ctx context.Context, msg *types.MessageDTO, 
 }
 
 func (c *ConversationSrv) indexWithLock(ctx context.Context, msg *types.MessageDTO, uid string) {
-	index := adler32.Checksum([]byte(uid))
+	index := chatlib.DigitizeUID(uid)
 	// todo 集群模式下，分布式锁
 	c.segmentLock.Lock(index)
 	defer c.segmentLock.Unlock(index)
