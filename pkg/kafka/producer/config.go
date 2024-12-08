@@ -70,7 +70,7 @@ func WithLogger(logger *logger.Logger) Option {
 
 // Validate validates the configuration
 func (c *Config) Validate() error {
-	if len(c.brokers) == 0 || c.topic == "" {
+	if len(c.brokers) == 0 {
 		return errors.New("invalid producer configuration")
 	}
 	return nil

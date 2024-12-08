@@ -18,33 +18,44 @@ services:
       MONGO_INITDB_ROOT_USERNAME: root
       MONGO_INITDB_ROOT_PASSWORD: 123456
   
-#  kafka:
-#    image: bitnami/kafka:3.8.0
-#    ports:
-#      - "9092:9092"
-#    volumes:
-#      - ${DATA_DIR}/kafka:/bitnami/kafka
-#    environment:
-#      TZ: Asia/Shanghai
-#      KAFKA_CFG_NODE_ID: 0
-#      KAFKA_CFG_PROCESS_ROLES: controller,broker
-#      KAFKA_CFG_CONTROLLER_QUORUM_VOTERS: 0@kafka:9093
-#      KAFKA_CFG_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
-#      KAFKA_CFG_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
-#      KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
-#      KAFKA_CFG_CONTROLLER_LISTENER_NAMES: CONTROLLER
+  kafka:
+    image: bitnami/kafka:3.8.0
+    ports:
+      - "9092:9092"
+    volumes:
+      - ${DATA_DIR}/kafka:/bitnami/kafka
+    environment:
+      TZ: Asia/Shanghai
+      KAFKA_CFG_NODE_ID: 0
+      KAFKA_CFG_PROCESS_ROLES: controller,broker
+      KAFKA_CFG_CONTROLLER_QUORUM_VOTERS: 0@kafka:9093
+      KAFKA_CFG_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
+      KAFKA_CFG_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      KAFKA_CFG_CONTROLLER_LISTENER_NAMES: CONTROLLER
+
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    ports:
+      - "9080:8080"
+    environment:
+      DYNAMIC_CONFIG_ENABLED: 'true'
+    volumes:
+      - ${DATA_DIR}/kafka-ui/config.yaml:/etc/kafkaui/dynamic_config.yaml
+    depends_on:
+      - kafka
 
   etcd:
-    image: bitnami/etcd:3.5.16  
+    image: bitnami/etcd:3.5.16
     ports:
-      - "2379:2379"              
+      - "2379:2379"
     environment:
       TZ: Asia/Shanghai
       ALLOW_NONE_AUTHENTICATION: yes
       ETCD_ADVERTISE_CLIENT_URLS: http://etcd:2379
     volumes:
       - ${DATA_DIR}/etcd:/bitnami/etcd
-  
+
   etcdkeeper:
     image: deltaprojects/etcdkeeper:latest
     environment:

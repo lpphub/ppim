@@ -31,7 +31,7 @@ const (
 
 func RegisterRpcClient(addr string) (err error) {
 	once.Do(func() {
-		discovery, derr := etcdclient.NewEtcdV3Discovery(etcdPath, serviceName, strings.Split(addr, ","), false, nil)
+		discovery, derr := etcdclient.NewEtcdV3Discovery(etcdPath, serviceName, strings.Split(addr, ","), true, nil)
 		if derr != nil {
 			err = derr
 			return

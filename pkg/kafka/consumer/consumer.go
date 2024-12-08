@@ -47,6 +47,8 @@ func NewConsumer(handler MessageHandler, opts ...Option) (*Consumer, error) {
 }
 
 func (c *Consumer) Start() {
+	c.config.logger.Info().Msgf("start consumer: topic=%s, groupID=%s", c.config.topic, c.config.groupID)
+
 	c.reader = kafka.NewReader(kafka.ReaderConfig{
 		Brokers:     c.config.brokers,
 		Topic:       c.config.topic,
@@ -86,8 +88,7 @@ func (c *Consumer) consume() {
 					break
 				}
 				attempts++
-				c.config.logger.Printf("Error processing message (attempt %d/%d): %v",
-					attempts, c.config.maxAttempts, err)
+				c.config.logger.Printf("Error processing message (attempt %d/%d): %v", attempts, c.config.maxAttempts, err)
 			}
 
 			if err := c.reader.CommitMessages(c.ctx, msg); err != nil {

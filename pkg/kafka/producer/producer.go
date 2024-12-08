@@ -29,12 +29,14 @@ func NewProducer(opts ...Option) (*Producer, error) {
 
 	writer := &kafka.Writer{
 		Addr:         kafka.TCP(config.brokers...),
-		Topic:        config.topic,
 		Balancer:     &kafka.LeastBytes{},
 		MaxAttempts:  config.maxRetries,
 		RequiredAcks: config.requiredAcks,
 		Async:        false,
 		Logger:       config.logger,
+	}
+	if config.topic != "" {
+		writer.Topic = config.topic
 	}
 
 	if config.clientID != "" {
@@ -49,7 +51,7 @@ func NewProducer(opts ...Option) (*Producer, error) {
 	}, nil
 }
 
-func (p *Producer) SendMessage(ctx context.Context, messages []kafka.Message) error {
+func (p *Producer) SendMessage(ctx context.Context, messages ...kafka.Message) error {
 	p.mtx.RLock()
 	defer p.mtx.RUnlock()
 

@@ -1,4 +1,4 @@
-package sub
+package mq
 
 import (
 	"context"
@@ -6,24 +6,27 @@ import (
 	jsoniter "github.com/json-iterator/go"
 	"github.com/segmentio/kafka-go"
 	"ppim/internal/chatlib"
-	"ppim/internal/gate/net"
+	"ppim/internal/gate/global"
 	"ppim/pkg/kafka/consumer"
 )
 
-type Subscriber struct {
-	svc *net.ServerContext
+func RegisterSubscriber() {
+	var (
+		brokers = global.Conf.Kafka.Brokers
+	)
+	err := subscriber(brokers, "test", "test", deliver)
+	if err != nil {
+		fmt.Printf("%v\n", err)
+	}
 }
 
-func subscriber(topic string) {
-	c, err := consumer.NewConsumer(deliver,
-		consumer.WithBrokers([]string{""}),
-		consumer.WithTopic(topic),
-		consumer.WithGroupID("test"),
-	)
+func subscriber(brokers []string, topic, groupID string, handler consumer.MessageHandler) error {
+	c, err := consumer.NewConsumer(handler, consumer.WithBrokers(brokers), consumer.WithTopic(topic), consumer.WithGroupID(groupID))
 	if err != nil {
-		panic(err)
+		return err
 	}
 	c.Start()
+	return nil
 }
 
 func deliver(ctx context.Context, message kafka.Message) error {
