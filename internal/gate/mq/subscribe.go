@@ -4,32 +4,39 @@ import (
 	"context"
 	"fmt"
 	jsoniter "github.com/json-iterator/go"
+	"github.com/lpphub/golib/logger"
 	"github.com/segmentio/kafka-go"
 	"ppim/internal/chatlib"
 	"ppim/internal/gate/global"
+	"ppim/internal/gate/net"
 	"ppim/pkg/kafka/consumer"
 )
 
-func RegisterSubscriber() {
-	var (
-		brokers = global.Conf.Kafka.Brokers
+type Subscriber struct {
+	svc *net.ServerContext
+}
+
+func LoadSubscriber(svc *net.ServerContext) {
+	sub := &Subscriber{svc: svc}
+	sub.register()
+}
+
+func (s *Subscriber) register() {
+	brokers := global.Conf.Kafka.Brokers
+
+	c, err := consumer.NewConsumer(s.deliver,
+		consumer.WithBrokers(brokers),
+		consumer.WithTopic("test"),
+		consumer.WithGroupID("test"),
 	)
-	err := subscriber(brokers, "test", "test", deliver)
 	if err != nil {
-		fmt.Printf("%v\n", err)
+		logger.Log().Err(err).Msg("MQ subscriber register fail")
+	} else {
+		c.Start()
 	}
 }
 
-func subscriber(brokers []string, topic, groupID string, handler consumer.MessageHandler) error {
-	c, err := consumer.NewConsumer(handler, consumer.WithBrokers(brokers), consumer.WithTopic(topic), consumer.WithGroupID(groupID))
-	if err != nil {
-		return err
-	}
-	c.Start()
-	return nil
-}
-
-func deliver(ctx context.Context, message kafka.Message) error {
+func (*Subscriber) deliver(ctx context.Context, message kafka.Message) error {
 	var dd chatlib.DeliverData
 	if err := jsoniter.Unmarshal(message.Value, &dd); err != nil {
 		return err

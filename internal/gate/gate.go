@@ -14,9 +14,10 @@ func Serve() {
 		panic(err.Error())
 	}
 
-	mq.RegisterSubscriber()
-
 	tcp := net.NewTCPServer(global.Conf.Server.Tcp)
+
+	mq.LoadSubscriber(tcp.GetSvc())
+
 	if err := tcp.Start(); err != nil {
 		panic(err.Error())
 	}
