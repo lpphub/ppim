@@ -56,14 +56,15 @@ func (c *ConversationSrv) indexWithLock(ctx context.Context, msg *types.MessageD
 		}
 		_ = conv.Insert(ctx)
 	} else {
-		conv.UnreadCount++
-		conv.UpdatedAt = time.Now()
+		if msg.FromID != uid {
+			conv.UnreadCount++
+		}
 		if conv.LastMsgSeq < msg.MsgSeq {
 			conv.LastMsgId = msg.MsgID
 			conv.LastMsgSeq = msg.MsgSeq
 			conv.FromID = msg.FromID
 		}
+		conv.UpdatedAt = time.Now()
 		_ = conv.Update(ctx)
 	}
-
 }
