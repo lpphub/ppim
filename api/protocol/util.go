@@ -31,3 +31,12 @@ func PacketSendAck(sendAck *SendAckPacket) *Message {
 		},
 	}
 }
+
+func PacketReceive(receive *ReceivePacket) *Message {
+	return &Message{
+		MsgType: MsgType_RECEIVE,
+		Payload: &Message_ReceivePacket{
+			ReceivePacket: receive,
+		},
+	}
+}

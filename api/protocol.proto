@@ -55,9 +55,11 @@ message SendPacket {
 }
 
 message Payload {
-  int32 msgType = 1;
-  string msgNo = 2;
-  string content = 3;
+  string msgNo = 1;
+  string msgId = 2;
+  uint64 msgSeq = 3;
+  int32 msgType = 4;
+  string content = 5;
 }
 
 message SendAckPacket {
@@ -65,10 +67,14 @@ message SendAckPacket {
   string msgNo = 2;
   string msgId = 3;
   uint64 msgSeq = 4;
+  string conversationID = 5;
 }
 
 message ReceivePacket {
-  string content = 1;
+  string conversationType = 1;
+  string conversationID = 2;
+  string fromID = 3;
+  Payload payload = 4;
 }
 
 message ReceiveAckPacket {

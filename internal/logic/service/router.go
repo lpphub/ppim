@@ -3,7 +3,6 @@ package service
 import (
 	"context"
 	"fmt"
-	jsoniter "github.com/json-iterator/go"
 	"github.com/segmentio/kafka-go"
 	"ppim/internal/chatlib"
 	"ppim/internal/logic/global"
@@ -42,11 +41,10 @@ func (s *RouterSrv) RouteChat(ctx context.Context, routeKeys []string, msg *type
 	for _, key := range routeKeys {
 		route := strings.Split(key, "_")
 
-		bytes, _ := jsoniter.Marshal(msg)
 		dd := &chatlib.DeliverMsg{
-			CMD:     "chat",
-			ToUID:   []string{route[0]},
-			Content: bytes,
+			CMD:     chatlib.DeliverChat,
+			ToUID:   route[0],
+			ChatMsg: msg,
 		}
 		message := kafka.Message{
 			Topic: route[2],

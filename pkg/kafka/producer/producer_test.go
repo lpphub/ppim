@@ -19,9 +19,8 @@ func TestProducer_SendMessage(t *testing.T) {
 	}
 
 	b, _ := jsoniter.Marshal(chatlib.DeliverMsg{
-		CMD:     "event",
-		ToUID:   []string{"789"},
-		Content: []byte("hello"),
+		CMD:   "event",
+		ToUID: "789",
 	})
 
 	msg := kafka.Message{
