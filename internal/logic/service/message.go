@@ -8,6 +8,7 @@ import (
 	"ppim/internal/logic/global"
 	"ppim/internal/logic/store"
 	"ppim/internal/logic/types"
+	"ppim/pkg/ext"
 	"time"
 )
 
@@ -17,7 +18,17 @@ var (
 	ErrMsgRoute  = errors.New("消息路由失败")
 )
 
-type MessageSrv struct{}
+type MessageSrv struct {
+	convSrv *ConversationSrv
+}
+
+func newMessageSrv() *MessageSrv {
+	return &MessageSrv{
+		convSrv: &ConversationSrv{
+			segmentLock: *ext.NewSegmentLock(20),
+		},
+	}
+}
 
 func (s *MessageSrv) HandleMsg(ctx context.Context, msg *types.MessageDTO) error {
 	ctx = logger.WithCtx(ctx)
@@ -56,7 +67,7 @@ func (s *MessageSrv) HandleMsg(ctx context.Context, msg *types.MessageDTO) error
 		return nil
 	}
 	// 索引会话
-	if err := svc.ConvSrv.IndexConv(ctx, msg, receivers); err != nil {
+	if err := s.convSrv.IndexConv(ctx, msg, receivers); err != nil {
 		logger.Err(ctx, err, "")
 		return ErrConvIndex
 	}

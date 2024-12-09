@@ -14,7 +14,7 @@ func TestConsumer_Start(t *testing.T) {
 
 	c, err := NewConsumer(func(_ context.Context, message kafka.Message) error {
 
-		var dd chatlib.DeliverData
+		var dd chatlib.DeliverMsg
 		if err := jsoniter.Unmarshal(message.Value, &dd); err != nil {
 			return err
 		}

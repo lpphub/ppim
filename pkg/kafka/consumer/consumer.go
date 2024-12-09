@@ -74,7 +74,7 @@ func (c *Consumer) consume() {
 		default:
 			msg, err := c.reader.FetchMessage(c.ctx)
 			if err != nil {
-				if !errors.Is(c.ctx.Err(), context.Canceled) {
+				if !errors.Is(err, context.Canceled) {
 					c.config.logger.Printf("Error fetching message: %v", err)
 				}
 				continue
@@ -91,7 +91,7 @@ func (c *Consumer) consume() {
 				c.config.logger.Printf("Error processing message (attempt %d/%d): %v", attempts, c.config.maxAttempts, err)
 			}
 
-			if err := c.reader.CommitMessages(c.ctx, msg); err != nil {
+			if err = c.reader.CommitMessages(c.ctx, msg); err != nil {
 				c.config.logger.Printf("Error committing message: %v", err)
 			}
 		}

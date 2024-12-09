@@ -20,6 +20,13 @@ const (
 	cacheRouteUid = "online:%s"
 )
 
+func newRouterSrv() *RouterSrv {
+	mqProducer, _ := producer.NewProducer(producer.WithBrokers(global.Conf.Kafka.Brokers))
+	return &RouterSrv{
+		mq: mqProducer,
+	}
+}
+
 func (s *RouterSrv) Register(ctx context.Context, ol *types.RouteDTO) error {
 	err := global.Redis.SAdd(ctx, s.genRouteKey(ol.Uid), s.buildVal(ol)).Err()
 	return err
@@ -36,10 +43,10 @@ func (s *RouterSrv) RouteChat(ctx context.Context, routeKeys []string, msg *type
 		route := strings.Split(key, "_")
 
 		bytes, _ := jsoniter.Marshal(msg)
-		dd := &chatlib.DeliverData{
+		dd := &chatlib.DeliverMsg{
 			CMD:     "chat",
 			ToUID:   []string{route[0]},
-			MsgData: bytes,
+			Content: bytes,
 		}
 		message := kafka.Message{
 			Topic: route[2],

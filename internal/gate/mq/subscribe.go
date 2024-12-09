@@ -2,7 +2,6 @@ package mq
 
 import (
 	"context"
-	"fmt"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/lpphub/golib/logger"
 	"github.com/segmentio/kafka-go"
@@ -36,22 +35,21 @@ func (s *Subscriber) register() {
 	}
 }
 
-func (*Subscriber) deliver(ctx context.Context, message kafka.Message) error {
-	var dd chatlib.DeliverData
-	if err := jsoniter.Unmarshal(message.Value, &dd); err != nil {
+func (s *Subscriber) deliver(ctx context.Context, message kafka.Message) error {
+	var msg chatlib.DeliverMsg
+	if err := jsoniter.Unmarshal(message.Value, &msg); err != nil {
 		return err
 	}
 
-	for _, uid := range dd.ToUID {
-		fmt.Println(uid)
-		//clients := s.svc.ConnManager.GetWithUID(uid)
-		//
-		//for _, client := range clients {
-		//	_, err := client.Write(msg.MsgData)
-		//	if err != nil {
-		//		logger.Err(ctx, err, "write to client error")
-		//	}
-		//}
+	for _, uid := range msg.ToUID {
+		clients := s.svc.ConnManager.GetWithUID(uid)
+
+		for _, client := range clients {
+			_, err := client.Write(msg.Content)
+			if err != nil {
+				logger.Err(ctx, err, "write to client error")
+			}
+		}
 	}
 	return nil
 }
