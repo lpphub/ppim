@@ -4,6 +4,7 @@ type Config struct {
 	Server serverConf
 	Mongo  mongoConf
 	Redis  redisConf
+	Kafka  kafkaConf
 	Log    logConf
 }
 
@@ -24,6 +25,10 @@ type redisConf struct {
 	Addr     string `yml:"addr"`
 	Password string `yml:"password"`
 	DB       int    `yml:"db"`
+}
+
+type kafkaConf struct {
+	Brokers []string `yml:"brokers"`
 }
 
 type logConf struct {

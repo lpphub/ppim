@@ -15,7 +15,7 @@ type MessageDTO struct {
 	CreatedAt        time.Time // 创建时间
 }
 
-type OnlineDTO struct {
+type RouteDTO struct {
 	Uid   string
 	Did   string
 	Ip    string

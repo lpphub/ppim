@@ -12,4 +12,6 @@ type serverConf struct {
 
 type kafkaConf struct {
 	Brokers []string `yml:"brokers"`
+	Topic   string   `yml:"topic"`
+	GroupID string   `yml:"group"`
 }

@@ -28,15 +28,15 @@ func (s *logicService) Auth(ctx context.Context, req *rpctypes.AuthReq, resp *rp
 }
 
 func (s *logicService) Register(ctx context.Context, req *rpctypes.RouterReq, _ *rpctypes.RouterResp) error {
-	var ol types.OnlineDTO
+	var ol types.RouteDTO
 	_ = copier.Copy(&ol, req)
-	return service.Inst().OnlineSrv.Register(ctx, &ol)
+	return service.Inst().RouterSrv.Register(ctx, &ol)
 }
 
 func (s *logicService) UnRegister(ctx context.Context, req *rpctypes.RouterReq, _ *rpctypes.RouterResp) error {
-	var ol types.OnlineDTO
+	var ol types.RouteDTO
 	_ = copier.Copy(&ol, req)
-	return service.Inst().OnlineSrv.UnRegister(ctx, &ol)
+	return service.Inst().RouterSrv.UnRegister(ctx, &ol)
 }
 
 func (s *logicService) SendMsg(ctx context.Context, req *rpctypes.MessageReq, _ *rpctypes.MessageResp) error {

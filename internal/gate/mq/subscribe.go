@@ -22,12 +22,12 @@ func LoadSubscriber(svc *net.ServerContext) {
 }
 
 func (s *Subscriber) register() {
-	brokers := global.Conf.Kafka.Brokers
+	kconf := global.Conf.Kafka
 
 	c, err := consumer.NewConsumer(s.deliver,
-		consumer.WithBrokers(brokers),
-		consumer.WithTopic("test"),
-		consumer.WithGroupID("test"),
+		consumer.WithBrokers(kconf.Brokers),
+		consumer.WithTopic(kconf.Topic),
+		consumer.WithGroupID(kconf.GroupID),
 	)
 	if err != nil {
 		logger.Log().Err(err).Msg("MQ subscriber register fail")

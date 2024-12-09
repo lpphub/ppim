@@ -6,6 +6,7 @@ import (
 	etcdclient "github.com/rpcxio/rpcx-etcd/client"
 	"github.com/smallnest/rpcx/client"
 	"ppim/api/rpctypes"
+	"ppim/internal/gate/global"
 	"strings"
 	"sync"
 )
@@ -72,8 +73,9 @@ func (c *RpcCaller) Auth(ctx context.Context, uid, did, token string) (bool, err
 func (c *RpcCaller) Register(ctx context.Context, uid, did string) error {
 	// todo: 获取当前节点对应的topic及ip
 	req := &rpctypes.RouterReq{
-		Uid: uid,
-		Did: did,
+		Uid:   uid,
+		Did:   did,
+		Topic: global.Conf.Kafka.Topic,
 	}
 	resp := &rpctypes.RouterReq{}
 
@@ -87,8 +89,9 @@ func (c *RpcCaller) Register(ctx context.Context, uid, did string) error {
 
 func (c *RpcCaller) UnRegister(ctx context.Context, uid, did string) error {
 	req := &rpctypes.RouterReq{
-		Uid: uid,
-		Did: did,
+		Uid:   uid,
+		Did:   did,
+		Topic: global.Conf.Kafka.Topic,
 	}
 	resp := &rpctypes.RouterReq{}
 
