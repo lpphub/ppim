@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"errors"
+	"github.com/lpphub/golib/gowork"
 	"go.mongodb.org/mongo-driver/mongo"
 	"ppim/internal/chatlib"
 	"ppim/internal/logic/store"
@@ -17,7 +18,15 @@ import (
  * 读扩散：一个会话对应一个timeline，消息到达后更新此会话最新timeline
  */
 type ConversationSrv struct {
+	works       *gowork.Pool
 	segmentLock ext.SegmentLock
+}
+
+func newConversationSrv() *ConversationSrv {
+	return &ConversationSrv{
+		works:       gowork.NewPool(100),
+		segmentLock: *ext.NewSegmentLock(20),
+	}
 }
 
 const (
@@ -30,8 +39,9 @@ func (c *ConversationSrv) IndexConv(ctx context.Context, msg *types.MessageDTO, 
 
 	// 接收者会话
 	for _, uid := range uidSlice {
-		// todo 控制协程数
-		go c.indexWithLock(ctx, msg, uid)
+		_ = c.works.Submit(func() {
+			c.indexWithLock(ctx, msg, uid)
+		})
 	}
 	return nil
 }

@@ -5,9 +5,9 @@ import (
 	"errors"
 	"github.com/bwmarrin/snowflake"
 	"github.com/golang/protobuf/proto"
+	"github.com/lpphub/golib/gowork"
 	"github.com/lpphub/golib/logger"
 	"github.com/panjf2000/gnet/v2"
-	"github.com/panjf2000/gnet/v2/pkg/pool/goroutine"
 	"github.com/spf13/cast"
 	"ppim/api/protocol"
 	"ppim/api/rpctypes"
@@ -18,7 +18,7 @@ import (
 
 type Processor struct {
 	svc            *ServerContext
-	workerPool     *goroutine.Pool
+	workerPool     *gowork.Pool
 	msgIDGenerator *snowflake.Node
 }
 
@@ -33,7 +33,7 @@ func newProcessor(svc *ServerContext) *Processor {
 	return &Processor{
 		svc:            svc,
 		msgIDGenerator: node,
-		workerPool:     goroutine.Default(),
+		workerPool:     gowork.Default(),
 	}
 }
 

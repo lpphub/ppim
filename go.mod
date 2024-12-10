@@ -8,7 +8,7 @@ require (
 	github.com/golang/protobuf v1.5.4
 	github.com/jinzhu/copier v0.4.0
 	github.com/json-iterator/go v1.1.12
-	github.com/lpphub/golib v0.0.0-20241202053251-11548c494559
+	github.com/lpphub/golib v0.0.0-20241210133652-df76326dda56
 	github.com/panjf2000/gnet/v2 v2.6.3
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.20.5

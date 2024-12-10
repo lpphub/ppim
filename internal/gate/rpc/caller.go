@@ -70,12 +70,12 @@ func (c *RpcCaller) Auth(ctx context.Context, uid, did, token string) (bool, err
 	return resp.Code == 0, nil
 }
 
+// Register 将当前连接对应的topic注册到logic route
 func (c *RpcCaller) Register(ctx context.Context, uid, did string) error {
-	// todo: 获取当前节点对应的topic及ip
 	req := &rpctypes.RouterReq{
 		Uid:   uid,
 		Did:   did,
-		Topic: global.Conf.Kafka.Topic,
+		Topic: global.Conf.Kafka.Topic, // 将当前连接
 	}
 	resp := &rpctypes.RouterReq{}
 

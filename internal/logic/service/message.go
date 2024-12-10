@@ -8,7 +8,6 @@ import (
 	"ppim/internal/logic/global"
 	"ppim/internal/logic/store"
 	"ppim/internal/logic/types"
-	"ppim/pkg/ext"
 	"time"
 )
 
@@ -24,9 +23,7 @@ type MessageSrv struct {
 
 func newMessageSrv() *MessageSrv {
 	return &MessageSrv{
-		convSrv: &ConversationSrv{
-			segmentLock: *ext.NewSegmentLock(20),
-		},
+		convSrv: newConversationSrv(),
 	}
 }
 
