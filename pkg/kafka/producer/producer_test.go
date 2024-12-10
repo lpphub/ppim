@@ -12,7 +12,7 @@ import (
 func TestProducer_SendMessage(t *testing.T) {
 	logger.Setup()
 
-	p, err := NewProducer(WithBrokers([]string{"kafka:9092"}))
+	p, err := NewProducer(WithBrokers([]string{"localhost:9094"}))
 	if err != nil {
 		t.Logf("%v", err)
 		return

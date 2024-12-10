@@ -21,7 +21,7 @@ func TestConsumer_Start(t *testing.T) {
 		t.Logf("%v", dd)
 
 		return nil
-	}, WithBrokers([]string{"kafka:9092"}), WithTopic("test"), WithGroupID("test"))
+	}, WithBrokers([]string{"localhost:9094"}), WithTopic("test"), WithGroupID("test"))
 	if err != nil {
 		t.Logf("%v\n", err)
 	}
