@@ -15,7 +15,7 @@ type Queue struct {
 	cancel  context.CancelFunc
 }
 
-func New(workers int) *Queue {
+func NewQueue(workers int) *Queue {
 	ctx, cancel := context.WithCancel(context.Background())
 	return &Queue{
 		tasks:   make(chan Task, 100), // buffer size of 100
