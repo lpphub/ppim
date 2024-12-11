@@ -5,7 +5,6 @@ import (
 	"errors"
 	"github.com/bwmarrin/snowflake"
 	"github.com/gobwas/ws/wsutil"
-	"github.com/golang/protobuf/proto"
 	"github.com/lpphub/golib/gowork"
 	"github.com/lpphub/golib/logger"
 	"github.com/panjf2000/gnet/v2"
@@ -52,9 +51,9 @@ func (p *Processor) Auth(conn gnet.Conn, packet *protocol.ConnectPacket) error {
 
 	authed, _ := rpc.Caller().Auth(ctx, uid, did, token)
 	if !authed {
-		ack, _ := proto.Marshal(protocol.PacketConnectAck(&protocol.ConnectAckPacket{
+		ack, _ := protocol.PacketConnectAck(&protocol.ConnectAckPacket{
 			Code: protocol.ConnAuthFail,
-		}))
+		})
 
 		connCtx := conn.Context().(*EventConnContext)
 		if connCtx.ConnType == _ws {
@@ -85,9 +84,9 @@ func (p *Processor) Auth(conn gnet.Conn, packet *protocol.ConnectPacket) error {
 	_ = client.SetAuthResult(true)
 	p.svc.ConnManager.Add(client)
 
-	ack, _ := proto.Marshal(protocol.PacketConnectAck(&protocol.ConnectAckPacket{
+	ack, _ := protocol.PacketConnectAck(&protocol.ConnectAckPacket{
 		Code: protocol.OK,
-	}))
+	})
 	if _, err := client.Write(ack); err != nil {
 		logger.Err(ctx, err, "")
 		return err
@@ -123,8 +122,8 @@ func (p *Processor) ping(_c *Client, _ *protocol.PingPacket) error {
 	logger.Log().Debug().Msgf("UID=[%s] 收到ping请求", _c.UID)
 	_c.HeartbeatLastTime = time.Now()
 
-	pongData, _ := proto.Marshal(protocol.PacketPong(&protocol.PongPacket{}))
-	_, err := _c.Write(pongData)
+	bytes, _ := protocol.PacketPong(&protocol.PongPacket{})
+	_, err := _c.Write(bytes)
 	return err
 }
 
@@ -156,19 +155,19 @@ func (p *Processor) send(_c *Client, message *protocol.SendPacket) error {
 		if err != nil {
 			logger.Err(ctx, err, "rpc - send msg error")
 
-			bytes, _ = proto.Marshal(protocol.PacketSendAck(&protocol.SendAckPacket{
+			bytes, _ = protocol.PacketSendAck(&protocol.SendAckPacket{
 				Code:   protocol.SendFail,
 				MsgNo:  msg.MsgNo,
 				MsgId:  msg.MsgID,
 				MsgSeq: msg.MsgSeq,
-			}))
+			})
 		} else {
-			bytes, _ = proto.Marshal(protocol.PacketSendAck(&protocol.SendAckPacket{
+			bytes, _ = protocol.PacketSendAck(&protocol.SendAckPacket{
 				Code:   protocol.OK,
 				MsgNo:  msg.MsgNo,
 				MsgId:  msg.MsgID,
 				MsgSeq: msg.MsgSeq,
-			}))
+			})
 		}
 
 		if _, err = _c.Write(bytes); err != nil {

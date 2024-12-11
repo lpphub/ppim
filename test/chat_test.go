@@ -6,6 +6,7 @@ import (
 	"github.com/lpphub/golib/env"
 	"net"
 	"ppim/api/protocol"
+	"ppim/internal/chatlib"
 	"ppim/internal/gate"
 	"ppim/internal/gate/net/codec"
 	"ppim/internal/logic"
@@ -65,15 +66,28 @@ func TestClient_1(t *testing.T) {
 	// 1. 连接授权
 	codecInst := new(codec.ProtobufCodec)
 
-	msg := protocol.PacketConnect(&protocol.ConnectPacket{
+	msg1, _ := protocol.PacketConnect(&protocol.ConnectPacket{
 		Uid:   "123",
 		Did:   "ios01",
 		Token: "aaa",
 	})
-	data, _ := proto.Marshal(msg)
-	buf, _ := codecInst.Encode(data)
+	buf, _ := codecInst.Encode(msg1)
 
 	if _, err = c.Write(buf); err != nil {
+		t.Log(err)
+	}
+
+	msg2, _ := protocol.PacketSend(&protocol.SendPacket{
+		ConversationType: chatlib.ConvSingle,
+		ToID:             "456",
+		Payload: &protocol.Payload{
+			MsgNo:   "u123",
+			MsgType: 1,
+			Content: "hello world",
+		},
+	})
+	buf1, _ := codecInst.Encode(msg2)
+	if _, err = c.Write(buf1); err != nil {
 		t.Log(err)
 	}
 
