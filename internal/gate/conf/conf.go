@@ -7,6 +7,7 @@ type Config struct {
 
 type serverConf struct {
 	Tcp  string `yml:"tcp"`
+	Ws   string `yml:"ws"`
 	Etcd string `yml:"etcd"`
 }
 

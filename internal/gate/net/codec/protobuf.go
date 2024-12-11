@@ -38,7 +38,7 @@ func (p ProtobufCodec) Decode(c gnet.Conn) ([]byte, error) {
 	}
 
 	buf, _ = c.Next(msgLen)
-	// todo check protobuf magic number, discard buf on error
+	// todo check protobuf magic number, discard Buf on error
 	return buf[_headerLen:], nil
 }
 

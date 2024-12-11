@@ -1,28 +1,19 @@
 package net
 
-import "fmt"
-
 type TCPServer struct {
-	context *ServerContext
-	engine  *EventEngine
+	svc    *ServerContext
+	engine *EventEngine
 }
 
-type ServerContext struct {
-	Addr   string
-	online int32
-
-	ConnManager *ClientManager
-}
-
-func NewTCPServer(addr string) *TCPServer {
-	context := &ServerContext{
-		Addr:        fmt.Sprintf("tcp://%s", addr),
-		ConnManager: newClientManager(),
+func NewTCPServer(ctx *ServerContext, addr string) *TCPServer {
+	engOpt := EngineOption{
+		Protocol: _tcp,
+		Addr:     addr,
 	}
 
 	server := &TCPServer{
-		context: context,
-		engine:  newEventEngine(context),
+		svc:    ctx,
+		engine: NewEventEngine(ctx, engOpt),
 	}
 	return server
 }
@@ -36,5 +27,5 @@ func (s *TCPServer) Stop() {
 }
 
 func (s *TCPServer) GetSvc() *ServerContext {
-	return s.context
+	return s.svc
 }

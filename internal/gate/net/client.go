@@ -2,6 +2,7 @@ package net
 
 import (
 	"errors"
+	"github.com/gobwas/ws/wsutil"
 	"github.com/panjf2000/gnet/v2"
 	"ppim/internal/gate/rpc"
 	"sync"
@@ -44,6 +45,12 @@ func (c *Client) Write(data []byte) (int, error) {
 	if err != nil {
 		return 0, err
 	}
+
+	if ctx.ConnType == _ws {
+		err = wsutil.WriteServerBinary(c.Conn, data)
+		return len(data), err
+	}
+
 	buf, err := ctx.Codec.Encode(data)
 	if err != nil {
 		return 0, err

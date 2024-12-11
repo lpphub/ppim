@@ -2,7 +2,6 @@ package gate
 
 import (
 	"ppim/internal/gate/global"
-	"ppim/internal/gate/mq"
 	"ppim/internal/gate/net"
 	"ppim/internal/gate/rpc"
 )
@@ -14,12 +13,19 @@ func Serve() {
 		panic(err.Error())
 	}
 
-	tcp := net.NewTCPServer(global.Conf.Server.Tcp)
+	svc := net.NewServerContext()
 
-	mq.LoadSubscriber(tcp.GetSvc())
+	tcp := net.NewTCPServer(svc, global.Conf.Server.Tcp)
+	go func() {
+		if err := tcp.Start(); err != nil {
+			panic(err.Error())
+		}
+		defer tcp.Stop()
+	}()
 
-	if err := tcp.Start(); err != nil {
+	ws := net.NewWsServer(svc, global.Conf.Server.Ws)
+	if err := ws.Start(); err != nil {
 		panic(err.Error())
 	}
-	defer tcp.Stop()
+	defer ws.Stop()
 }

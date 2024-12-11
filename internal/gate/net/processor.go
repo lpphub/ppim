@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"github.com/bwmarrin/snowflake"
+	"github.com/gobwas/ws/wsutil"
 	"github.com/golang/protobuf/proto"
 	"github.com/lpphub/golib/gowork"
 	"github.com/lpphub/golib/logger"
@@ -56,14 +57,21 @@ func (p *Processor) Auth(conn gnet.Conn, packet *protocol.ConnectPacket) error {
 		}))
 
 		connCtx := conn.Context().(*EventConnContext)
-		ackBuf, err := connCtx.Codec.Encode(ack)
-		if err != nil {
-			logger.Err(ctx, err, "failed to decode")
-			return err
-		}
-		if _, err = conn.Write(ackBuf); err != nil {
-			logger.Err(ctx, err, "")
-			return err
+		if connCtx.ConnType == _ws {
+			if err := wsutil.WriteServerBinary(conn, ack); err != nil {
+				logger.Err(ctx, err, "failed to write ws")
+				return err
+			}
+		} else {
+			ackBuf, err := connCtx.Codec.Encode(ack)
+			if err != nil {
+				logger.Err(ctx, err, "failed to decode")
+				return err
+			}
+			if _, err = conn.Write(ackBuf); err != nil {
+				logger.Err(ctx, err, "failed to write tcp")
+				return err
+			}
 		}
 		return nil
 	}
@@ -75,7 +83,7 @@ func (p *Processor) Auth(conn gnet.Conn, packet *protocol.ConnectPacket) error {
 		HeartbeatLastTime: time.Now(),
 	}
 	_ = client.SetAuthResult(true)
-	p.svc.ConnManager.Add(client)
+	p.svc.connManager.Add(client)
 
 	ack, _ := proto.Marshal(protocol.PacketConnectAck(&protocol.ConnectAckPacket{
 		Code: protocol.OK,
@@ -89,7 +97,7 @@ func (p *Processor) Auth(conn gnet.Conn, packet *protocol.ConnectPacket) error {
 
 func (p *Processor) Process(conn gnet.Conn, msg *protocol.Message) error {
 	// 取得连接客户端
-	client := p.svc.ConnManager.GetWithFD(conn.Fd())
+	client := p.svc.connManager.GetWithFD(conn.Fd())
 	if client == nil {
 		return ErrConnNotFound
 	}

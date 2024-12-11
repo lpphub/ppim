@@ -5,7 +5,9 @@ go 1.23.1
 require (
 	github.com/bwmarrin/snowflake v0.3.0
 	github.com/gin-gonic/gin v1.10.0
+	github.com/gobwas/ws v1.4.0
 	github.com/golang/protobuf v1.5.4
+	github.com/gorilla/websocket v1.5.3
 	github.com/jinzhu/copier v0.4.0
 	github.com/json-iterator/go v1.1.12
 	github.com/lpphub/golib v0.0.0-20241210133652-df76326dda56
@@ -50,6 +52,8 @@ require (
 	github.com/go-playground/universal-translator v0.18.1 // indirect
 	github.com/go-playground/validator/v10 v10.20.0 // indirect
 	github.com/go-task/slim-sprig/v3 v3.0.0 // indirect
+	github.com/gobwas/httphead v0.1.0 // indirect
+	github.com/gobwas/pool v0.2.1 // indirect
 	github.com/goccy/go-json v0.10.2 // indirect
 	github.com/godzie44/go-uring v0.0.0-20220926161041-69611e8b13d5 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
