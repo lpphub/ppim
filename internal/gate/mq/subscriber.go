@@ -17,7 +17,7 @@ type Subscriber struct {
 	svc *net.ServerContext
 }
 
-func LoadSubscriber(svc *net.ServerContext) {
+func RegisterSubscriber(svc *net.ServerContext) {
 	sub := &Subscriber{svc: svc}
 	sub.register()
 }
@@ -25,15 +25,15 @@ func LoadSubscriber(svc *net.ServerContext) {
 func (s *Subscriber) register() {
 	kconf := global.Conf.Kafka
 
-	if c, err := consumer.NewConsumer(s.deliver, consumer.WithBrokers(kconf.Brokers), consumer.WithTopic(kconf.Topic),
-		consumer.WithGroupID(kconf.GroupID)); err != nil {
+	if c, err := consumer.NewConsumer(s.handleDeliver, consumer.WithBrokers(kconf.Brokers), consumer.WithTopic(kconf.Topic),
+		consumer.WithGroupID(kconf.GroupId)); err != nil {
 		logger.Log().Err(err).Msg("MQ subscriber register fail")
 	} else {
 		c.Start()
 	}
 }
 
-func (s *Subscriber) deliver(ctx context.Context, message kafka.Message) error {
+func (s *Subscriber) handleDeliver(ctx context.Context, message kafka.Message) error {
 	var msg chatlib.DeliverMsg
 	if err := jsoniter.Unmarshal(message.Value, &msg); err != nil {
 		return err

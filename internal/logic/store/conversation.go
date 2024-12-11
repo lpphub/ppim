@@ -39,13 +39,6 @@ func (c *Conversation) Insert(ctx context.Context) error {
 
 func (c *Conversation) Update(ctx context.Context) error {
 	filter := bson.D{{"uid", c.UID}, {"conversation_id", c.ConversationID}}
-	//update := bson.D{{"$set", bson.D{
-	//	{"unread_count", c.UnreadCount},
-	//	{"last_msg_id", c.LastMsgId},
-	//	{"last_msg_seq", c.LastMsgSeq},
-	//	{"from_id", c.FromID},
-	//	{"updated_at", time.Now()}},
-	//}}
 	_, err := c.Collection().ReplaceOne(ctx, filter, c)
 	return err
 }

@@ -83,7 +83,7 @@ func (p *Processor) Auth(conn gnet.Conn, packet *protocol.ConnectPacket) error {
 		HeartbeatLastTime: time.Now(),
 	}
 	_ = client.SetAuthResult(true)
-	p.svc.connManager.Add(client)
+	p.svc.ConnManager.Add(client)
 
 	ack, _ := proto.Marshal(protocol.PacketConnectAck(&protocol.ConnectAckPacket{
 		Code: protocol.OK,
@@ -97,7 +97,7 @@ func (p *Processor) Auth(conn gnet.Conn, packet *protocol.ConnectPacket) error {
 
 func (p *Processor) Process(conn gnet.Conn, msg *protocol.Message) error {
 	// 取得连接客户端
-	client := p.svc.connManager.GetWithFD(conn.Fd())
+	client := p.svc.ConnManager.GetWithFD(conn.Fd())
 	if client == nil {
 		return ErrConnNotFound
 	}

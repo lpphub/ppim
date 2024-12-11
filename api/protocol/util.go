@@ -6,6 +6,15 @@ const (
 	SendFail     // 发送失败
 )
 
+func PacketConnect(conn *ConnectPacket) *Message {
+	return &Message{
+		MsgType: MsgType_CONNECT,
+		Payload: &Message_ConnectPacket{
+			ConnectPacket: conn,
+		},
+	}
+}
+
 func PacketConnectAck(connAck *ConnectAckPacket) *Message {
 	return &Message{
 		MsgType: MsgType_CONNECT_ACK,
@@ -14,6 +23,7 @@ func PacketConnectAck(connAck *ConnectAckPacket) *Message {
 		},
 	}
 }
+
 func PacketPong(pong *PongPacket) *Message {
 	return &Message{
 		MsgType: MsgType_PONG,

@@ -10,7 +10,6 @@ import (
 	"os"
 	"os/signal"
 	"ppim/api/protocol"
-	"ppim/internal/chatlib"
 	"ppim/internal/gate/net/codec"
 	"testing"
 	"time"
@@ -101,7 +100,10 @@ func TestWebsocket(t *testing.T) {
 				logging.Infof("read err: %s", err)
 				return
 			}
-			logging.Infof("recv: %v", message)
+
+			var msg protocol.Message
+			_ = proto.Unmarshal(message, &msg)
+			logging.Infof("recv: %v", msg.GetConnectAckPacket())
 		}
 	}()
 
@@ -114,11 +116,12 @@ func TestWebsocket(t *testing.T) {
 			return
 		case <-ticker.C:
 			msg, _ := proto.Marshal(&protocol.Message{
-				MsgType: protocol.MsgType_SEND,
-				Payload: &protocol.Message_SendPacket{
-					SendPacket: &protocol.SendPacket{
-						ConversationType: chatlib.ConvSingle,
-						ToID:             "123",
+				MsgType: protocol.MsgType_CONNECT,
+				Payload: &protocol.Message_ConnectPacket{
+					ConnectPacket: &protocol.ConnectPacket{
+						Uid:   "123",
+						Did:   "abc",
+						Token: "aaa",
 					},
 				},
 			})

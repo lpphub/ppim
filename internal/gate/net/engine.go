@@ -92,7 +92,7 @@ func (e *EventEngine) OnClose(c gnet.Conn, err error) (action gnet.Action) {
 	}
 	atomic.AddInt32(&e.svc.online, -1)
 
-	e.svc.connManager.RemoveWithFD(c.Fd())
+	e.svc.ConnManager.RemoveWithFD(c.Fd())
 	return
 }
 
@@ -173,7 +173,7 @@ func (e *EventEngine) process(_c gnet.Conn, msg *protocol.Message, isAuthed bool
 
 func (e *EventEngine) OnTick() (delay time.Duration, action gnet.Action) {
 	interval := time.Now().Add(-5 * time.Minute)
-	cm := e.svc.connManager
+	cm := e.svc.ConnManager
 	for i, c := range cm.connMap {
 		if interval.After(c.HeartbeatLastTime) { // 超过5分钟未收到心跳
 			cm.RemoveWithFD(i)

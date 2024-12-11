@@ -17,6 +17,7 @@ type Message struct {
 	ConversationType string    `bson:"conversation_type"`
 	FromID           string    `bson:"from_id"`
 	ToID             string    `bson:"to_id"`
+	SendTime         time.Time `bson:"send_time"`
 	CreatedAt        time.Time `bson:"created_at"`
 	UpdatedAt        time.Time `bson:"updated_at"`
 }

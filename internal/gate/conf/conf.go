@@ -6,13 +6,13 @@ type Config struct {
 }
 
 type serverConf struct {
-	Tcp  string `yml:"tcp"`
-	Ws   string `yml:"ws"`
-	Etcd string `yml:"etcd"`
+	Tcp  string
+	Ws   string
+	Etcd string
 }
 
 type kafkaConf struct {
-	Brokers []string `yml:"brokers"`
-	Topic   string   `yml:"topic"`
-	GroupID string   `yml:"group"`
+	Brokers []string
+	Topic   string
+	GroupId string
 }

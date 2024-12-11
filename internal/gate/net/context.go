@@ -3,13 +3,13 @@ package net
 type ServerContext struct {
 	online int32
 
-	connManager *ClientManager
+	ConnManager *ClientManager
 	processor   *Processor
 }
 
 func NewServerContext() *ServerContext {
 	svc := &ServerContext{
-		connManager: newClientManager(),
+		ConnManager: newClientManager(),
 	}
 
 	svc.processor = newProcessor(svc)

@@ -16,7 +16,7 @@ type RouterSrv struct {
 }
 
 const (
-	cacheRouteUid = "online:%s"
+	cacheRouteUid = "route:%s"
 )
 
 func newRouterSrv() *RouterSrv {
@@ -36,7 +36,7 @@ func (s *RouterSrv) UnRegister(ctx context.Context, ol *types.RouteDTO) error {
 	return err
 }
 
-func (s *RouterSrv) RouteChat(ctx context.Context, routeKeys []string, msg *types.MessageDTO) error {
+func (s *RouterSrv) RouteDeliver(ctx context.Context, routeKeys []string, msg *types.MessageDTO) error {
 	messageSlice := make([]kafka.Message, 0, len(routeKeys))
 	for _, key := range routeKeys {
 		route := strings.Split(key, "_")

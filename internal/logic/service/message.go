@@ -18,19 +18,21 @@ var (
 )
 
 type MessageSrv struct {
-	convSrv *ConversationSrv
+	convSrv  *ConversationSrv
+	routeSrv *RouterSrv
 }
 
 func newMessageSrv() *MessageSrv {
 	return &MessageSrv{
-		convSrv: newConversationSrv(),
+		convSrv:  newConversationSrv(),
+		routeSrv: newRouterSrv(),
 	}
 }
 
 func (s *MessageSrv) HandleMsg(ctx context.Context, msg *types.MessageDTO) error {
 	ctx = logger.WithCtx(ctx)
 
-	// 1. 消息持久化
+	// 1.消息持久化
 	mm := &store.Message{
 		MsgID:            msg.MsgID,
 		MsgSeq:           msg.MsgSeq,
@@ -41,13 +43,16 @@ func (s *MessageSrv) HandleMsg(ctx context.Context, msg *types.MessageDTO) error
 		ConversationType: msg.ConversationType,
 		FromID:           msg.FromID,
 		ToID:             msg.ToID,
+		SendTime:         msg.CreatedAt,
 		CreatedAt:        time.Now(),
+		UpdatedAt:        time.Now(),
 	}
 	if err := mm.Insert(ctx); err != nil {
 		logger.Err(ctx, err, "")
 		return ErrMsgStore
 	}
 
+	// 2.获取接收者
 	var receivers []string
 	if msg.ConversationType == chatlib.ConvSingle {
 		receivers = append(receivers, msg.ToID)
@@ -63,34 +68,35 @@ func (s *MessageSrv) HandleMsg(ctx context.Context, msg *types.MessageDTO) error
 		logger.Warn(ctx, "消息接收者列表为空")
 		return nil
 	}
-	// 索引会话
+
+	// 3.索引会话
 	if err := s.convSrv.IndexConv(ctx, msg, receivers); err != nil {
 		logger.Err(ctx, err, "")
 		return ErrConvIndex
 	}
 
+	// 4.在线投递
 	var (
-		onlineUserDeviceSlice []string
-		offlineUIDSlice       []string
+		onlineSlice  []string //在线用户设备
+		offlineSlice []string //离线用户UID
 	)
 	for _, uid := range receivers {
 		online, _ := global.Redis.SMembers(ctx, svc.RouterSrv.genRouteKey(uid)).Result()
 		if len(online) > 0 {
-			onlineUserDeviceSlice = append(onlineUserDeviceSlice, online...)
+			onlineSlice = append(onlineSlice, online...)
 		} else {
-			offlineUIDSlice = append(offlineUIDSlice, uid)
+			offlineSlice = append(offlineSlice, uid)
 		}
 	}
-	if len(onlineUserDeviceSlice) > 0 {
-		err := svc.RouterSrv.RouteChat(ctx, onlineUserDeviceSlice, msg)
+	if len(onlineSlice) > 0 {
+		err := s.routeSrv.RouteDeliver(ctx, onlineSlice, msg)
 		if err != nil {
 			logger.Err(ctx, err, "")
 			return ErrMsgRoute
 		}
 	}
-	if len(offlineUIDSlice) > 0 {
-		// todo 消息通知（离线）
-		logger.Info(ctx, "消息离线通知")
+	if len(offlineSlice) > 0 {
+		// todo 消息离线通知
 	}
 	return nil
 }

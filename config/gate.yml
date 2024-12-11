@@ -7,4 +7,4 @@ kafka:
   brokers:
     - "localhost:9094"
   topic: "test"
-  group: "test"
+  groupId: "test"

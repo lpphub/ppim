@@ -2,6 +2,7 @@ package gate
 
 import (
 	"ppim/internal/gate/global"
+	"ppim/internal/gate/mq"
 	"ppim/internal/gate/net"
 	"ppim/internal/gate/rpc"
 )
@@ -14,6 +15,8 @@ func Serve() {
 	}
 
 	svc := net.NewServerContext()
+
+	mq.RegisterSubscriber(svc)
 
 	tcp := net.NewTCPServer(svc, global.Conf.Server.Tcp)
 	go func() {
