@@ -42,7 +42,7 @@ func main() {
 			}
 
 			if msg.GetMsgType() == protocol.MsgType_SEND_ACK {
-				fmt.Printf("发送结果：msgId=%s \n", msg.GetSendAckPacket().GetMsgId())
+				fmt.Printf("发送结果：code=%d msgId=%s \n", msg.GetSendAckPacket().GetCode(), msg.GetSendAckPacket().GetMsgId())
 			}
 
 			if msg.GetMsgType() == protocol.MsgType_RECEIVE {

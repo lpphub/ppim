@@ -177,7 +177,7 @@ func (e *EventEngine) OnTick() (delay time.Duration, action gnet.Action) {
 	if e.opt.Protocol == _ws { // tcp与ws 引用同一个connManager，只执行一个即可；后续可优化共用一个event_engine
 		return
 	}
-	logger.Log().Info().Msgf("cleaning expire connections...")
+	logger.Log().Info().Msgf("cleaning expired connections...")
 
 	interval := time.Now().Add(-5 * time.Minute)
 	cm := e.svc.ConnManager

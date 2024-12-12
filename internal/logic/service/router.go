@@ -3,12 +3,14 @@ package service
 import (
 	"context"
 	"fmt"
+	"github.com/lpphub/golib/logger"
 	"github.com/segmentio/kafka-go"
 	"ppim/internal/chatlib"
 	"ppim/internal/logic/global"
 	"ppim/internal/logic/types"
 	"ppim/pkg/kafka/producer"
 	"strings"
+	"time"
 )
 
 type RouterSrv struct {
@@ -51,7 +53,12 @@ func (s *RouterSrv) RouteDeliver(ctx context.Context, routeKeys []string, msg *t
 		}
 		messageSlice = append(messageSlice, message)
 	}
-	return s.mq.SendMessage(ctx, messageSlice...)
+
+	t := time.Now()
+	err := s.mq.SendMessage(ctx, messageSlice...)
+	logger.Infof(ctx, "MQ投递耗时: %d", time.Since(t).Milliseconds())
+
+	return err
 }
 
 func (s *RouterSrv) genRouteKey(uid string) string {

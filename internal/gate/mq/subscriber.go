@@ -38,7 +38,8 @@ func (s *Subscriber) handleDeliver(ctx context.Context, message kafka.Message) e
 		return err
 	}
 
-	if msg.CMD == chatlib.DeliverChat {
+	switch msg.CMD {
+	case chatlib.DeliverChat:
 		clients := s.svc.ConnManager.GetWithUID(msg.ToUID)
 		if len(clients) == 0 {
 			return nil
@@ -64,6 +65,12 @@ func (s *Subscriber) handleDeliver(ctx context.Context, message kafka.Message) e
 				logger.Err(ctx, err, "write to client error")
 			}
 		}
+	case chatlib.DeliverEvent:
+		// TODO: handle event
+	case chatlib.DeliverNotify:
+		// TODO: handle notify
+	default:
+		logger.Warnf(ctx, "unknown cmd: %s", msg.CMD)
 	}
 	return nil
 }

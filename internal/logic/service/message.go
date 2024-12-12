@@ -30,6 +30,7 @@ func newMessageSrv(routeSrv *RouterSrv) *MessageSrv {
 }
 
 func (s *MessageSrv) HandleMsg(ctx context.Context, msg *types.MessageDTO) error {
+	// todo 异步处理
 	ctx = logger.WithCtx(ctx)
 
 	// 1.消息持久化
@@ -88,6 +89,7 @@ func (s *MessageSrv) HandleMsg(ctx context.Context, msg *types.MessageDTO) error
 			offlineSlice = append(offlineSlice, uid)
 		}
 	}
+
 	if len(onlineSlice) > 0 {
 		err := s.routeSrv.RouteDeliver(ctx, onlineSlice, msg)
 		if err != nil {
@@ -95,6 +97,7 @@ func (s *MessageSrv) HandleMsg(ctx context.Context, msg *types.MessageDTO) error
 			return ErrMsgRoute
 		}
 	}
+
 	if len(offlineSlice) > 0 {
 		// todo 消息离线通知
 	}
