@@ -33,7 +33,7 @@ const (
 	cacheConvRecent = "conv:recent:%s"
 )
 
-func (c *ConversationSrv) IndexConv(ctx context.Context, msg *types.MessageDTO, uidSlice []string) error {
+func (c *ConversationSrv) IndexRecent(ctx context.Context, msg *types.MessageDTO, uidSlice []string) error {
 	// 发送者会话
 	uidSlice = append(uidSlice, msg.FromID)
 

@@ -56,8 +56,7 @@ func (s *RouterSrv) RouteDeliver(ctx context.Context, routeKeys []string, msg *t
 
 	t := time.Now()
 	err := s.mq.SendMessage(ctx, messageSlice...)
-	logger.Infof(ctx, "MQ投递耗时: %d", time.Since(t).Milliseconds())
-
+	logger.Infof(ctx, "MQ produce cost_ms: %d", time.Since(t).Milliseconds())
 	return err
 }
 

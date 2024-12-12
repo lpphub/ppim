@@ -33,6 +33,8 @@ func (s *Subscriber) register() {
 }
 
 func (s *Subscriber) handleDeliver(ctx context.Context, message kafka.Message) error {
+	logger.Log().Info().Msgf("receive message: %s", string(message.Value))
+
 	var msg chatlib.DeliverMsg
 	if err := jsoniter.Unmarshal(message.Value, &msg); err != nil {
 		return err

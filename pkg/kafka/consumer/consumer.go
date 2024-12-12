@@ -4,9 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"sync"
-
 	"github.com/segmentio/kafka-go"
+	"sync"
 )
 
 type MessageHandler func(context.Context, kafka.Message) error
@@ -56,6 +55,8 @@ func (c *Consumer) Start() {
 		MinBytes:    c.config.minBytes,
 		MaxBytes:    c.config.maxBytes,
 		StartOffset: c.config.startOffset,
+		//ReadBackoffMin: 10 * time.Millisecond,
+		//ReadBackoffMax: 200 * time.Millisecond,
 		ErrorLogger: kafka.LoggerFunc(c.config.logger.Printf),
 	})
 

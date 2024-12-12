@@ -66,12 +66,12 @@ func (s *MessageSrv) HandleMsg(ctx context.Context, msg *types.MessageDTO) error
 		}
 	}
 	if len(receivers) == 0 {
-		logger.Warn(ctx, "消息接收者列表为空")
+		logger.Warn(ctx, "msg receivers is empty")
 		return nil
 	}
 
-	// 3.索引会话
-	if err := s.convSrv.IndexConv(ctx, msg, receivers); err != nil {
+	// 3.索引会话最新消息¬
+	if err := s.convSrv.IndexRecent(ctx, msg, receivers); err != nil {
 		logger.Err(ctx, err, "")
 		return ErrConvIndex
 	}

@@ -15,9 +15,9 @@ type ServiceContext struct {
 var svc *ServiceContext
 
 func LoadService() {
-	// kafka flush msg every 200ms
+	// kafka flush msg every 100ms
 	mqProducer, err := producer.NewProducer(producer.WithBrokers(global.Conf.Kafka.Brokers),
-		producer.WithBatchTimeout(200*time.Millisecond), producer.WithAsync(true))
+		producer.WithBatchTimeout(10*time.Millisecond), producer.WithAsync(false))
 	if err != nil {
 		logger.Log().Err(err).Msg("failed to create kafka producer")
 		return

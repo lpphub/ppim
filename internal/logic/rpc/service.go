@@ -3,7 +3,6 @@ package rpc
 import (
 	"context"
 	"github.com/jinzhu/copier"
-	"github.com/lpphub/golib/logger"
 	"ppim/api/rpctypes"
 	"ppim/internal/logic/service"
 	"ppim/internal/logic/store"
@@ -40,7 +39,6 @@ func (s *logicService) UnRegister(ctx context.Context, req *rpctypes.RouterReq, 
 }
 
 func (s *logicService) SendMsg(ctx context.Context, req *rpctypes.MessageReq, _ *rpctypes.MessageResp) error {
-	logger.Infof(ctx, "send msg param: %v", req)
 	var msg types.MessageDTO
 	_ = copier.Copy(&msg, req)
 	return service.Inst().MsgSrv.HandleMsg(ctx, &msg)
