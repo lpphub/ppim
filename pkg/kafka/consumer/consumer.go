@@ -55,8 +55,7 @@ func (c *Consumer) Start() {
 		MinBytes:    c.config.minBytes,
 		MaxBytes:    c.config.maxBytes,
 		StartOffset: c.config.startOffset,
-		//ReadBackoffMin: 10 * time.Millisecond,
-		//ReadBackoffMax: 200 * time.Millisecond,
+		MaxWait:     c.config.maxWait,
 		ErrorLogger: kafka.LoggerFunc(c.config.logger.Printf),
 	})
 

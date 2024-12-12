@@ -113,7 +113,7 @@ func (p *Processor) Process(conn gnet.Conn, msg *protocol.Message) error {
 		err = errors.New("unknown message type")
 	}
 	if err != nil {
-		logger.Log().Error().Msgf("process message error: %v", err)
+		logger.Log().Err(err).Msgf("process message error: %v", msg)
 	}
 	return err
 }

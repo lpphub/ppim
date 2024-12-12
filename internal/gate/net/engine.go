@@ -108,7 +108,9 @@ func (e *EventEngine) OnTraffic(_c gnet.Conn) gnet.Action {
 			return gnet.Close
 		}
 		var msg protocol.Message
-		_ = proto.Unmarshal(buf, &msg)
+		if err = proto.Unmarshal(buf, &msg); err != nil {
+			logger.Log().Err(err).Msg("failed to unmarshal proto")
+		}
 
 		if act := e.process(_c, &msg, connCtx.Authed); act == gnet.Close {
 			return act
@@ -129,24 +131,15 @@ func (e *EventEngine) OnTraffic(_c gnet.Conn) gnet.Action {
 
 		for i := range messages {
 			var msg protocol.Message
-			_ = proto.Unmarshal(messages[i].Payload, &msg)
+			if err = proto.Unmarshal(messages[i].Payload, &msg); err != nil {
+				logger.Log().Err(err).Msg("failed to unmarshal proto")
+			}
 
 			if act := e.process(_c, &msg, connCtx.Authed); act == gnet.Close {
 				return act
 			}
 		}
 	}
-
-	//if !connCtx.Authed {
-	//	if err := e.svc.processor.Auth(_c, msg.GetConnectPacket()); err != nil {
-	//		logger.Log().Err(err).Msg("failed to auth the connection")
-	//		return gnet.Close
-	//	}
-	//} else {
-	//	if err := e.svc.processor.Process(_c, &msg); err != nil {
-	//		logger.Log().Err(err).Msg("failed to process msg")
-	//	}
-	//}
 
 	if _c.InboundBuffered() > 0 {
 		if err := _c.Wake(nil); err != nil { // wake up the connection manually to avoid missing the leftover data

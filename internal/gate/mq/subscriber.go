@@ -10,6 +10,7 @@ import (
 	"ppim/internal/gate/global"
 	"ppim/internal/gate/net"
 	"ppim/pkg/kafka/consumer"
+	"time"
 )
 
 type Subscriber struct {
@@ -25,7 +26,7 @@ func (s *Subscriber) register() {
 	kconf := global.Conf.Kafka
 
 	if c, err := consumer.NewConsumer(s.handleDeliver, consumer.WithBrokers(kconf.Brokers), consumer.WithTopic(kconf.Topic),
-		consumer.WithGroupID(kconf.GroupId)); err != nil {
+		consumer.WithGroupID(kconf.GroupId), consumer.WithMaxWait(time.Second)); err != nil {
 		logger.Log().Err(err).Msg("MQ subscriber register fail")
 	} else {
 		c.Start()

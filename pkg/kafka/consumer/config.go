@@ -4,6 +4,7 @@ import (
 	"errors"
 	"github.com/lpphub/golib/logger"
 	"github.com/segmentio/kafka-go"
+	"time"
 )
 
 type Option func(*Config)
@@ -16,6 +17,7 @@ type Config struct {
 	maxBytes    int
 	maxAttempts int
 	startOffset int64
+	maxWait     time.Duration
 	logger      *logger.Logger
 }
 
@@ -56,6 +58,12 @@ func WithMinBytes(minBytes int) Option {
 func WithMaxBytes(maxBytes int) Option {
 	return func(c *Config) {
 		c.maxBytes = maxBytes
+	}
+}
+
+func WithMaxWait(maxWait time.Duration) Option {
+	return func(c *Config) {
+		c.maxWait = maxWait
 	}
 }
 
