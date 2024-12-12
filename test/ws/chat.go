@@ -2,12 +2,10 @@ package main
 
 import (
 	"bufio"
-	"errors"
 	"fmt"
 	"github.com/golang/protobuf/proto"
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
-	"io"
 	"os"
 	"ppim/api/protocol"
 	"ppim/internal/chatlib"
@@ -26,7 +24,7 @@ func main() {
 		for {
 			_, message, err := c.ReadMessage()
 			if err != nil {
-				if errors.Is(err, io.EOF) {
+				if websocket.IsUnexpectedCloseError(err) {
 					os.Exit(-1)
 					return
 				}

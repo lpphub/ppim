@@ -2,35 +2,37 @@ package producer
 
 import (
 	"context"
+	"fmt"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/lpphub/golib/logger"
 	"github.com/segmentio/kafka-go"
 	"ppim/internal/chatlib"
 	"testing"
+	"time"
 )
 
 func TestProducer_SendMessage(t *testing.T) {
 	logger.Setup()
 
-	p, err := NewProducer(WithBrokers([]string{"localhost:9094"}))
+	p, err := NewProducer(WithBrokers([]string{"localhost:9094"}), WithBatchTimeout(200*time.Millisecond), WithAsync(true))
 	if err != nil {
 		t.Logf("%v", err)
 		return
 	}
 
-	b, _ := jsoniter.Marshal(chatlib.DeliverMsg{
-		CMD:   "event",
-		ToUID: "789",
-	})
+	for i := 0; i < 3; i++ {
+		b, _ := jsoniter.Marshal(chatlib.DeliverMsg{
+			CMD:   "event_test",
+			ToUID: fmt.Sprintf("u_%d", i),
+		})
+		msg := kafka.Message{
+			Topic: "test_speed",
+			Key:   []byte("test1"),
+			Value: b,
+		}
 
-	msg := kafka.Message{
-		Topic: "test",
-		Key:   []byte("test"),
-		Value: b,
-	}
-
-	err = p.SendMessage(context.Background(), msg)
-	if err != nil {
-		t.Logf("%v", err)
+		t1 := time.Now()
+		_ = p.SendMessage(context.Background(), msg)
+		t.Logf("cost %d", time.Since(t1).Milliseconds())
 	}
 }

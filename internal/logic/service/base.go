@@ -4,6 +4,7 @@ import (
 	"github.com/lpphub/golib/logger"
 	"ppim/internal/logic/global"
 	"ppim/pkg/kafka/producer"
+	"time"
 )
 
 type ServiceContext struct {
@@ -14,7 +15,9 @@ type ServiceContext struct {
 var svc *ServiceContext
 
 func LoadService() {
-	mqProducer, err := producer.NewProducer(producer.WithBrokers(global.Conf.Kafka.Brokers))
+	// kafka flush msg every 200ms
+	mqProducer, err := producer.NewProducer(producer.WithBrokers(global.Conf.Kafka.Brokers),
+		producer.WithBatchTimeout(200*time.Millisecond), producer.WithAsync(true))
 	if err != nil {
 		logger.Log().Err(err).Msg("failed to create kafka producer")
 		return

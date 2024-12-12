@@ -4,9 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"sync"
-
 	"github.com/segmentio/kafka-go"
+	"sync"
 )
 
 type Producer struct {
@@ -32,7 +31,8 @@ func NewProducer(opts ...Option) (*Producer, error) {
 		Balancer:     &kafka.LeastBytes{},
 		MaxAttempts:  config.maxRetries,
 		RequiredAcks: config.requiredAcks,
-		Async:        false,
+		BatchTimeout: config.batchTimeout,
+		Async:        config.async,
 		Logger:       config.logger,
 	}
 	if config.topic != "" {
