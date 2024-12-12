@@ -27,7 +27,7 @@ func (*Conversation) Collection() *mongo.Collection {
 }
 
 func (c *Conversation) GetOne(ctx context.Context, uid, conversationID string) (*Conversation, error) {
-	filter := bson.D{{"uid", uid}, {"conversation_id", conversationID}}
+	filter := bson.D{{"conversation_id", conversationID}, {"uid", uid}}
 	err := c.Collection().FindOne(ctx, filter).Decode(c)
 	return c, err
 }
@@ -38,7 +38,7 @@ func (c *Conversation) Insert(ctx context.Context) error {
 }
 
 func (c *Conversation) Update(ctx context.Context) error {
-	filter := bson.D{{"uid", c.UID}, {"conversation_id", c.ConversationID}}
+	filter := bson.D{{"conversation_id", c.ConversationID}, {"uid", c.UID}}
 	_, err := c.Collection().ReplaceOne(ctx, filter, c)
 	return err
 }
