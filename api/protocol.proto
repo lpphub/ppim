@@ -60,6 +60,7 @@ message Payload {
   uint64 msgSeq = 3;
   int32 msgType = 4;
   string content = 5;
+  uint64 sendTime = 6;
 }
 
 message SendAckPacket {

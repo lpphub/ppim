@@ -2,7 +2,6 @@ package mq
 
 import (
 	"context"
-	"github.com/golang/protobuf/proto"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/lpphub/golib/logger"
 	"github.com/segmentio/kafka-go"
@@ -46,7 +45,7 @@ func (s *Subscriber) handleDeliver(ctx context.Context, message kafka.Message) e
 		}
 
 		chat := msg.ChatMsg
-		bytes, _ := proto.Marshal(protocol.PacketReceive(&protocol.ReceivePacket{
+		bytes, _ := protocol.PacketReceive(&protocol.ReceivePacket{
 			ConversationType: chat.ConversationType,
 			ConversationID:   chat.ConversationID,
 			FromID:           chat.FromID,
@@ -57,7 +56,7 @@ func (s *Subscriber) handleDeliver(ctx context.Context, message kafka.Message) e
 				MsgType: chat.MsgType,
 				Content: chat.Content,
 			},
-		}))
+		})
 
 		for _, client := range clients {
 			_, err := client.Write(bytes)

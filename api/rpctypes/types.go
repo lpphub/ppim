@@ -31,6 +31,7 @@ type MessageReq struct {
 	MsgNo            string
 	MsgType          int32
 	Content          string
+	SendTime         uint64
 }
 
 type MessageResp struct {

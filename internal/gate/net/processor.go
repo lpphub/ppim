@@ -143,6 +143,7 @@ func (p *Processor) send(_c *Client, message *protocol.SendPacket) error {
 		MsgNo:            message.Payload.MsgNo,
 		MsgType:          message.Payload.MsgType,
 		Content:          message.Payload.Content,
+		SendTime:         message.Payload.SendTime,
 	}
 	logger.Log().Debug().Msgf("UID=[%s]发送消息: %v", _c.UID, msg)
 

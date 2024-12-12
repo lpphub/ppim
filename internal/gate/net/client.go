@@ -12,7 +12,7 @@ import (
 type (
 	Client struct {
 		Conn              gnet.Conn
-		mu                sync.RWMutex
+		mtx               sync.RWMutex
 		UID               string    // 用户ID
 		DID               string    // 设备ID
 		HeartbeatLastTime time.Time // 最后心跳时间
@@ -38,8 +38,8 @@ func (c *Client) getConnContext() (*EventConnContext, error) {
 }
 
 func (c *Client) Write(data []byte) (int, error) {
-	c.mu.Lock()
-	defer c.mu.Unlock()
+	c.mtx.Lock()
+	defer c.mtx.Unlock()
 
 	ctx, err := c.getConnContext()
 	if err != nil {
@@ -98,6 +98,9 @@ func (cm *ClientManager) RemoveWithFD(fd int) {
 	if client == nil {
 		return
 	}
+
+	// 关闭连接
+	_ = client.Conn.Close()
 
 	delete(cm.connMap, fd)
 

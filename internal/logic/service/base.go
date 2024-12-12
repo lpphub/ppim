@@ -1,5 +1,11 @@
 package service
 
+import (
+	"github.com/lpphub/golib/logger"
+	"ppim/internal/logic/global"
+	"ppim/pkg/kafka/producer"
+)
+
 type ServiceContext struct {
 	MsgSrv    *MessageSrv
 	RouterSrv *RouterSrv
@@ -7,10 +13,18 @@ type ServiceContext struct {
 
 var svc *ServiceContext
 
-func init() {
+func LoadService() {
+	mqProducer, err := producer.NewProducer(producer.WithBrokers(global.Conf.Kafka.Brokers))
+	if err != nil {
+		logger.Log().Err(err).Msg("failed to create kafka producer")
+		return
+	}
+
+	route := newRouterSrv(mqProducer)
+
 	svc = &ServiceContext{
-		MsgSrv:    newMessageSrv(),
-		RouterSrv: newRouterSrv(),
+		MsgSrv:    newMessageSrv(route),
+		RouterSrv: route,
 	}
 }
 

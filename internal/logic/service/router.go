@@ -19,10 +19,9 @@ const (
 	cacheRouteUid = "route:%s"
 )
 
-func newRouterSrv() *RouterSrv {
-	mqProducer, _ := producer.NewProducer(producer.WithBrokers(global.Conf.Kafka.Brokers))
+func newRouterSrv(mq *producer.Producer) *RouterSrv {
 	return &RouterSrv{
-		mq: mqProducer,
+		mq: mq,
 	}
 }
 
@@ -32,7 +31,7 @@ func (s *RouterSrv) Register(ctx context.Context, ol *types.RouteDTO) error {
 }
 
 func (s *RouterSrv) UnRegister(ctx context.Context, ol *types.RouteDTO) error {
-	err := global.Redis.SAdd(ctx, s.genRouteKey(ol.Uid), s.buildVal(ol)).Err()
+	err := global.Redis.SRem(ctx, s.genRouteKey(ol.Uid), s.buildVal(ol)).Err()
 	return err
 }
 

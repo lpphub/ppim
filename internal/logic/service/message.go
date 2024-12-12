@@ -22,10 +22,10 @@ type MessageSrv struct {
 	routeSrv *RouterSrv
 }
 
-func newMessageSrv() *MessageSrv {
+func newMessageSrv(routeSrv *RouterSrv) *MessageSrv {
 	return &MessageSrv{
 		convSrv:  newConversationSrv(),
-		routeSrv: newRouterSrv(),
+		routeSrv: routeSrv,
 	}
 }
 
@@ -43,7 +43,7 @@ func (s *MessageSrv) HandleMsg(ctx context.Context, msg *types.MessageDTO) error
 		ConversationType: msg.ConversationType,
 		FromID:           msg.FromID,
 		ToID:             msg.ToID,
-		SendTime:         msg.CreatedAt,
+		SendTime:         time.UnixMilli(int64(msg.SendTime)),
 		CreatedAt:        time.Now(),
 		UpdatedAt:        time.Now(),
 	}
