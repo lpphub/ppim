@@ -25,6 +25,7 @@ func defaultConfig() *Config {
 	return &Config{
 		minBytes:    10e3, // 10KB
 		maxBytes:    10e6, // 10MB
+		maxWait:     3 * time.Second,
 		maxAttempts: 3,
 		startOffset: kafka.LastOffset,
 		logger:      logger.Log(),

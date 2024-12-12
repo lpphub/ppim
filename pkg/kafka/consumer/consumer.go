@@ -54,8 +54,8 @@ func (c *Consumer) Start() {
 		GroupID:     c.config.groupID,
 		MinBytes:    c.config.minBytes,
 		MaxBytes:    c.config.maxBytes,
-		StartOffset: c.config.startOffset,
 		MaxWait:     c.config.maxWait,
+		StartOffset: c.config.startOffset,
 		ErrorLogger: kafka.LoggerFunc(c.config.logger.Printf),
 	})
 
