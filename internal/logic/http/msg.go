@@ -9,7 +9,7 @@ import (
 )
 
 type MsgHandler struct {
-	ConvSrv *srv.ConversationSrv
+	conv *srv.ConvSrv
 }
 
 func (h *MsgHandler) RecentConvList(ctx *gin.Context) {
@@ -19,7 +19,7 @@ func (h *MsgHandler) RecentConvList(ctx *gin.Context) {
 		return
 	}
 
-	if list, err := h.ConvSrv.RecentList(ctx, uid); err != nil {
+	if list, err := h.conv.RecentList(ctx, uid); err != nil {
 		logx.Err(ctx, err, "")
 		web.JsonWithError(ctx, errs.ErrRecordNotFound)
 	} else {

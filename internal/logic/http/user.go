@@ -12,7 +12,7 @@ import (
 )
 
 type UserHandler struct {
-	Srv *srv.UserSrv
+	srv *srv.UserSrv
 }
 
 func (h UserHandler) GetOne(ctx *gin.Context) {
@@ -21,7 +21,7 @@ func (h UserHandler) GetOne(ctx *gin.Context) {
 		web.JsonWithError(ctx, errs.ErrInvalidParam)
 		return
 	}
-	if u, err := h.Srv.GetOne(ctx, uid); err != nil {
+	if u, err := h.srv.GetOne(ctx, uid); err != nil {
 		logx.Error(ctx, err.Error())
 		if errors.Is(err, mongo.ErrNoDocuments) {
 			web.JsonWithError(ctx, errs.ErrRecordNotFound)
@@ -41,7 +41,7 @@ func (h UserHandler) Register(ctx *gin.Context) {
 		return
 	}
 
-	if err := h.Srv.Register(ctx, req); err != nil {
+	if err := h.srv.Register(ctx, req); err != nil {
 		logx.Error(ctx, err.Error())
 		web.JsonWithError(ctx, errs.ErrServerInternal)
 	} else {

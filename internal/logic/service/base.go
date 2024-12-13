@@ -8,13 +8,14 @@ import (
 )
 
 type ServiceContext struct {
-	MsgSrv   *MessageSrv
-	RouteSrv *RouteSrv
+	Msg   *MessageSrv
+	Route *RouteSrv
+	Conv  *ConversationSrv
 }
 
 var svc *ServiceContext
 
-func LoadService() {
+func InitService() {
 	// kafka flush msg every 50ms
 	mqProducer, err := producer.NewProducer(producer.WithBrokers(global.Conf.Kafka.Brokers),
 		producer.WithBatchTimeout(50*time.Millisecond), producer.WithAsync(true))
@@ -24,13 +25,16 @@ func LoadService() {
 	}
 
 	route := newRouterSrv(mqProducer)
+	conv := newConversationSrv()
+	msg := newMessageSrv(conv, route)
 
 	svc = &ServiceContext{
-		MsgSrv:   newMessageSrv(route),
-		RouteSrv: route,
+		Route: route,
+		Conv:  conv,
+		Msg:   msg,
 	}
 }
 
-func Inst() *ServiceContext {
+func Hint() *ServiceContext {
 	return svc
 }

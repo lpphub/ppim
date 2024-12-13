@@ -14,8 +14,8 @@ type AuthResp struct {
 type RouterReq struct {
 	Uid   string
 	Did   string
-	Ip    string
 	Topic string
+	Ip    string
 }
 
 type RouterResp struct {

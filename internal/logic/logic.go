@@ -11,7 +11,7 @@ import (
 func Serve() {
 	global.InitGlobalCtx()
 
-	service.LoadService()
+	service.InitService()
 
 	go func() {
 		rpcsrv := rpc.NewRpcServer(global.Conf.Server.Rpc, global.Conf.Server.Etcd)

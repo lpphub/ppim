@@ -89,12 +89,13 @@ func (c *ConversationSrv) indexWithLock(ctx context.Context, msg *types.MessageD
 }
 
 func (c *ConversationSrv) cacheRecent(ctx context.Context, uid string, msg *types.MessageDTO) error {
+	// 缓存用户最近会话
 	cacheKey := fmt.Sprintf(CacheConvRecent, uid)
 	pipe := global.Redis.Pipeline()
 	pipe.ZAdd(ctx, cacheKey, redis.Z{Score: float64(msg.SendTime), Member: msg.ConversationID})
 
 	count, _ := pipe.ZCard(ctx, cacheKey).Result()
-	if count > 200 {
+	if count > 100 {
 		pipe.ZRemRangeByRank(ctx, cacheKey, 0, 0)
 	}
 	_, err := pipe.Exec(ctx)

@@ -19,14 +19,14 @@ var (
 )
 
 type MessageSrv struct {
-	convSrv  *ConversationSrv
-	routeSrv *RouteSrv
+	conv  *ConversationSrv
+	route *RouteSrv
 }
 
-func newMessageSrv(routeSrv *RouteSrv) *MessageSrv {
+func newMessageSrv(conv *ConversationSrv, route *RouteSrv) *MessageSrv {
 	return &MessageSrv{
-		convSrv:  newConversationSrv(),
-		routeSrv: routeSrv,
+		conv:  conv,
+		route: route,
 	}
 }
 
@@ -71,8 +71,8 @@ func (s *MessageSrv) HandleMsg(ctx context.Context, msg *types.MessageDTO) error
 		return nil
 	}
 
-	// 3.索引会话最新消息¬
-	if err := s.convSrv.IndexRecent(ctx, msg, receivers); err != nil {
+	// 3.索引会话最新消息
+	if err := s.conv.IndexRecent(ctx, msg, receivers); err != nil {
 		logger.Err(ctx, err, "")
 		return ErrConvIndex
 	}
@@ -83,7 +83,7 @@ func (s *MessageSrv) HandleMsg(ctx context.Context, msg *types.MessageDTO) error
 		offlineSlice []string //离线用户UID
 	)
 	for _, uid := range receivers {
-		online, _ := global.Redis.HGetAll(ctx, svc.RouteSrv.genRouteKey(uid)).Result()
+		online, _ := global.Redis.HGetAll(ctx, s.route.genRouteKey(uid)).Result()
 		if len(online) > 0 {
 			for _, topic := range online {
 				onlineSlice = append(onlineSlice, fmt.Sprintf("%s#%s", uid, topic))
@@ -94,7 +94,7 @@ func (s *MessageSrv) HandleMsg(ctx context.Context, msg *types.MessageDTO) error
 	}
 
 	if len(onlineSlice) > 0 {
-		err := s.routeSrv.RouteDeliver(ctx, onlineSlice, msg)
+		err := s.route.RouteDeliver(ctx, onlineSlice, msg)
 		if err != nil {
 			logger.Err(ctx, err, "")
 			return ErrMsgRoute

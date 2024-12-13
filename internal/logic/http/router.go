@@ -10,17 +10,17 @@ import (
 )
 
 var (
-	user *UserHandler
-	msg  *MsgHandler
+	user UserHandler
+	msg  MsgHandler
 )
 
-func initSvcCtx() {
-	user = &UserHandler{Srv: srv.NewUserSrv()}
-	msg = &MsgHandler{ConvSrv: srv.NewConversationSrv()}
+func initHandlers() {
+	user = UserHandler{srv: srv.NewUserSrv()}
+	msg = MsgHandler{conv: srv.NewConvSrv()}
 }
 
 func registerRoutes(r *gin.Engine) {
-	initSvcCtx()
+	initHandlers()
 
 	r.GET("/test", Test)
 
