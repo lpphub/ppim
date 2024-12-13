@@ -13,7 +13,7 @@ import (
 	"time"
 )
 
-type RouterSrv struct {
+type RouteSrv struct {
 	mq *producer.Producer
 }
 
@@ -22,23 +22,23 @@ const (
 	cacheRouteUid = "route:%s"
 )
 
-func newRouterSrv(mq *producer.Producer) *RouterSrv {
-	return &RouterSrv{
+func newRouterSrv(mq *producer.Producer) *RouteSrv {
+	return &RouteSrv{
 		mq: mq,
 	}
 }
 
-func (s *RouterSrv) Online(ctx context.Context, ol *types.RouteDTO) error {
+func (s *RouteSrv) Online(ctx context.Context, ol *types.RouteDTO) error {
 	err := global.Redis.HSet(ctx, s.genRouteKey(ol.Uid), ol.Did, ol.Topic).Err()
 	return err
 }
 
-func (s *RouterSrv) Offline(ctx context.Context, ol *types.RouteDTO) error {
+func (s *RouteSrv) Offline(ctx context.Context, ol *types.RouteDTO) error {
 	err := global.Redis.HDel(ctx, s.genRouteKey(ol.Uid), ol.Did).Err()
 	return err
 }
 
-func (s *RouterSrv) RouteDeliver(ctx context.Context, routeKeys []string, msg *types.MessageDTO) error {
+func (s *RouteSrv) RouteDeliver(ctx context.Context, routeKeys []string, msg *types.MessageDTO) error {
 	messageSlice := make([]kafka.Message, 0, len(routeKeys))
 	for _, key := range routeKeys {
 		route := strings.Split(key, "#")
@@ -61,10 +61,10 @@ func (s *RouterSrv) RouteDeliver(ctx context.Context, routeKeys []string, msg *t
 	return err
 }
 
-func (s *RouterSrv) genRouteKey(uid string) string {
+func (s *RouteSrv) genRouteKey(uid string) string {
 	return fmt.Sprintf(cacheRouteUid, uid)
 }
 
-func (s *RouterSrv) buildVal(ol *types.RouteDTO) string {
+func (s *RouteSrv) buildVal(ol *types.RouteDTO) string {
 	return fmt.Sprintf("%s_%s_%s", ol.Uid, ol.Did, ol.Topic)
 }

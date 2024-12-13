@@ -4,6 +4,7 @@ import (
 	"context"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 	"ppim/internal/logic/global"
 	"time"
 )
@@ -12,8 +13,8 @@ type Conversation struct {
 	ConversationID   string    `bson:"conversation_id"`
 	ConversationType string    `bson:"conversation_type"`
 	UID              string    `bson:"uid"`
-	Pin              bool      `bson:"pin"`          // 是否置顶
-	NoDisturb        bool      `bson:"no_disturb"`   // 是否免打扰
+	Pin              bool      `bson:"pin"`          // 置顶
+	Mute             bool      `bson:"mute"`         // 免打扰
 	UnreadCount      uint64    `bson:"unread_count"` // 未读消息数
 	LastMsgId        string    `bson:"last_msg_id"`
 	LastMsgSeq       uint64    `bson:"last_msg_seq"`
@@ -41,4 +42,20 @@ func (c *Conversation) Update(ctx context.Context) error {
 	filter := bson.D{{"conversation_id", c.ConversationID}, {"uid", c.UID}}
 	_, err := c.Collection().ReplaceOne(ctx, filter, c)
 	return err
+}
+
+func (c *Conversation) ListRecent(ctx context.Context, uid string) ([]Conversation, error) {
+	filter := bson.D{{"uid", uid}}
+	opts := options.Find().SetSort(bson.D{{"updated_at", -1}}).SetLimit(100)
+
+	cursor, err := c.Collection().Find(ctx, filter, opts)
+	if err != nil {
+		return nil, err
+	}
+
+	var results []Conversation
+	if err = cursor.All(ctx, &results); err != nil {
+		return nil, err
+	}
+	return results, nil
 }

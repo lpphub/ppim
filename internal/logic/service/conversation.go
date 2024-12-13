@@ -3,9 +3,13 @@ package service
 import (
 	"context"
 	"errors"
+	"fmt"
 	"github.com/lpphub/golib/gowork"
+	"github.com/lpphub/golib/logger"
+	"github.com/redis/go-redis/v9"
 	"go.mongodb.org/mongo-driver/mongo"
 	"ppim/internal/chatlib"
+	"ppim/internal/logic/global"
 	"ppim/internal/logic/store"
 	"ppim/internal/logic/types"
 	"ppim/pkg/ext"
@@ -30,7 +34,7 @@ func newConversationSrv() *ConversationSrv {
 }
 
 const (
-	cacheConvRecent = "conv:recent:%s"
+	CacheConvRecent = "conv:recent:%s"
 )
 
 func (c *ConversationSrv) IndexRecent(ctx context.Context, msg *types.MessageDTO, uidSlice []string) error {
@@ -51,6 +55,11 @@ func (c *ConversationSrv) indexWithLock(ctx context.Context, msg *types.MessageD
 	// todo 集群模式下，分布式锁
 	c.segmentLock.Lock(index)
 	defer c.segmentLock.Unlock(index)
+
+	if err := c.cacheRecent(ctx, uid, msg); err != nil {
+		logger.Err(ctx, err, fmt.Sprintf("conversation cache recent: uid=%s", uid))
+		return
+	}
 
 	conv, err := new(store.Conversation).GetOne(ctx, uid, msg.ConversationID)
 	if err != nil && errors.Is(err, mongo.ErrNoDocuments) {
@@ -77,4 +86,17 @@ func (c *ConversationSrv) indexWithLock(ctx context.Context, msg *types.MessageD
 		conv.UpdatedAt = time.Now()
 		_ = conv.Update(ctx)
 	}
+}
+
+func (c *ConversationSrv) cacheRecent(ctx context.Context, uid string, msg *types.MessageDTO) error {
+	cacheKey := fmt.Sprintf(CacheConvRecent, uid)
+	pipe := global.Redis.Pipeline()
+	pipe.ZAdd(ctx, cacheKey, redis.Z{Score: float64(msg.SendTime), Member: msg.ConversationID})
+
+	count, _ := pipe.ZCard(ctx, cacheKey).Result()
+	if count > 200 {
+		pipe.ZRemRangeByRank(ctx, cacheKey, 0, 0)
+	}
+	_, err := pipe.Exec(ctx)
+	return err
 }

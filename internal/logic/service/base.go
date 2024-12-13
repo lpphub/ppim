@@ -8,8 +8,8 @@ import (
 )
 
 type ServiceContext struct {
-	MsgSrv    *MessageSrv
-	RouterSrv *RouterSrv
+	MsgSrv   *MessageSrv
+	RouteSrv *RouteSrv
 }
 
 var svc *ServiceContext
@@ -26,8 +26,8 @@ func LoadService() {
 	route := newRouterSrv(mqProducer)
 
 	svc = &ServiceContext{
-		MsgSrv:    newMessageSrv(route),
-		RouterSrv: route,
+		MsgSrv:   newMessageSrv(route),
+		RouteSrv: route,
 	}
 }
 

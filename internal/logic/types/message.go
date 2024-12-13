@@ -16,6 +16,17 @@ type MessageDTO struct {
 type RouteDTO struct {
 	Uid   string
 	Did   string
-	Ip    string
 	Topic string
+	Ip    string
+}
+
+type RecentConvVO struct {
+	ConversationID   string      `json:"conversation_id"`
+	ConversationType string      `json:"conversation_type"`
+	UnreadCount      int32       `json:"unread_count"`
+	Pin              bool        `json:"pin"`
+	Mute             bool        `json:"mute"`
+	FromUid          string      `json:"from_uid"`
+	LastMsgID        string      `json:"last_msg_id"`
+	LastMsg          *MessageDTO `json:"last_msg"`
 }

@@ -20,10 +20,10 @@ var (
 
 type MessageSrv struct {
 	convSrv  *ConversationSrv
-	routeSrv *RouterSrv
+	routeSrv *RouteSrv
 }
 
-func newMessageSrv(routeSrv *RouterSrv) *MessageSrv {
+func newMessageSrv(routeSrv *RouteSrv) *MessageSrv {
 	return &MessageSrv{
 		convSrv:  newConversationSrv(),
 		routeSrv: routeSrv,
@@ -83,7 +83,7 @@ func (s *MessageSrv) HandleMsg(ctx context.Context, msg *types.MessageDTO) error
 		offlineSlice []string //离线用户UID
 	)
 	for _, uid := range receivers {
-		online, _ := global.Redis.HGetAll(ctx, svc.RouterSrv.genRouteKey(uid)).Result()
+		online, _ := global.Redis.HGetAll(ctx, svc.RouteSrv.genRouteKey(uid)).Result()
 		if len(online) > 0 {
 			for _, topic := range online {
 				onlineSlice = append(onlineSlice, fmt.Sprintf("%s#%s", uid, topic))

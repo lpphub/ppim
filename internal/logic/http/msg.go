@@ -1,21 +1,28 @@
 package http
 
 import (
-	"errors"
 	"github.com/gin-gonic/gin"
 	"github.com/lpphub/golib/logger/logx"
 	"github.com/lpphub/golib/web"
-	"ppim/internal/logic/global"
+	"ppim/internal/logic/http/srv"
+	"ppim/pkg/errs"
 )
 
 type MsgHandler struct {
+	ConvSrv *srv.ConversationSrv
 }
 
-func (h *MsgHandler) Test(ctx *gin.Context) {
-	t := global.Redis.Get(ctx, "test").String()
-	logx.Infof(ctx, "redis test: %s", t)
+func (h *MsgHandler) RecentConvList(ctx *gin.Context) {
+	uid := ctx.Query("uid")
+	if uid == "" {
+		web.JsonWithError(ctx, errs.ErrInvalidParam)
+		return
+	}
 
-	logx.Err(ctx, errors.New("bbb"), "")
-
-	web.JsonWithSuccess(ctx, "")
+	if list, err := h.ConvSrv.RecentList(ctx, uid); err != nil {
+		logx.Err(ctx, err, "")
+		web.JsonWithError(ctx, errs.ErrRecordNotFound)
+	} else {
+		web.JsonWithSuccess(ctx, list)
+	}
 }
