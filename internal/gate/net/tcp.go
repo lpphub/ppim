@@ -7,8 +7,8 @@ type TCPServer struct {
 
 func NewTCPServer(ctx *ServerContext, addr string) *TCPServer {
 	engOpt := EngineOption{
-		Protocol: _tcp,
-		Addr:     addr,
+		Network: _tcp,
+		Addr:    addr,
 	}
 
 	server := &TCPServer{

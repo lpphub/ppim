@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"fmt"
 	"github.com/lpphub/golib/logger"
 	"github.com/pkg/errors"
 	"ppim/internal/chatlib"
@@ -78,13 +79,15 @@ func (s *MessageSrv) HandleMsg(ctx context.Context, msg *types.MessageDTO) error
 
 	// 4.在线投递
 	var (
-		onlineSlice  []string //在线用户设备
+		onlineSlice  []string //在线用户路由
 		offlineSlice []string //离线用户UID
 	)
 	for _, uid := range receivers {
-		online, _ := global.Redis.SMembers(ctx, svc.RouterSrv.genRouteKey(uid)).Result()
+		online, _ := global.Redis.HGetAll(ctx, svc.RouterSrv.genRouteKey(uid)).Result()
 		if len(online) > 0 {
-			onlineSlice = append(onlineSlice, online...)
+			for _, topic := range online {
+				onlineSlice = append(onlineSlice, fmt.Sprintf("%s#%s", uid, topic))
+			}
 		} else {
 			offlineSlice = append(offlineSlice, uid)
 		}

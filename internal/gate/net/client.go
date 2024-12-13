@@ -46,7 +46,7 @@ func (c *Client) Write(data []byte) (int, error) {
 		return 0, err
 	}
 
-	if ctx.ConnType == _ws {
+	if ctx.Network == _ws {
 		err = wsutil.WriteServerBinary(c.Conn, data)
 		return len(data), err
 	}

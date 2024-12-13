@@ -13,17 +13,17 @@ import (
 	"time"
 )
 
-type ConnType int8
+type Network int8
 
 const (
-	_tcp ConnType = iota
+	_tcp Network = iota
 	_ws
 )
 
 type (
 	EngineOption struct {
-		Protocol ConnType
-		Addr     string
+		Network Network
+		Addr    string
 	}
 
 	EventEngine struct {
@@ -35,10 +35,10 @@ type (
 	}
 
 	EventConnContext struct {
-		Codec    codec.Codec
-		Authed   bool
-		ConnType ConnType
-		WsCodec  *codec.WsCodec
+		Codec   codec.Codec
+		Authed  bool
+		Network Network
+		WsCodec *codec.WsCodec
 	}
 )
 
@@ -75,10 +75,10 @@ func (e *EventEngine) OnOpen(c gnet.Conn) (out []byte, action gnet.Action) {
 	//}
 
 	ctx := &EventConnContext{
-		ConnType: e.opt.Protocol,
-		Authed:   false,
-		Codec:    new(codec.ProtobufCodec), // todo 优化codec设计
-		WsCodec:  new(codec.WsCodec),
+		Network: e.opt.Network,
+		Authed:  false,
+		Codec:   new(codec.ProtobufCodec), // todo 优化codec设计
+		WsCodec: new(codec.WsCodec),
 	}
 	c.SetContext(ctx)
 
@@ -98,7 +98,7 @@ func (e *EventEngine) OnClose(c gnet.Conn, err error) (action gnet.Action) {
 
 func (e *EventEngine) OnTraffic(_c gnet.Conn) gnet.Action {
 	connCtx := _c.Context().(*EventConnContext)
-	if connCtx.ConnType == _tcp {
+	if connCtx.Network == _tcp {
 		buf, err := connCtx.Codec.Decode(_c)
 		if err != nil {
 			if errors.Is(err, codec.ErrIncompletePacket) {
@@ -115,7 +115,7 @@ func (e *EventEngine) OnTraffic(_c gnet.Conn) gnet.Action {
 		if act := e.process(_c, &msg, connCtx.Authed); act == gnet.Close {
 			return act
 		}
-	} else if connCtx.ConnType == _ws {
+	} else if connCtx.Network == _ws {
 		ws := connCtx.WsCodec
 		if ws.ReadBufferBytes(_c) == gnet.Close {
 			return gnet.Close
@@ -167,7 +167,7 @@ func (e *EventEngine) process(_c gnet.Conn, msg *protocol.Message, isAuthed bool
 func (e *EventEngine) OnTick() (delay time.Duration, action gnet.Action) {
 	delay = 3 * time.Minute
 
-	if e.opt.Protocol == _ws { // tcp与ws 引用同一个connManager，只执行一个即可；后续可优化共用一个event_engine
+	if e.opt.Network == _ws { // tcp与ws 引用同一个connManager，只执行一个即可；后续可优化共用一个event_engine
 		return
 	}
 	logger.Log().Info().Msgf("cleaning expired connections...")

@@ -56,7 +56,7 @@ func (p *Processor) Auth(conn gnet.Conn, packet *protocol.ConnectPacket) error {
 		})
 
 		connCtx := conn.Context().(*EventConnContext)
-		if connCtx.ConnType == _ws {
+		if connCtx.Network == _ws {
 			if err := wsutil.WriteServerBinary(conn, ack); err != nil {
 				logger.Err(ctx, err, "failed to write ws")
 				return err
@@ -120,9 +120,11 @@ func (p *Processor) Process(conn gnet.Conn, msg *protocol.Message) error {
 
 func (p *Processor) ping(_c *Client, _ *protocol.PingPacket) error {
 	logger.Log().Debug().Msgf("UID=[%s] 收到ping请求", _c.UID)
+	// todo 心跳时，更新客户端route状态
+
 	_c.HeartbeatLastTime = time.Now()
 
-	bytes, _ := protocol.PacketPong(&protocol.PongPacket{})
+	bytes, _ := protocol.PacketPong(nil)
 	_, err := _c.Write(bytes)
 	return err
 }

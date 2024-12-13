@@ -6,5 +6,5 @@ server:
 kafka:
   brokers:
     - "localhost:9094"
-  topic: "test"
-  groupId: "test"
+  topic: "test-msg"
+  groupId: "test_group"

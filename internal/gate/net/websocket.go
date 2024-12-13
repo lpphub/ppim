@@ -7,8 +7,8 @@ type WsServer struct {
 
 func NewWsServer(svc *ServerContext, addr string) *WsServer {
 	engOpt := EngineOption{
-		Protocol: _ws,
-		Addr:     addr,
+		Network: _ws,
+		Addr:    addr,
 	}
 
 	server := &WsServer{

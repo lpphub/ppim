@@ -18,6 +18,7 @@ type RouterSrv struct {
 }
 
 const (
+	// 缓存格式：route:123 pc_d003 topic1 ios_i201 topic2
 	cacheRouteUid = "route:%s"
 )
 
@@ -27,20 +28,20 @@ func newRouterSrv(mq *producer.Producer) *RouterSrv {
 	}
 }
 
-func (s *RouterSrv) Register(ctx context.Context, ol *types.RouteDTO) error {
-	err := global.Redis.SAdd(ctx, s.genRouteKey(ol.Uid), s.buildVal(ol)).Err()
+func (s *RouterSrv) Online(ctx context.Context, ol *types.RouteDTO) error {
+	err := global.Redis.HSet(ctx, s.genRouteKey(ol.Uid), ol.Did, ol.Topic).Err()
 	return err
 }
 
-func (s *RouterSrv) UnRegister(ctx context.Context, ol *types.RouteDTO) error {
-	err := global.Redis.SRem(ctx, s.genRouteKey(ol.Uid), s.buildVal(ol)).Err()
+func (s *RouterSrv) Offline(ctx context.Context, ol *types.RouteDTO) error {
+	err := global.Redis.HDel(ctx, s.genRouteKey(ol.Uid), ol.Did).Err()
 	return err
 }
 
 func (s *RouterSrv) RouteDeliver(ctx context.Context, routeKeys []string, msg *types.MessageDTO) error {
 	messageSlice := make([]kafka.Message, 0, len(routeKeys))
 	for _, key := range routeKeys {
-		route := strings.Split(key, "_")
+		route := strings.Split(key, "#")
 
 		dd := &chatlib.DeliverMsg{
 			CMD:     chatlib.DeliverChat,
@@ -48,7 +49,7 @@ func (s *RouterSrv) RouteDeliver(ctx context.Context, routeKeys []string, msg *t
 			ChatMsg: msg,
 		}
 		message := kafka.Message{
-			Topic: route[2],
+			Topic: route[1],
 			Value: dd.ToJsonBytes(),
 		}
 		messageSlice = append(messageSlice, message)

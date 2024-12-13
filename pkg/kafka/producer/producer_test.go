@@ -14,7 +14,7 @@ import (
 func TestProducer_SendMessage(t *testing.T) {
 	logger.Setup()
 
-	p, err := NewProducer(WithBrokers([]string{"localhost:9094"}), WithBatchTimeout(200*time.Millisecond), WithAsync(true))
+	p, err := NewProducer(WithBrokers([]string{"localhost:9094"}), WithBatchTimeout(100*time.Millisecond), WithAsync(false))
 	if err != nil {
 		t.Logf("%v", err)
 		return
@@ -32,7 +32,10 @@ func TestProducer_SendMessage(t *testing.T) {
 		}
 
 		t1 := time.Now()
-		_ = p.SendMessage(context.Background(), msg)
+		err = p.SendMessage(context.Background(), msg)
+		if err != nil {
+			t.Logf("%v", err)
+		}
 		t.Logf("cost %d", time.Since(t1).Milliseconds())
 	}
 }
