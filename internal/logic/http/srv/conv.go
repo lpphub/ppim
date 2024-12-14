@@ -2,6 +2,7 @@ package srv
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/jinzhu/copier"
 	"ppim/internal/logic/store"
 	"ppim/internal/logic/types"
 )
@@ -35,5 +36,22 @@ func (srv *ConvSrv) RecentList(ctx *gin.Context, uid string) (list []*types.Rece
 		msgIds = append(msgIds, d.LastMsgId)
 	}
 
+	msgList, err := new(store.Message).ListByMsgIds(ctx, msgIds)
+	if err != nil {
+		return nil, err
+	}
+
+	msgMap := make(map[string]*types.MessageDTO, len(msgList))
+	for _, m := range msgList {
+		var md types.MessageDTO
+		_ = copier.Copy(&m, md)
+		msgMap[m.MsgID] = &md
+	}
+
+	for _, vo := range list {
+		if md, ok := msgMap[vo.LastMsgID]; ok {
+			vo.LastMsg = md
+		}
+	}
 	return
 }

@@ -2,6 +2,7 @@ package store
 
 import (
 	"context"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"ppim/internal/logic/global"
 	"time"
@@ -29,4 +30,18 @@ func (*Message) Collection() *mongo.Collection {
 func (m *Message) Insert(ctx context.Context) error {
 	_, err := m.Collection().InsertOne(ctx, m)
 	return err
+}
+
+func (m *Message) ListByMsgIds(ctx context.Context, msgIds []string) ([]Message, error) {
+	filter := bson.M{"msg_id": bson.M{"$in": msgIds}}
+	cursor, err := m.Collection().Find(ctx, filter)
+	if err != nil {
+		return nil, err
+	}
+
+	var results []Message
+	if err = cursor.All(ctx, &results); err != nil {
+		return nil, err
+	}
+	return results, nil
 }

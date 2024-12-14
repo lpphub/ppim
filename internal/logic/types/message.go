@@ -1,5 +1,7 @@
 package types
 
+import "time"
+
 type MessageDTO struct {
 	MsgID            string // 消息ID (唯一标识)
 	MsgSeq           uint64 // 消息序列号 (递增)
@@ -29,4 +31,5 @@ type RecentConvVO struct {
 	FromUid          string      `json:"from_uid"`
 	LastMsgID        string      `json:"last_msg_id"`
 	LastMsg          *MessageDTO `json:"last_msg"`
+	UpdatedAt        time.Time   `json:"updated_at"`
 }

@@ -56,6 +56,7 @@ func (c *ConversationSrv) indexWithLock(ctx context.Context, msg *types.MessageD
 	c.segmentLock.Lock(index)
 	defer c.segmentLock.Unlock(index)
 
+	// todo 将最新消息写入到redis，用于快速查询最近会话；另考虑异步更新存储消息
 	if err := c.cacheRecent(ctx, uid, msg); err != nil {
 		logger.Err(ctx, err, fmt.Sprintf("conversation cache recent: uid=%s", uid))
 		return
