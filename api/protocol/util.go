@@ -26,6 +26,15 @@ func PacketConnectAck(connAck *ConnectAckPacket) ([]byte, error) {
 	})
 }
 
+func PacketPing(ping *PingPacket) ([]byte, error) {
+	return proto.Marshal(&Message{
+		MsgType: MsgType_PING,
+		Payload: &Message_PingPacket{
+			PingPacket: ping,
+		},
+	})
+}
+
 func PacketPong(pong *PongPacket) ([]byte, error) {
 	return proto.Marshal(&Message{
 		MsgType: MsgType_PONG,

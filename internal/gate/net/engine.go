@@ -170,13 +170,14 @@ func (e *EventEngine) OnTick() (delay time.Duration, action gnet.Action) {
 	if e.opt.Network == _ws { // tcp与ws 引用同一个connManager，只执行一个即可；后续可优化共用一个event_engine
 		return
 	}
-	logger.Log().Info().Msgf("cleaning expired connections...")
+	logger.Log().Info().Msgf("cleaning connections without heartbeat...")
 
 	interval := time.Now().Add(-5 * time.Minute)
 	cm := e.svc.ConnManager
 	for i, c := range cm.connMap {
 		if interval.After(c.HeartbeatLastTime) { // 超过5分钟未收到心跳
 			cm.RemoveWithFD(i)
+			logger.Log().Warn().Msgf("close the connection without heartbeat: uid=%s, did=%s", c.UID, c.DID)
 		}
 	}
 	return

@@ -33,15 +33,30 @@ func newConversationSrv() *ConversationSrv {
 	}
 }
 
+/**
+ * 1.会话最新消息
+ * 2.用户最近会话列表：只保留100条
+ * 3.用户会话详细：未读消息数，最新消息, 置顶，免打扰，已读消息
+ *
+ * conv:recent:msg:{convID} -> string -> msg
+ * conv:recent:{uid} -> sortedset -> convID,sendTime
+ * conv:recent:{uid}:{convID} -> hash -> unreadCount,pin,mute,readMsgId
+ */
 const (
-	CacheConvRecent = "conv:recent:%s"
+	CacheConvRecentMsg  = "conv:recent:msg:%s"
+	CacheConvRecent     = "conv:recent:%s"
+	CacheConvRecentInfo = "conv:recent:%s:%s"
+
+	CacheFieldConvUnreadCount = "unreadCount"
+	CacheFieldConvLastMsgId   = "lastMsgId"
+	CacheFieldConvPin         = "pin"
+	CacheFieldConvMute        = "mute"
+	CacheFieldConvReadMsgId   = "readMsgId"
 )
 
 func (c *ConversationSrv) IndexRecent(ctx context.Context, msg *types.MessageDTO, uidSlice []string) error {
-	// 发送者会话
+	// 发送者 + 接收者
 	uidSlice = append(uidSlice, msg.FromID)
-
-	// 接收者会话
 	for _, uid := range uidSlice {
 		_ = c.works.Submit(func() {
 			c.indexWithLock(ctx, msg, uid)
@@ -51,17 +66,17 @@ func (c *ConversationSrv) IndexRecent(ctx context.Context, msg *types.MessageDTO
 }
 
 func (c *ConversationSrv) indexWithLock(ctx context.Context, msg *types.MessageDTO, uid string) {
-	index := chatlib.DigitizeUID(uid)
 	// todo 集群模式下，分布式锁
+	index := chatlib.DigitizeUID(uid)
 	c.segmentLock.Lock(index)
 	defer c.segmentLock.Unlock(index)
 
-	// todo 将最新消息写入到redis，用于快速查询最近会话；另考虑异步更新存储消息
 	if err := c.cacheRecent(ctx, uid, msg); err != nil {
 		logger.Err(ctx, err, fmt.Sprintf("conversation cache recent: uid=%s", uid))
 		return
 	}
 
+	// todo 优化：异步周期性从redis持久化至存储层，减少数据存储操作
 	conv, err := new(store.Conversation).GetOne(ctx, uid, msg.ConversationID)
 	if err != nil && errors.Is(err, mongo.ErrNoDocuments) {
 		conv = &store.Conversation{
@@ -89,15 +104,28 @@ func (c *ConversationSrv) indexWithLock(ctx context.Context, msg *types.MessageD
 	}
 }
 
+// 缓存用户最近会话
 func (c *ConversationSrv) cacheRecent(ctx context.Context, uid string, msg *types.MessageDTO) error {
-	// 缓存用户最近会话
 	cacheKey := fmt.Sprintf(CacheConvRecent, uid)
+	cacheInfoKey := fmt.Sprintf(CacheConvRecentInfo, uid, msg.ConversationID)
+
 	pipe := global.Redis.Pipeline()
+	// 用户最新会话
 	pipe.ZAdd(ctx, cacheKey, redis.Z{Score: float64(msg.SendTime), Member: msg.ConversationID})
 
+	// 会话最新消息
+	pipe.HSet(ctx, cacheInfoKey, CacheFieldConvLastMsgId, msg.MsgID)
+
+	if uid != msg.FromID {
+		// 未读消息数
+		pipe.HIncrBy(ctx, cacheInfoKey, CacheFieldConvUnreadCount, 1)
+	}
+
+	// 会话数量超过100，删除最早一条
 	count, _ := pipe.ZCard(ctx, cacheKey).Result()
 	if count > 100 {
 		pipe.ZRemRangeByRank(ctx, cacheKey, 0, 0)
+		pipe.HDel(ctx, cacheInfoKey)
 	}
 	_, err := pipe.Exec(ctx)
 	return err
