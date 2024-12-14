@@ -30,27 +30,43 @@ func newRouterSrv(mq *producer.Producer) *RouteSrv {
 
 func (s *RouteSrv) Online(ctx context.Context, ol *types.RouteDTO) error {
 	err := global.Redis.HSet(ctx, s.genRouteKey(ol.Uid), ol.Did, ol.Topic).Err()
+	if err != nil {
+		logger.Err(ctx, err, "route online error")
+	}
 	return err
 }
 
 func (s *RouteSrv) Offline(ctx context.Context, ol *types.RouteDTO) error {
 	err := global.Redis.HDel(ctx, s.genRouteKey(ol.Uid), ol.Did).Err()
+	if err != nil {
+		logger.Err(ctx, err, "route offline error")
+	}
 	return err
 }
 
 func (s *RouteSrv) RouteDeliver(ctx context.Context, routeKeys []string, msg *types.MessageDTO) error {
-	messageSlice := make([]kafka.Message, 0, len(routeKeys))
+	topicReceivers := make(map[string][]string)
 	for _, key := range routeKeys {
+		// key = uid#topic
 		route := strings.Split(key, "#")
 
+		if r, ok := topicReceivers[route[1]]; ok {
+			topicReceivers[route[1]] = append(r, route[0])
+		} else {
+			topicReceivers[route[1]] = []string{route[0]}
+		}
+	}
+
+	messageSlice := make([]kafka.Message, 0, len(routeKeys))
+	for t, us := range topicReceivers {
 		dd := &chatlib.DeliverMsg{
-			CMD:     chatlib.DeliverChat,
-			ToUID:   route[0],
-			ChatMsg: msg,
+			CMD:       chatlib.DeliverChat,
+			Receivers: us,
+			ChatMsg:   msg,
 		}
 		message := kafka.Message{
-			Topic: route[1],
 			Value: dd.ToJsonBytes(),
+			Topic: t,
 		}
 		messageSlice = append(messageSlice, message)
 	}

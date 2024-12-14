@@ -2,10 +2,14 @@ package main
 
 import (
 	"bufio"
+	"context"
 	"fmt"
+	"github.com/gobwas/ws"
+	"github.com/gobwas/ws/wsutil"
 	"github.com/golang/protobuf/proto"
 	"github.com/google/uuid"
-	"github.com/gorilla/websocket"
+	"github.com/pkg/errors"
+	"io"
 	"os"
 	"ppim/api/protocol"
 	"ppim/internal/chatlib"
@@ -13,7 +17,7 @@ import (
 )
 
 func main() {
-	c, _, err := websocket.DefaultDialer.Dial("ws://localhost:5051/", nil)
+	c, _, _, err := ws.Dial(context.Background(), "ws://localhost:5051")
 	if err != nil {
 		fmt.Printf("%v\n", err)
 		return
@@ -22,13 +26,13 @@ func main() {
 
 	go func() {
 		for {
-			_, message, err := c.ReadMessage()
+			message, _, err := wsutil.ReadServerData(c)
 			if err != nil {
-				if websocket.IsUnexpectedCloseError(err) {
+				if errors.Is(err, io.EOF) {
 					os.Exit(-1)
 					return
 				}
-				fmt.Printf("%v\n", err)
+				fmt.Printf("read err: %v\n", err)
 				return
 			}
 
@@ -56,7 +60,7 @@ func main() {
 		Did:   "p456",
 		Token: "bbb",
 	})
-	err = c.WriteMessage(websocket.BinaryMessage, msg1)
+	err = wsutil.WriteClientBinary(c, msg1)
 	if err != nil {
 		fmt.Printf("write err: %v\n", err)
 		return
@@ -78,7 +82,7 @@ func main() {
 				SendTime: uint64(time.Now().UnixMilli()),
 			},
 		})
-		err = c.WriteMessage(websocket.BinaryMessage, msg3)
+		err = wsutil.WriteClientBinary(c, msg3)
 		if err != nil {
 			fmt.Printf("write err: %v\n", err)
 			return

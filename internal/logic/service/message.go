@@ -9,6 +9,7 @@ import (
 	"ppim/internal/logic/global"
 	"ppim/internal/logic/store"
 	"ppim/internal/logic/types"
+	"ppim/pkg/util"
 	"time"
 )
 
@@ -92,9 +93,18 @@ func (s *MessageSrv) HandleMsg(ctx context.Context, msg *types.MessageDTO) error
 			offlineSlice = append(offlineSlice, uid)
 		}
 	}
+	// 发送者在线的其他设备也接收消息
+	selfOnline, _ := global.Redis.HGetAll(ctx, s.route.genRouteKey(msg.FromID)).Result()
+	if len(selfOnline) > 1 {
+		for did, topic := range selfOnline {
+			if msg.FromDID != did {
+				onlineSlice = append(onlineSlice, fmt.Sprintf("%s#%s", msg.FromID, topic))
+			}
+		}
+	}
 
 	if len(onlineSlice) > 0 {
-		err := s.route.RouteDeliver(ctx, onlineSlice, msg)
+		err := s.route.RouteDeliver(ctx, util.RemoveDup(onlineSlice), msg)
 		if err != nil {
 			logger.Err(ctx, err, "")
 			return ErrMsgRoute

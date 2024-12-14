@@ -2,7 +2,7 @@ package net
 
 type TCPServer struct {
 	svc    *ServerContext
-	engine *EventEngine
+	engine EventEngine
 }
 
 func NewTCPServer(ctx *ServerContext, addr string) *TCPServer {

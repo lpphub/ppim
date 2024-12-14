@@ -2,7 +2,7 @@ package net
 
 type WsServer struct {
 	svc    *ServerContext
-	engine *EventEngine
+	engine EventEngine
 }
 
 func NewWsServer(svc *ServerContext, addr string) *WsServer {

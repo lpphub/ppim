@@ -43,11 +43,6 @@ func (s *Subscriber) handleDeliver(ctx context.Context, message kafka.Message) e
 
 	switch msg.CMD {
 	case chatlib.DeliverChat:
-		clients := s.svc.ConnManager.GetWithUID(msg.ToUID)
-		if len(clients) == 0 {
-			return nil
-		}
-
 		chat := msg.ChatMsg
 		bytes, _ := protocol.PacketReceive(&protocol.ReceivePacket{
 			ConversationType: chat.ConversationType,
@@ -62,12 +57,21 @@ func (s *Subscriber) handleDeliver(ctx context.Context, message kafka.Message) e
 			},
 		})
 
-		for _, client := range clients {
-			_, err := client.Write(bytes)
-			if err != nil {
-				logger.Err(ctx, err, "write to client error")
+		for _, receiver := range msg.Receivers {
+			clients := s.svc.ConnManager.GetWithUID(receiver)
+			if len(clients) == 0 {
+				continue
+			}
+			for _, client := range clients {
+				if client.DID != chat.FromDID { // 避免自己收到消息
+					_, err := client.Write(bytes)
+					if err != nil {
+						logger.Err(ctx, err, "write to client error")
+					}
+				}
 			}
 		}
+
 	case chatlib.DeliverEvent:
 		// TODO: handle event
 	case chatlib.DeliverNotify:

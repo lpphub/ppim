@@ -137,6 +137,7 @@ func (p *Processor) send(_c *Client, message *protocol.SendPacket) error {
 	)
 	msg := &rpctypes.MessageReq{
 		FromID:           _c.UID,
+		FromDID:          _c.DID,
 		ToID:             message.ToID,
 		ConversationType: message.ConversationType,
 		ConversationID:   conversationID,

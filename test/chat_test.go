@@ -1,10 +1,16 @@
 package main
 
 import (
+	"context"
 	"encoding/binary"
+	"fmt"
+	"github.com/gobwas/ws"
+	"github.com/gobwas/ws/wsutil"
 	"github.com/golang/protobuf/proto"
-	"github.com/gorilla/websocket"
+	"github.com/pkg/errors"
+	"io"
 	"net"
+	"os"
 	"ppim/api/protocol"
 	"ppim/internal/chatlib"
 	"ppim/internal/gate/net/codec"
@@ -85,18 +91,22 @@ func TestClient_1(t *testing.T) {
 }
 
 func TestClient_2(t *testing.T) {
-	c, _, err := websocket.DefaultDialer.Dial("ws://localhost:5051/", nil)
+	c, _, _, err := ws.Dial(context.Background(), "ws://localhost:5051")
 	if err != nil {
-		t.Log(err)
+		fmt.Printf("%v\n", err)
 		return
 	}
 	defer c.Close()
 
 	go func() {
 		for {
-			_, message, err := c.ReadMessage()
+			message, _, err := wsutil.ReadServerData(c)
 			if err != nil {
-				t.Log(err)
+				if errors.Is(err, io.EOF) {
+					os.Exit(-1)
+					return
+				}
+				fmt.Printf("read err: %v\n", err)
 				return
 			}
 
@@ -104,15 +114,16 @@ func TestClient_2(t *testing.T) {
 			_ = proto.Unmarshal(message, &msg)
 
 			if msg.GetMsgType() == protocol.MsgType_CONNECT_ACK {
-				t.Logf("recv: type=%v data=%v", msg.GetMsgType(), msg.GetConnectAckPacket())
+				fmt.Printf("连接结果：%d \n", msg.GetConnectAckPacket().GetCode())
 			}
 
 			if msg.GetMsgType() == protocol.MsgType_SEND_ACK {
-				t.Logf("recv: type=%v data=%v", msg.GetMsgType(), msg.GetSendAckPacket())
+				fmt.Printf("发送结果：code=%d msgId=%s \n", msg.GetSendAckPacket().GetCode(), msg.GetSendAckPacket().GetMsgId())
 			}
 
 			if msg.GetMsgType() == protocol.MsgType_RECEIVE {
-				t.Logf("recv: type=%v data=%v", msg.GetMsgType(), msg.GetReceivePacket())
+				d := msg.GetReceivePacket()
+				fmt.Printf("接收到的消息：data=%s fromID=%s convID=%s \n", d.GetPayload().GetContent(), d.GetFromID(), d.GetConversationID())
 			}
 		}
 	}()
@@ -120,31 +131,31 @@ func TestClient_2(t *testing.T) {
 	// 1. 连接授权
 	msg1, _ := protocol.PacketConnect(&protocol.ConnectPacket{
 		Uid:   "456",
-		Did:   "p456",
+		Did:   "a456",
 		Token: "bbb",
 	})
-	err = c.WriteMessage(websocket.BinaryMessage, msg1)
+	err = wsutil.WriteClientBinary(c, msg1)
 	if err != nil {
-		t.Logf("write err: %v", err)
+		fmt.Printf("write err: %v\n", err)
 		return
 	}
 
 	// 2. 发送消息
-	msg2, _ := protocol.PacketSend(&protocol.SendPacket{
-		ConversationType: chatlib.ConvSingle,
-		ToID:             "123",
-		Payload: &protocol.Payload{
-			MsgNo:    "u124",
-			MsgType:  1,
-			Content:  "你好",
-			SendTime: uint64(time.Now().UnixMilli()),
-		},
-	})
-	err = c.WriteMessage(websocket.BinaryMessage, msg2)
-	if err != nil {
-		t.Logf("write err: %v", err)
-		return
-	}
+	//msg2, _ := protocol.PacketSend(&protocol.SendPacket{
+	//	ConversationType: chatlib.ConvSingle,
+	//	ToID:             "123",
+	//	Payload: &protocol.Payload{
+	//		MsgNo:    "u124",
+	//		MsgType:  1,
+	//		Content:  "你好",
+	//		SendTime: uint64(time.Now().UnixMilli()),
+	//	},
+	//})
+	//err = wsutil.WriteClientBinary(c, msg2)
+	//if err != nil {
+	//	t.Logf("write err: %v", err)
+	//	return
+	//}
 
 	select {}
 }

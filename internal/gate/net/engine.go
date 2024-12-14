@@ -42,8 +42,8 @@ type (
 	}
 )
 
-func NewEventEngine(ctx *ServerContext, opt EngineOption) *EventEngine {
-	return &EventEngine{
+func NewEventEngine(ctx *ServerContext, opt EngineOption) EventEngine {
+	return EventEngine{
 		svc: ctx,
 		opt: opt,
 	}

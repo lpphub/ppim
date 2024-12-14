@@ -12,6 +12,7 @@ type MessageDTO struct {
 	Content          string // 消息内容
 	ToID             string // 接收者ID
 	FromID           string // 发送者ID
+	FromDID          string // 发送者DID
 	SendTime         uint64 // 发送时间
 }
 
