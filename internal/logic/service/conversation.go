@@ -4,9 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	jsoniter "github.com/json-iterator/go"
 	"github.com/lpphub/golib/gowork"
 	"github.com/lpphub/golib/logger"
 	"github.com/redis/go-redis/v9"
+	"github.com/spf13/cast"
 	"go.mongodb.org/mongo-driver/mongo"
 	"ppim/internal/chatlib"
 	"ppim/internal/logic/global"
@@ -55,6 +57,9 @@ const (
 )
 
 func (c *ConversationSrv) IndexRecent(ctx context.Context, msg *types.MessageDTO, uidSlice []string) error {
+	msgJson, _ := jsoniter.MarshalToString(msg)
+	global.Redis.Set(ctx, fmt.Sprintf(CacheConvRecentMsg, msg.ConversationID), msgJson, 30*24*time.Hour)
+
 	// 发送者 + 接收者
 	uidSlice = append(uidSlice, msg.FromID)
 	for _, uid := range uidSlice {
@@ -71,7 +76,7 @@ func (c *ConversationSrv) indexWithLock(ctx context.Context, msg *types.MessageD
 	c.segmentLock.Lock(index)
 	defer c.segmentLock.Unlock(index)
 
-	if err := c.cacheRecent(ctx, uid, msg); err != nil {
+	if err := c.cacheStoreRecent(ctx, uid, msg); err != nil {
 		logger.Err(ctx, err, fmt.Sprintf("conversation cache recent: uid=%s", uid))
 		return
 	}
@@ -105,7 +110,7 @@ func (c *ConversationSrv) indexWithLock(ctx context.Context, msg *types.MessageD
 }
 
 // 缓存用户最近会话
-func (c *ConversationSrv) cacheRecent(ctx context.Context, uid string, msg *types.MessageDTO) error {
+func (c *ConversationSrv) cacheStoreRecent(ctx context.Context, uid string, msg *types.MessageDTO) error {
 	cacheKey := fmt.Sprintf(CacheConvRecent, uid)
 	cacheInfoKey := fmt.Sprintf(CacheConvRecentInfo, uid, msg.ConversationID)
 
@@ -129,4 +134,54 @@ func (c *ConversationSrv) cacheRecent(ctx context.Context, uid string, msg *type
 	}
 	_, err := pipe.Exec(ctx)
 	return err
+}
+
+func (c *ConversationSrv) CacheQueryRecent(ctx context.Context, uid string) ([]*types.RecentConvVO, error) {
+	ids, err := global.Redis.ZRevRange(ctx, fmt.Sprintf(CacheConvRecent, uid), 0, 200).Result()
+	if err != nil {
+		return nil, err
+	}
+	logger.Infof(ctx, "recent conv ids=%v", ids)
+
+	var list []*types.RecentConvVO
+	for _, id := range ids {
+		pipe := global.Redis.Pipeline()
+		pipe.Get(ctx, fmt.Sprintf(CacheConvRecentMsg, id))
+		pipe.HMGet(ctx, fmt.Sprintf(CacheConvRecentInfo, uid, id), CacheFieldConvUnreadCount, CacheFieldConvPin, CacheFieldConvMute)
+		cmds, err := pipe.Exec(ctx)
+		if err != nil {
+			logger.Err(ctx, err, "conv: cache query recent")
+			continue
+		}
+
+		vo := &types.RecentConvVO{}
+		recentMsg, _ := cmds[0].(*redis.StringCmd).Result()
+		if recentMsg != "" {
+			var mt types.MessageDTO
+			_ = jsoniter.UnmarshalFromString(recentMsg, &mt)
+
+			vo.ConversationID = mt.ConversationID
+			vo.ConversationType = mt.ConversationType
+			vo.FromUid = mt.FromID
+			vo.LastMsgID = mt.MsgID
+			vo.Version = mt.CreatedAt
+			vo.LastMsg = &mt
+		}
+
+		fields, _ := cmds[1].(*redis.SliceCmd).Result()
+		logger.Infof(ctx, "conv: cache query recent fields=%v", fields)
+		if len(fields) == 3 {
+			if fields[0] != nil {
+				vo.UnreadCount = cast.ToUint64(fields[0])
+			}
+			if fields[1] != nil {
+				vo.Pin = fields[1].(bool)
+			}
+			if fields[2] != nil {
+				vo.Mute = fields[2].(bool)
+			}
+		}
+		list = append(list, vo)
+	}
+	return list, nil
 }

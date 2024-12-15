@@ -35,6 +35,6 @@ func InitService() {
 	}
 }
 
-func Hint() *ServiceContext {
+func Hints() *ServiceContext {
 	return svc
 }

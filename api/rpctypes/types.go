@@ -30,9 +30,10 @@ type MessageReq struct {
 	MsgID            string // 消息ID
 	MsgSeq           uint64 // 消息序列号
 	MsgNo            string // 消息编号
-	MsgType          int32  // 消息类型
+	MsgType          int8   // 消息类型
 	Content          string // 消息内容
-	SendTime         uint64 // 发送时间
+	SendTime         int64  // 发送时间
+	CreatedAt        int64  // 创建时间
 }
 
 type MessageResp struct {

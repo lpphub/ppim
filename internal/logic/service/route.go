@@ -47,9 +47,7 @@ func (s *RouteSrv) Offline(ctx context.Context, ol *types.RouteDTO) error {
 func (s *RouteSrv) RouteDeliver(ctx context.Context, routeKeys []string, msg *types.MessageDTO) error {
 	topicReceivers := make(map[string][]string)
 	for _, key := range routeKeys {
-		// key = uid#topic
-		route := strings.Split(key, "#")
-
+		route := strings.Split(key, "#") // key = uid#topic
 		if r, ok := topicReceivers[route[1]]; ok {
 			topicReceivers[route[1]] = append(r, route[0])
 		} else {

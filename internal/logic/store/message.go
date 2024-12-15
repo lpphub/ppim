@@ -12,7 +12,7 @@ type Message struct {
 	MsgID            string    `bson:"msg_id"`
 	MsgSeq           uint64    `bson:"msg_seq"`
 	MsgNo            string    `bson:"msg_no"`
-	MsgType          int32     `bson:"msg_type"`
+	MsgType          int8      `bson:"msg_type"`
 	Content          string    `bson:"content"`
 	ConversationID   string    `bson:"conversation_id"`
 	ConversationType string    `bson:"conversation_type"`

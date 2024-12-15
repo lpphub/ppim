@@ -144,9 +144,10 @@ func (p *Processor) send(_c *Client, message *protocol.SendPacket) error {
 		MsgID:            msgId,
 		MsgSeq:           msgSeq,
 		MsgNo:            message.Payload.MsgNo,
-		MsgType:          message.Payload.MsgType,
+		MsgType:          int8(message.Payload.MsgType),
 		Content:          message.Payload.Content,
-		SendTime:         message.Payload.SendTime,
+		SendTime:         int64(message.Payload.SendTime),
+		CreatedAt:        time.Now().UnixMilli(),
 	}
 	logger.Log().Debug().Msgf("UID=[%s]发送消息: %v", _c.UID, msg)
 

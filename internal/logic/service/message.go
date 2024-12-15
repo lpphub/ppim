@@ -46,7 +46,7 @@ func (s *MessageSrv) HandleMsg(ctx context.Context, msg *types.MessageDTO) error
 		ConversationType: msg.ConversationType,
 		FromID:           msg.FromID,
 		ToID:             msg.ToID,
-		SendTime:         time.UnixMilli(int64(msg.SendTime)),
+		SendTime:         time.UnixMilli(msg.SendTime),
 		CreatedAt:        time.Now(),
 		UpdatedAt:        time.Now(),
 	}
@@ -93,7 +93,7 @@ func (s *MessageSrv) HandleMsg(ctx context.Context, msg *types.MessageDTO) error
 			offlineSlice = append(offlineSlice, uid)
 		}
 	}
-	// 发送者在线的其他设备也接收消息
+	// 发送者的其他在线设备也接收消息
 	selfOnline, _ := global.Redis.HGetAll(ctx, s.route.genRouteKey(msg.FromID)).Result()
 	if len(selfOnline) > 1 {
 		for did, topic := range selfOnline {

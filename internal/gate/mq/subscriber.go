@@ -52,7 +52,7 @@ func (s *Subscriber) handleDeliver(ctx context.Context, message kafka.Message) e
 				MsgNo:   chat.MsgNo,
 				MsgId:   chat.MsgID,
 				MsgSeq:  chat.MsgSeq,
-				MsgType: chat.MsgType,
+				MsgType: int32(chat.MsgType),
 				Content: chat.Content,
 			},
 		})

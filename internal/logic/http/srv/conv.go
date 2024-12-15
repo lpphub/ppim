@@ -3,6 +3,7 @@ package srv
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/jinzhu/copier"
+	"ppim/internal/logic/service"
 	"ppim/internal/logic/store"
 	"ppim/internal/logic/types"
 )
@@ -14,8 +15,10 @@ func NewConvSrv() *ConvSrv {
 }
 
 func (srv *ConvSrv) RecentList(ctx *gin.Context, uid string) (list []*types.RecentConvVO, err error) {
-	//ids, _ := global.Redis.ZRevRange(ctx, fmt.Sprintf(service.CacheConvRecent, uid), 0, 200).Result()
-	//logx.Infof(ctx, "recent conv ids=%v", ids)
+	list, err = service.Hints().Conv.CacheQueryRecent(ctx, uid)
+	if err == nil {
+		return
+	}
 
 	data, err := new(store.Conversation).ListRecent(ctx, uid)
 	if err != nil {
@@ -31,6 +34,7 @@ func (srv *ConvSrv) RecentList(ctx *gin.Context, uid string) (list []*types.Rece
 			Pin:              d.Pin,
 			FromUid:          d.FromID,
 			LastMsgID:        d.LastMsgId,
+			Version:          d.CreatedAt.UnixMilli(),
 		})
 
 		msgIds = append(msgIds, d.LastMsgId)
