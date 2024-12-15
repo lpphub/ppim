@@ -32,8 +32,9 @@ const (
 
 func RegisterRpcClient(registryAddr string) (err error) {
 	once.Do(func() {
-		discovery, err := etcdclient.NewEtcdV3Discovery(basePath, serviceName, strings.Split(registryAddr, ","), true, nil)
-		if err != nil {
+		discovery, cerr := etcdclient.NewEtcdV3Discovery(basePath, serviceName, strings.Split(registryAddr, ","), true, nil)
+		if cerr != nil {
+			err = cerr
 			return
 		}
 		logic := client.NewXClient(serviceName, client.Failtry, client.RandomSelect, discovery, client.DefaultOption)
