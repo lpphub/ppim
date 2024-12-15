@@ -10,7 +10,7 @@ import (
 func Serve() {
 	global.Init()
 
-	if err := rpc.RegisterRpcClient(global.Conf.Server.Etcd); err != nil {
+	if err := rpc.RegisterRpcClient(global.Conf.Server.RpcRegistry); err != nil {
 		panic(err.Error())
 	}
 

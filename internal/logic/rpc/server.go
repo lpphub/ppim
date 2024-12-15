@@ -10,18 +10,18 @@ import (
 )
 
 type RpcServer struct {
-	addr     string
-	etcdAddr []string
-	etcdPath string
-	srv      *server.Server
+	serviceAddr  string
+	registryAddr []string
+	basePath     string
+	srv          *server.Server
 }
 
-func NewRpcServer(addr, etcd string) *RpcServer {
+func NewRpcServer(srvAddr, registry string) *RpcServer {
 	return &RpcServer{
-		addr:     addr,
-		etcdAddr: strings.Split(etcd, ","),
-		etcdPath: "/rpcx",
-		srv:      server.NewServer(),
+		serviceAddr:  srvAddr,
+		registryAddr: strings.Split(registry, ","),
+		basePath:     "/rpcx",
+		srv:          server.NewServer(),
 	}
 }
 
@@ -30,23 +30,24 @@ func (s *RpcServer) registerServer() {
 }
 
 func (s *RpcServer) Start() {
-	setupEtcdRegisterPlugin(s)
+	setupRegistryPlugin(s)
 	s.registerServer()
 
-	logger.Log().Info().Msgf("Listening and serving RPC on %s", s.addr)
-	if err := s.srv.Serve("tcp", s.addr); err != nil {
+	logger.Log().Info().Msgf("Listening and serving RPC on %s", s.serviceAddr)
+	if err := s.srv.Serve("tcp", s.serviceAddr); err != nil {
 		panic(fmt.Sprintf("rpc server start failed, err:%v\n", err))
 	}
 }
 
-func setupEtcdRegisterPlugin(s *RpcServer) {
+func setupRegistryPlugin(s *RpcServer) {
 	r := &serverplugin.EtcdV3RegisterPlugin{
-		ServiceAddress: fmt.Sprintf("tcp@%s", s.addr),
-		EtcdServers:    s.etcdAddr,
-		BasePath:       s.etcdPath,
+		ServiceAddress: fmt.Sprintf("tcp@%s", s.serviceAddr),
+		EtcdServers:    s.registryAddr,
+		BasePath:       s.basePath,
 		UpdateInterval: time.Minute,
 		//Metrics:        metrics.NewRegistry(),
 	}
+
 	if err := r.Start(); err != nil {
 		logger.Log().Err(err).Msg("failed to start etcd")
 	}

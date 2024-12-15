@@ -21,7 +21,7 @@ var (
 )
 
 const (
-	etcdPath    = "/rpcx"
+	basePath    = "/rpcx"
 	serviceName = "logic"
 
 	methodAuth       = "Auth"
@@ -30,11 +30,10 @@ const (
 	methodSendMsg    = "SendMsg"
 )
 
-func RegisterRpcClient(addr string) (err error) {
+func RegisterRpcClient(registryAddr string) (err error) {
 	once.Do(func() {
-		discovery, derr := etcdclient.NewEtcdV3Discovery(etcdPath, serviceName, strings.Split(addr, ","), true, nil)
-		if derr != nil {
-			err = derr
+		discovery, err := etcdclient.NewEtcdV3Discovery(basePath, serviceName, strings.Split(registryAddr, ","), true, nil)
+		if err != nil {
 			return
 		}
 		logic := client.NewXClient(serviceName, client.Failtry, client.RandomSelect, discovery, client.DefaultOption)
@@ -77,9 +76,7 @@ func (c *RpcCaller) Register(ctx context.Context, uid, did string) error {
 		Did:   did,
 		Topic: global.Conf.Kafka.Topic, // 将当前连接
 	}
-	resp := &rpctypes.RouterReq{}
-
-	err := c.logic.Call(ctx, methodRegister, req, resp)
+	err := c.logic.Call(ctx, methodRegister, req, &rpctypes.RouterReq{})
 	if err != nil {
 		logger.Err(ctx, err, "")
 		return err
@@ -93,9 +90,7 @@ func (c *RpcCaller) UnRegister(ctx context.Context, uid, did string) error {
 		Did:   did,
 		Topic: global.Conf.Kafka.Topic,
 	}
-	resp := &rpctypes.RouterReq{}
-
-	err := c.logic.Call(ctx, methodUnRegister, req, resp)
+	err := c.logic.Call(ctx, methodUnRegister, req, &rpctypes.RouterReq{})
 	if err != nil {
 		logger.Err(ctx, err, "")
 		return err

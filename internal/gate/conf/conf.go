@@ -6,9 +6,9 @@ type Config struct {
 }
 
 type serverConf struct {
-	Tcp  string
-	Ws   string
-	Etcd string
+	Tcp         string
+	Ws          string
+	RpcRegistry string
 }
 
 type kafkaConf struct {

@@ -16,7 +16,7 @@ func Test_Auth(t *testing.T) {
 	resp := &rpctypes.AuthResp{}
 
 	//discovery, _ := client.NewPeer2PeerDiscovery("tcp@localhost:9090", "")
-	discovery, _ := etcdclient.NewEtcdV3Discovery("/rpcx", "logic", []string{"localhost:2379"}, false, nil)
+	discovery, _ := etcdclient.NewEtcdV3Discovery("rpcx", "logic", []string{"localhost:2379"}, false, nil)
 
 	xclient := client.NewXClient("logic", client.Failtry, client.RandomSelect, discovery, client.DefaultOption)
 	defer xclient.Close()

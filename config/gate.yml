@@ -1,7 +1,7 @@
 server:
   tcp: ":5050"
   ws: ":5051"
-  etcd: "127.0.0.1:2379"
+  rpcRegistry: "localhost:2379"
 
 kafka:
   brokers:
