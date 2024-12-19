@@ -15,8 +15,7 @@ const (
 func GenConversationID(from, to, conversationType string) (string, error) {
 	switch conversationType {
 	case ConvSingle:
-		fromID := DigitizeUID(from)
-		toID := DigitizeUID(to)
+		fromID, toID := DigitizeUID(from), DigitizeUID(to)
 		if fromID > toID {
 			return fmt.Sprintf("%s|%d@%d", conversationType, fromID, toID), nil
 		}

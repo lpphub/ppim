@@ -44,7 +44,7 @@ func (s *MessageSrv) HandleMsg(ctx context.Context, msg *types.MessageDTO) error
 		Content:          msg.Content,
 		ConversationID:   msg.ConversationID,
 		ConversationType: msg.ConversationType,
-		FromID:           msg.FromID,
+		FromUID:          msg.FromUID,
 		ToID:             msg.ToID,
 		SendTime:         time.UnixMilli(msg.SendTime),
 		CreatedAt:        time.Now(),
@@ -94,11 +94,11 @@ func (s *MessageSrv) HandleMsg(ctx context.Context, msg *types.MessageDTO) error
 		}
 	}
 	// 发送者的其他在线设备也接收消息
-	selfOnline, _ := global.Redis.HGetAll(ctx, s.route.genRouteKey(msg.FromID)).Result()
+	selfOnline, _ := global.Redis.HGetAll(ctx, s.route.genRouteKey(msg.FromUID)).Result()
 	if len(selfOnline) > 1 {
 		for did, topic := range selfOnline {
 			if msg.FromDID != did {
-				onlineSlice = append(onlineSlice, fmt.Sprintf("%s#%s", msg.FromID, topic))
+				onlineSlice = append(onlineSlice, fmt.Sprintf("%s#%s", msg.FromUID, topic))
 			}
 		}
 	}

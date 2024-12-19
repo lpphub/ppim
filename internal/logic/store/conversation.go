@@ -18,7 +18,7 @@ type Conversation struct {
 	UnreadCount      uint64    `bson:"unread_count"` // 未读消息数
 	LastMsgId        string    `bson:"last_msg_id"`
 	LastMsgSeq       uint64    `bson:"last_msg_seq"`
-	FromID           string    `bson:"from_id"`
+	FromUID          string    `bson:"from_uid"`
 	CreatedAt        time.Time `bson:"created_at"`
 	UpdatedAt        time.Time `bson:"updated_at"`
 }

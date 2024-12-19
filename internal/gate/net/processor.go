@@ -136,7 +136,7 @@ func (p *Processor) send(_c *Client, message *protocol.SendPacket) error {
 		conversationID, _ = chatlib.GenConversationID(_c.UID, message.ToID, message.ConversationType)
 	)
 	msg := &rpctypes.MessageReq{
-		FromID:           _c.UID,
+		FromUID:          _c.UID,
 		FromDID:          _c.DID,
 		ToID:             message.ToID,
 		ConversationType: message.ConversationType,

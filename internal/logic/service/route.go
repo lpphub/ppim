@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"fmt"
+	"github.com/jinzhu/copier"
 	"github.com/lpphub/golib/logger"
 	"github.com/segmentio/kafka-go"
 	"ppim/internal/chatlib"
@@ -57,13 +58,14 @@ func (s *RouteSrv) RouteDelivery(ctx context.Context, routeKeys []string, msg *t
 
 	messageSlice := make([]kafka.Message, 0, len(routeKeys))
 	for t, us := range topicReceivers {
-		dd := &chatlib.DeliveryMsg{
+		dm := &chatlib.DeliveryMsg{
 			CMD:       chatlib.DeliveryChat,
+			FromUID:   msg.FromUID,
 			Receivers: us,
-			ChatMsg:   msg,
+			Chat:      s.convert(msg),
 		}
 		message := kafka.Message{
-			Value: dd.ToJsonBytes(),
+			Value: dm.ToJsonBytes(),
 			Topic: t,
 		}
 		messageSlice = append(messageSlice, message)
@@ -73,6 +75,12 @@ func (s *RouteSrv) RouteDelivery(ctx context.Context, routeKeys []string, msg *t
 	err := s.mq.SendMessage(ctx, messageSlice...)
 	logger.Infof(ctx, "MQ produce cost_ms: %d", time.Since(t).Milliseconds())
 	return err
+}
+
+func (s *RouteSrv) convert(msg *types.MessageDTO) *chatlib.ChatMsg {
+	var chat chatlib.ChatMsg
+	_ = copier.Copy(&chat, msg)
+	return &chat
 }
 
 func (s *RouteSrv) genRouteKey(uid string) string {

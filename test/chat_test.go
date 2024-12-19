@@ -143,7 +143,7 @@ func TestClient_2(t *testing.T) {
 	// 2. 发送消息
 	//msg2, _ := protocol.PacketSend(&protocol.SendPacket{
 	//	ConversationType: chatlib.ConvSingle,
-	//	ToID:             "123",
+	//	ToUID:             "123",
 	//	Payload: &protocol.Payload{
 	//		MsgNo:    "u124",
 	//		MsgType:  1,

@@ -3,7 +3,6 @@ package task
 import (
 	"context"
 	"ppim/internal/chatlib"
-	"ppim/internal/logic/types"
 	"ppim/pkg/ext"
 )
 
@@ -13,8 +12,8 @@ type RetryDelivery struct {
 	mtx   ext.SegmentLock
 }
 
-func (r *RetryDelivery) Add(msg *types.MessageDTO) error {
-	uid := chatlib.DigitizeUID(msg.FromID)
+func (r *RetryDelivery) Add(msg *chatlib.DeliveryMsg) error {
+	uid := chatlib.DigitizeUID(msg.FromUID)
 	r.mtx.Lock(uid)
 	defer r.mtx.Unlock(uid)
 

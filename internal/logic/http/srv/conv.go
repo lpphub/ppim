@@ -32,7 +32,7 @@ func (srv *ConvSrv) RecentList(ctx *gin.Context, uid string) (list []*types.Rece
 			ConversationType: d.ConversationType,
 			Mute:             d.Mute,
 			Pin:              d.Pin,
-			FromUid:          d.FromID,
+			FromUID:          d.FromUID,
 			LastMsgID:        d.LastMsgId,
 			Version:          d.CreatedAt.UnixMilli(),
 		})

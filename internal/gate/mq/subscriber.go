@@ -34,7 +34,7 @@ func (s *Subscriber) register() {
 }
 
 func (s *Subscriber) handleDeliver(ctx context.Context, message kafka.Message) error {
-	logger.Log().Info().Msgf("receive message: %s", string(message.Value))
+	logger.Log().Info().Msgf("mq receive message: %s", string(message.Value))
 
 	var msg chatlib.DeliveryMsg
 	if err := jsoniter.Unmarshal(message.Value, &msg); err != nil {
@@ -43,7 +43,7 @@ func (s *Subscriber) handleDeliver(ctx context.Context, message kafka.Message) e
 
 	switch msg.CMD {
 	case chatlib.DeliveryChat:
-		chat := msg.ChatMsg
+		chat := msg.Chat
 		bytes, _ := protocol.PacketReceive(&protocol.ReceivePacket{
 			ConversationType: chat.ConversationType,
 			ConversationID:   chat.ConversationID,

@@ -61,7 +61,7 @@ func (c *ConversationSrv) IndexRecent(ctx context.Context, msg *types.MessageDTO
 	global.Redis.Set(ctx, fmt.Sprintf(CacheConvRecentMsg, msg.ConversationID), msgJson, 30*24*time.Hour)
 
 	// 发送者 + 接收者
-	uidSlice = append(uidSlice, msg.FromID)
+	uidSlice = append(uidSlice, msg.FromUID)
 	for _, uid := range uidSlice {
 		_ = c.works.Submit(func() {
 			c.indexWithLock(ctx, msg, uid)
@@ -96,13 +96,13 @@ func (c *ConversationSrv) indexWithLock(ctx context.Context, msg *types.MessageD
 		}
 		_ = conv.Insert(ctx)
 	} else {
-		if msg.FromID != uid {
+		if msg.FromUID != uid {
 			conv.UnreadCount++
 		}
 		if conv.LastMsgSeq < msg.MsgSeq {
 			conv.LastMsgId = msg.MsgID
 			conv.LastMsgSeq = msg.MsgSeq
-			conv.FromID = msg.FromID
+			conv.FromUID = msg.FromUID
 		}
 		conv.UpdatedAt = time.Now()
 		_ = conv.Update(ctx)
@@ -121,7 +121,7 @@ func (c *ConversationSrv) cacheStoreRecent(ctx context.Context, uid string, msg 
 	// 会话最新消息
 	pipe.HSet(ctx, cacheInfoKey, CacheFieldConvLastMsgId, msg.MsgID)
 
-	if uid != msg.FromID {
+	if uid != msg.FromUID {
 		// 未读消息数
 		pipe.HIncrBy(ctx, cacheInfoKey, CacheFieldConvUnreadCount, 1)
 	}
@@ -162,7 +162,7 @@ func (c *ConversationSrv) CacheQueryRecent(ctx context.Context, uid string) ([]*
 
 			vo.ConversationID = mt.ConversationID
 			vo.ConversationType = mt.ConversationType
-			vo.FromUid = mt.FromID
+			vo.FromUID = mt.FromUID
 			vo.LastMsgID = mt.MsgID
 			vo.Version = mt.CreatedAt
 			vo.LastMsg = &mt

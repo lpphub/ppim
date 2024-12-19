@@ -23,7 +23,7 @@ type RouterResp struct {
 
 type MessageReq struct {
 	ToID             string // 目标用户
-	FromID           string // 发送者
+	FromUID          string // 发送者
 	FromDID          string // 发送者DID
 	ConversationType string // 会话类型
 	ConversationID   string // 会话ID

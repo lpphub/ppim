@@ -25,7 +25,7 @@ func TestConversationSrv_IndexConversation(t *testing.T) {
 		Content:          "hello2",
 		ConversationID:   "single|123@456",
 		ConversationType: "single",
-		FromID:           "456",
+		FromUID:          "456",
 		ToID:             "123",
 	}
 	srv.indexWithLock(context.TODO(), msg, "456")
