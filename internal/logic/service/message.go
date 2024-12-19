@@ -32,7 +32,7 @@ func newMessageSrv(conv *ConversationSrv, route *RouteSrv) *MessageSrv {
 }
 
 func (s *MessageSrv) HandleMsg(ctx context.Context, msg *types.MessageDTO) error {
-	// todo 异步处理
+	// todo 优化：异步处理
 	ctx = logger.WithCtx(ctx)
 
 	// 1.消息持久化
@@ -104,7 +104,7 @@ func (s *MessageSrv) HandleMsg(ctx context.Context, msg *types.MessageDTO) error
 	}
 
 	if len(onlineSlice) > 0 {
-		err := s.route.RouteDeliver(ctx, util.RemoveDup(onlineSlice), msg)
+		err := s.route.RouteDelivery(ctx, util.RemoveDup(onlineSlice), msg)
 		if err != nil {
 			logger.Err(ctx, err, "")
 			return ErrMsgRoute

@@ -18,7 +18,7 @@ type Queue struct {
 func NewQueue(workers int) *Queue {
 	ctx, cancel := context.WithCancel(context.Background())
 	return &Queue{
-		tasks:   make(chan Task, 100), // buffer size of 100
+		tasks:   make(chan Task, 1024), // buffer size of 1024
 		workers: workers,
 		ctx:     ctx,
 		cancel:  cancel,
@@ -28,7 +28,7 @@ func NewQueue(workers int) *Queue {
 func (q *Queue) Start() {
 	for i := 0; i < q.workers; i++ {
 		q.wg.Add(1)
-		go q.worker()
+		go q.work()
 	}
 }
 
@@ -46,8 +46,8 @@ func (q *Queue) Add(task Task) {
 	}
 }
 
-// worker processes tasks from the queue
-func (q *Queue) worker() {
+// work processes tasks from the queue
+func (q *Queue) work() {
 	defer q.wg.Done()
 
 	for {

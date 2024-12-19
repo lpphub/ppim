@@ -6,18 +6,18 @@ import (
 )
 
 const (
-	DeliverEvent  = "event"
-	DeliverChat   = "chat"
-	DeliverNotify = "notify"
+	DeliveryEvent  = "event"
+	DeliveryChat   = "chat"
+	DeliveryNotify = "notify"
 )
 
-type DeliverMsg struct {
+type DeliveryMsg struct {
 	CMD       string // 指令：event-事件 chat-聊天 notify-通知
 	Receivers []string
 	ChatMsg   *types.MessageDTO
 }
 
-func (d *DeliverMsg) ToJsonBytes() []byte {
+func (d *DeliveryMsg) ToJsonBytes() []byte {
 	bytes, _ := jsoniter.Marshal(d)
 	return bytes
 }

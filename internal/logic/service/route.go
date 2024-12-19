@@ -18,7 +18,7 @@ type RouteSrv struct {
 }
 
 const (
-	// 缓存格式：route:123 pc_d003 topic1 ios_i201 topic2
+	// 缓存路由：route:123 pc_d003 topic1 ios_i201 topic2
 	cacheRouteUid = "route:%s"
 )
 
@@ -44,7 +44,7 @@ func (s *RouteSrv) Offline(ctx context.Context, ol *types.RouteDTO) error {
 	return err
 }
 
-func (s *RouteSrv) RouteDeliver(ctx context.Context, routeKeys []string, msg *types.MessageDTO) error {
+func (s *RouteSrv) RouteDelivery(ctx context.Context, routeKeys []string, msg *types.MessageDTO) error {
 	topicReceivers := make(map[string][]string)
 	for _, key := range routeKeys {
 		route := strings.Split(key, "#") // key = uid#topic
@@ -57,8 +57,8 @@ func (s *RouteSrv) RouteDeliver(ctx context.Context, routeKeys []string, msg *ty
 
 	messageSlice := make([]kafka.Message, 0, len(routeKeys))
 	for t, us := range topicReceivers {
-		dd := &chatlib.DeliverMsg{
-			CMD:       chatlib.DeliverChat,
+		dd := &chatlib.DeliveryMsg{
+			CMD:       chatlib.DeliveryChat,
 			Receivers: us,
 			ChatMsg:   msg,
 		}

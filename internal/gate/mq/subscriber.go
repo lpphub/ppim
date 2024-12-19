@@ -36,13 +36,13 @@ func (s *Subscriber) register() {
 func (s *Subscriber) handleDeliver(ctx context.Context, message kafka.Message) error {
 	logger.Log().Info().Msgf("receive message: %s", string(message.Value))
 
-	var msg chatlib.DeliverMsg
+	var msg chatlib.DeliveryMsg
 	if err := jsoniter.Unmarshal(message.Value, &msg); err != nil {
 		return err
 	}
 
 	switch msg.CMD {
-	case chatlib.DeliverChat:
+	case chatlib.DeliveryChat:
 		chat := msg.ChatMsg
 		bytes, _ := protocol.PacketReceive(&protocol.ReceivePacket{
 			ConversationType: chat.ConversationType,
@@ -57,6 +57,7 @@ func (s *Subscriber) handleDeliver(ctx context.Context, message kafka.Message) e
 			},
 		})
 
+		// todo 优化：可靠送达，可放入重试队列
 		for _, receiver := range msg.Receivers {
 			clients := s.svc.ConnManager.GetWithUID(receiver)
 			if len(clients) == 0 {
@@ -72,9 +73,9 @@ func (s *Subscriber) handleDeliver(ctx context.Context, message kafka.Message) e
 			}
 		}
 
-	case chatlib.DeliverEvent:
+	case chatlib.DeliveryEvent:
 		// TODO: handle event
-	case chatlib.DeliverNotify:
+	case chatlib.DeliveryNotify:
 		// TODO: handle notify
 	default:
 		logger.Warnf(ctx, "unknown cmd: %s", msg.CMD)

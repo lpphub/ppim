@@ -21,7 +21,7 @@ func TestProducer_SendMessage(t *testing.T) {
 	}
 
 	for i := 0; i < 3; i++ {
-		b, _ := jsoniter.Marshal(chatlib.DeliverMsg{
+		b, _ := jsoniter.Marshal(chatlib.DeliveryMsg{
 			CMD:   "event_test",
 			ToUID: fmt.Sprintf("u_%d", i),
 		})
