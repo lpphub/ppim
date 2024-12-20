@@ -71,7 +71,7 @@ func main() {
 
 				if msg.GetMsgType() == protocol.MsgType_RECEIVE {
 					d := msg.GetReceivePacket()
-					fmt.Printf("接收到的消息：data=%s fromID=%s convID=%s \n", d.GetPayload().GetContent(), d.GetFromID(), d.GetConversationID())
+					fmt.Printf("接收到的消息：data=%s fromID=%s convID=%s \n", d.GetPayload().GetContent(), d.GetFromUID(), d.GetConversationID())
 				}
 
 				if msg.GetMsgType() == protocol.MsgType_PONG {

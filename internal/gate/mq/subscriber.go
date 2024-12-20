@@ -9,16 +9,21 @@ import (
 	"ppim/internal/chatlib"
 	"ppim/internal/gate/global"
 	"ppim/internal/gate/net"
+	"ppim/internal/gate/task"
 	"ppim/pkg/kafka/consumer"
 	"time"
 )
 
 type Subscriber struct {
-	svc *net.ServerContext
+	svc   *net.ServerContext
+	retry *task.RetryDelivery
 }
 
-func RegisterSubscriber(svc *net.ServerContext) {
-	sub := &Subscriber{svc: svc}
+func RegisterSubscriber(svc *net.ServerContext, retry *task.RetryDelivery) {
+	sub := &Subscriber{
+		svc:   svc,
+		retry: retry,
+	}
 	sub.register()
 }
 
@@ -47,7 +52,7 @@ func (s *Subscriber) handleDeliver(ctx context.Context, message kafka.Message) e
 		bytes, _ := protocol.PacketReceive(&protocol.ReceivePacket{
 			ConversationType: chat.ConversationType,
 			ConversationID:   chat.ConversationID,
-			FromID:           chat.FromID,
+			FromUID:          chat.FromUID,
 			Payload: &protocol.Payload{
 				MsgNo:   chat.MsgNo,
 				MsgId:   chat.MsgID,
@@ -57,7 +62,6 @@ func (s *Subscriber) handleDeliver(ctx context.Context, message kafka.Message) e
 			},
 		})
 
-		// todo 优化：可靠送达，可放入重试队列
 		for _, receiver := range msg.Receivers {
 			clients := s.svc.ConnManager.GetWithUID(receiver)
 			if len(clients) == 0 {
@@ -69,6 +73,14 @@ func (s *Subscriber) handleDeliver(ctx context.Context, message kafka.Message) e
 					if err != nil {
 						logger.Err(ctx, err, "write to client error")
 					}
+
+					// 放入重试队列
+					s.retry.Add(&task.RetryMsg{
+						MsgBytes: bytes,
+						ConnFD:   client.Conn.Fd(),
+						MsgID:    chat.MsgID,
+						UID:      receiver,
+					})
 				}
 			}
 		}

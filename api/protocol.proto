@@ -74,7 +74,7 @@ message SendAckPacket {
 message ReceivePacket {
   string conversationType = 1;
   string conversationID = 2;
-  string fromID = 3;
+  string fromUID = 3;
   Payload payload = 4;
 }
 

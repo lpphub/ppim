@@ -7,7 +7,7 @@ type ServerContext struct {
 	processor   *Processor
 }
 
-func NewServerContext() *ServerContext {
+func InitServerContext() *ServerContext {
 	svc := &ServerContext{
 		ConnManager: newClientManager(),
 	}
