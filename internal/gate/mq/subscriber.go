@@ -30,7 +30,7 @@ func RegisterSubscriber(svc *net.ServerContext, retry *task.RetryDelivery) {
 func (s *Subscriber) register() {
 	kconf := global.Conf.Kafka
 
-	if c, err := consumer.NewConsumer(s.handleDeliver, consumer.WithBrokers(kconf.Brokers), consumer.WithTopic(kconf.Topic),
+	if c, err := consumer.NewConsumer(s.handleDelivery, consumer.WithBrokers(kconf.Brokers), consumer.WithTopic(kconf.Topic),
 		consumer.WithGroupID(kconf.GroupId), consumer.WithMaxWait(time.Second)); err != nil {
 		logger.Log().Err(err).Msg("MQ subscriber register fail")
 	} else {
@@ -38,7 +38,7 @@ func (s *Subscriber) register() {
 	}
 }
 
-func (s *Subscriber) handleDeliver(ctx context.Context, message kafka.Message) error {
+func (s *Subscriber) handleDelivery(ctx context.Context, message kafka.Message) error {
 	logger.Log().Info().Msgf("mq receive message: %s", string(message.Value))
 
 	var msg chatlib.DeliveryMsg

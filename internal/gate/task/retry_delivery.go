@@ -79,9 +79,11 @@ func (r *RetryDelivery) work() {
 			t.retry++
 
 			client := r.svc.ConnManager.GetWithFD(t.ConnFD)
-			if client != nil {
-				_, _ = client.Write(t.MsgBytes)
+			if client == nil {
+				return
 			}
+
+			_, _ = client.Write(t.MsgBytes)
 
 			if t.retry < r.maxRetry {
 				r.Add(t)
