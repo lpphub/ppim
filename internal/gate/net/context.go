@@ -3,8 +3,9 @@ package net
 type ServerContext struct {
 	online int32
 
-	ConnManager *ClientManager
 	processor   *Processor
+	ConnManager *ClientManager
+	Retry       *RetryDelivery
 }
 
 func InitServerContext() *ServerContext {
@@ -13,5 +14,8 @@ func InitServerContext() *ServerContext {
 	}
 
 	svc.processor = newProcessor(svc)
+
+	svc.Retry = newRetryDelivery(svc)
+	// todo retry启动
 	return svc
 }

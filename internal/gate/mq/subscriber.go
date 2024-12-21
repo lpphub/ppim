@@ -9,20 +9,17 @@ import (
 	"ppim/internal/chatlib"
 	"ppim/internal/gate/global"
 	"ppim/internal/gate/net"
-	"ppim/internal/gate/task"
 	"ppim/pkg/kafka/consumer"
 	"time"
 )
 
 type Subscriber struct {
-	svc   *net.ServerContext
-	retry *task.RetryDelivery
+	svc *net.ServerContext
 }
 
-func RegisterSubscriber(svc *net.ServerContext, retry *task.RetryDelivery) {
+func RegisterSubscriber(svc *net.ServerContext) {
 	sub := &Subscriber{
-		svc:   svc,
-		retry: retry,
+		svc: svc,
 	}
 	sub.register()
 }
@@ -75,7 +72,7 @@ func (s *Subscriber) handleDelivery(ctx context.Context, message kafka.Message) 
 					}
 
 					// 放入重试队列
-					s.retry.Add(&task.RetryMsg{
+					s.svc.Retry.Add(&net.RetryMsg{
 						MsgBytes: bytes,
 						ConnFD:   client.Conn.Fd(),
 						MsgID:    chat.MsgID,

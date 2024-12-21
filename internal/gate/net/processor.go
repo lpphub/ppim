@@ -182,9 +182,10 @@ func (p *Processor) send(_c *Client, message *protocol.SendPacket) error {
 	return err
 }
 
-func (p *Processor) receiveAck(_c *Client, msg *protocol.ReceiveAckPacket) error {
-	// todo 接收客户端收到消息的确认
-	// 1. 更新消息状态
-	// 2. 结束
-	return nil
+func (p *Processor) receiveAck(_ *Client, msg *protocol.ReceiveAckPacket) error {
+	err := p.workerPool.Submit(func() {
+		// 从重试队列移除
+		p.svc.Retry.Remove(msg.GetMsgId())
+	})
+	return err
 }

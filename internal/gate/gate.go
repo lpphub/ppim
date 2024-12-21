@@ -5,7 +5,6 @@ import (
 	"ppim/internal/gate/mq"
 	"ppim/internal/gate/net"
 	"ppim/internal/gate/rpc"
-	"ppim/internal/gate/task"
 )
 
 func Serve() {
@@ -17,10 +16,7 @@ func Serve() {
 
 	svc := net.InitServerContext()
 
-	retry := task.NewRetryDelivery(svc)
-	retry.Start()
-
-	mq.RegisterSubscriber(svc, retry)
+	mq.RegisterSubscriber(svc)
 
 	go func() {
 		tcp := net.NewTCPServer(svc, global.Conf.Server.Tcp)
