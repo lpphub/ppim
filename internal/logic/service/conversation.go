@@ -25,13 +25,13 @@ import (
  */
 type ConversationSrv struct {
 	works       *gowork.Pool
-	segmentLock ext.SegmentLock
+	segmentLock *ext.SegmentRWLock
 }
 
 func newConversationSrv() *ConversationSrv {
 	return &ConversationSrv{
 		works:       gowork.NewPool(100),
-		segmentLock: *ext.NewSegmentLock(20),
+		segmentLock: ext.NewSegmentLock(20),
 	}
 }
 
