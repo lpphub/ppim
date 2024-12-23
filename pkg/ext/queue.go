@@ -2,25 +2,20 @@ package ext
 
 import (
 	"errors"
-	"sync"
 )
 
 type node[T any] struct {
 	Val  T
 	Next *node[T]
 }
-type LinkedListQueue[T any] struct {
+type LinkedQueue[T any] struct {
 	head *node[T]
 	tail *node[T]
 	size int
-	mtx  sync.Mutex
 }
 
 // Enqueue 入队
-func (q *LinkedListQueue[T]) Enqueue(value T) {
-	q.mtx.Lock()
-	defer q.mtx.Unlock()
-
+func (q *LinkedQueue[T]) Enqueue(value T) {
 	newNode := &node[T]{Val: value}
 	if q.tail != nil {
 		q.tail.Next = newNode
@@ -33,10 +28,7 @@ func (q *LinkedListQueue[T]) Enqueue(value T) {
 }
 
 // Dequeue 出队
-func (q *LinkedListQueue[T]) Dequeue() (T, error) {
-	q.mtx.Lock()
-	defer q.mtx.Unlock()
-
+func (q *LinkedQueue[T]) Dequeue() (T, error) {
 	if q.head == nil {
 		var zero T
 		return zero, errors.New("queue is empty")
@@ -50,10 +42,7 @@ func (q *LinkedListQueue[T]) Dequeue() (T, error) {
 	return value, nil
 }
 
-func (q *LinkedListQueue[T]) Peek() (T, error) {
-	q.mtx.Lock()
-	defer q.mtx.Unlock()
-
+func (q *LinkedQueue[T]) Peek() (T, error) {
 	if q.head == nil {
 		var zero T
 		return zero, errors.New("queue is empty")
@@ -61,10 +50,7 @@ func (q *LinkedListQueue[T]) Peek() (T, error) {
 	return q.head.Val, nil
 }
 
-func (q *LinkedListQueue[T]) Take(num int) ([]T, error) {
-	q.mtx.Lock()
-	defer q.mtx.Unlock()
-
+func (q *LinkedQueue[T]) Take(num int) ([]T, error) {
 	if num <= 0 {
 		return nil, errors.New("num must be greater than 0")
 	}
@@ -86,9 +72,6 @@ func (q *LinkedListQueue[T]) Take(num int) ([]T, error) {
 	return result, nil
 }
 
-func (q *LinkedListQueue[T]) Size() int {
-	q.mtx.Lock()
-	defer q.mtx.Unlock()
-
+func (q *LinkedQueue[T]) Size() int {
 	return q.size
 }

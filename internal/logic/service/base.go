@@ -2,8 +2,9 @@ package service
 
 import (
 	"github.com/lpphub/golib/logger"
+	"github.com/segmentio/kafka-go"
 	"ppim/internal/logic/global"
-	"ppim/pkg/kafka/producer"
+	"ppim/pkg/kafkago"
 	"time"
 )
 
@@ -17,8 +18,13 @@ var svc *ServiceContext
 
 func InitService() {
 	// kafka flush msg every 50ms
-	mqProducer, err := producer.NewProducer(producer.WithBrokers(global.Conf.Kafka.Brokers),
-		producer.WithBatchTimeout(50*time.Millisecond), producer.WithAsync(true))
+	conf := kafkago.ProducerConfig{
+		Brokers:      global.Conf.Kafka.Brokers,
+		BatchTimeout: 50 * time.Millisecond,
+		RequiredAcks: kafka.RequireAll,
+		Async:        true,
+	}
+	mqProducer, err := kafkago.NewProducer(conf)
 	if err != nil {
 		logger.Log().Err(err).Msg("failed to create kafka producer")
 		return

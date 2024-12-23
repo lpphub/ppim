@@ -9,13 +9,13 @@ import (
 	"ppim/internal/chatlib"
 	"ppim/internal/logic/global"
 	"ppim/internal/logic/types"
-	"ppim/pkg/kafka/producer"
+	"ppim/pkg/kafkago"
 	"strings"
 	"time"
 )
 
 type RouteSrv struct {
-	mq *producer.Producer
+	mq *kafkago.Producer
 }
 
 const (
@@ -23,7 +23,7 @@ const (
 	cacheRouteUid = "route:%s"
 )
 
-func newRouterSrv(mq *producer.Producer) *RouteSrv {
+func newRouterSrv(mq *kafkago.Producer) *RouteSrv {
 	return &RouteSrv{
 		mq: mq,
 	}

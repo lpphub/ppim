@@ -9,7 +9,7 @@ import (
 	"ppim/internal/chatlib"
 	"ppim/internal/gate/global"
 	"ppim/internal/gate/net"
-	"ppim/pkg/kafka/consumer"
+	"ppim/pkg/kafkago"
 	"time"
 )
 
@@ -27,8 +27,14 @@ func RegisterSubscriber(svc *net.ServerContext) {
 func (s *Subscriber) register() {
 	kconf := global.Conf.Kafka
 
-	if c, err := consumer.NewConsumer(s.handleDelivery, consumer.WithBrokers(kconf.Brokers), consumer.WithTopic(kconf.Topic),
-		consumer.WithGroupID(kconf.GroupId), consumer.WithMaxWait(time.Second)); err != nil {
+	config := kafkago.ConsumerConfig{
+		Brokers:     kconf.Brokers,
+		Topic:       kconf.Topic,
+		GroupID:     kconf.GroupId,
+		MaxWait:     time.Second,
+		MaxAttempts: 3,
+	}
+	if c, err := kafkago.NewConsumer(s.handleDelivery, config); err != nil {
 		logger.Log().Err(err).Msg("MQ subscriber register fail")
 	} else {
 		c.Start()
