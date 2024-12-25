@@ -39,7 +39,7 @@ func newRetryDelivery(svc *ServerContext, maxRetries int) *RetryDelivery {
 		maxRetries: maxRetries,
 		ctx:        ctx,
 		cancel:     cancel,
-		queue:      make([]*RetryMsg, 0, 1024),
+		queue:      make([]*RetryMsg, 0, 2048),
 		hash:       make(map[string]*RetryMsg),
 	}
 }
