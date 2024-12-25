@@ -1,4 +1,4 @@
-package ext
+package util
 
 import (
 	"errors"

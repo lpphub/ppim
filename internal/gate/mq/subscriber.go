@@ -78,7 +78,7 @@ func (s *Subscriber) handleDelivery(ctx context.Context, message kafka.Message) 
 					}
 
 					// 放入重试队列
-					s.svc.Retry.Add(&net.RetryMsg{
+					s.svc.RetryManager.Add(&net.RetryMsg{
 						MsgBytes: bytes,
 						ConnFD:   client.Conn.Fd(),
 						MsgID:    chat.MsgID,

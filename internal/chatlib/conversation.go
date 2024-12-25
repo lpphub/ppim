@@ -3,7 +3,7 @@ package chatlib
 import (
 	"errors"
 	"fmt"
-	"hash/adler32"
+	"ppim/pkg/util"
 )
 
 const (
@@ -27,6 +27,5 @@ func GenConversationID(from, to, conversationType string) (string, error) {
 }
 
 func DigitizeUID(uid string) uint32 {
-	return adler32.Checksum([]byte(uid))
-	//return crc32.ChecksumIEEE([]byte(uid))
+	return util.DigitizeWithAdler32(uid)
 }

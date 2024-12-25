@@ -15,6 +15,7 @@ func Serve() {
 	}
 
 	svc := net.InitServerContext()
+	svc.StartBackground()
 
 	mq.RegisterSubscriber(svc)
 

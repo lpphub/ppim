@@ -182,10 +182,12 @@ func (p *Processor) send(_c *Client, message *protocol.SendPacket) error {
 	return err
 }
 
-func (p *Processor) receiveAck(_ *Client, msg *protocol.ReceiveAckPacket) error {
+func (p *Processor) receiveAck(_c *Client, msg *protocol.ReceiveAckPacket) error {
+	logger.Infof(context.Background(), "receive ack msg: uid=%s, msgId=%s", _c.UID, msg.MsgId)
+
 	err := p.workerPool.Submit(func() {
 		// 从重试队列移除
-		p.svc.Retry.Remove(msg.GetMsgId())
+		p.svc.RetryManager.Remove(msg.GetMsgId())
 	})
 	return err
 }

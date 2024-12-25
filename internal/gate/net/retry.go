@@ -2,8 +2,10 @@ package net
 
 import (
 	"context"
-	"ppim/pkg/ext"
+	"github.com/lpphub/golib/logger"
+	"ppim/pkg/util"
 	"sync"
+	"sync/atomic"
 	"time"
 )
 
@@ -15,111 +17,155 @@ type RetryMsg struct {
 	retry    int    // 重试次数
 }
 
-type RetryQueue struct {
-	elements *ext.LinkedQueue[*RetryMsg]
-	mtx      sync.RWMutex
-}
-
-func (q *RetryQueue) Enqueue(ele *RetryMsg) {
-	q.mtx.Lock()
-	defer q.mtx.Unlock()
-
-	q.elements.Enqueue(ele)
-}
-
-func (q *RetryQueue) Dequeue() *RetryMsg {
-	q.mtx.Lock()
-	defer q.mtx.Unlock()
-
-	r, _ := q.elements.Dequeue()
-	return r
-}
-
-func (q *RetryQueue) Take(num int) []*RetryMsg {
-	q.mtx.Lock()
-	defer q.mtx.Unlock()
-
-	rs, _ := q.elements.Take(num)
-	return rs
-}
-
-func (q *RetryQueue) Size() int {
-	q.mtx.RLock()
-	defer q.mtx.RUnlock()
-
-	return q.elements.Size()
-}
-
-// RetryDelivery 通过重试队列保障消息可靠投递
 type RetryDelivery struct {
-	svc      *ServerContext
-	queue    *RetryQueue
-	maxRetry int
+	list []*RetryMsg
+	hash map[string]*RetryMsg
 
-	wg     sync.WaitGroup
-	ctx    context.Context
-	cancel context.CancelFunc
+	svc        *ServerContext
+	maxRetries int
+
+	working atomic.Bool
+	mtx     sync.Mutex
+	ctx     context.Context
+	cancel  context.CancelFunc
 }
 
-func newRetryDelivery(svc *ServerContext) *RetryDelivery {
+func newRetryDelivery(svc *ServerContext, maxRetries int) *RetryDelivery {
 	ctx, cancel := context.WithCancel(context.Background())
 	return &RetryDelivery{
-		svc:      svc,
-		ctx:      ctx,
-		cancel:   cancel,
-		maxRetry: 3,
-		queue: &RetryQueue{
-			elements: &ext.LinkedQueue[*RetryMsg]{},
-		},
+		svc:        svc,
+		maxRetries: maxRetries,
+		ctx:        ctx,
+		cancel:     cancel,
+		hash:       make(map[string]*RetryMsg),
+		list:       make([]*RetryMsg, 0, 1024),
 	}
 }
 
-func (r *RetryDelivery) Add(msg *RetryMsg) {
-	r.queue.Enqueue(msg)
+func (r *RetryDelivery) Add(el *RetryMsg) {
+	r.mtx.Lock()
+	defer r.mtx.Unlock()
+
+	r.list = append(r.list, el)
+	r.hash[el.MsgID] = el
 }
 
 func (r *RetryDelivery) Remove(msgId string) {
-	// todo
+	r.mtx.Lock()
+	defer r.mtx.Unlock()
+
+	delete(r.hash, msgId)
+	// todo list遍历时判断下即可
 }
 
-func (r *RetryDelivery) Start() {
-	r.wg.Add(1)
-	go r.work()
+func (r *RetryDelivery) Take(num int) []*RetryMsg {
+	r.mtx.Lock()
+	defer r.mtx.Unlock()
+
+	if len(r.list) == 0 {
+		return nil
+	}
+	if num > len(r.list) {
+		num = len(r.list)
+	}
+
+	batch := r.list[:num]
+	r.list = r.list[num:]
+	return batch
 }
 
-func (r *RetryDelivery) Stop() {
+func (r *RetryDelivery) start() {
+	go func() {
+		ticker := time.NewTicker(5 * time.Second)
+		for {
+			select {
+			case <-r.ctx.Done():
+				return
+			case <-ticker.C:
+				go r.work()
+			}
+		}
+	}()
+}
+
+func (r *RetryDelivery) stop() {
 	r.cancel()
-	r.queue = nil
-	r.wg.Wait()
 }
 
 func (r *RetryDelivery) work() {
-	defer r.wg.Done()
+	if r.working.Load() {
+		return
+	}
+	r.working.Store(true)
+	defer r.working.Store(false)
 
-	ticker := time.NewTicker(3 * time.Second)
 	for {
 		select {
 		case <-r.ctx.Done():
 			return
-		case <-ticker.C:
-			ms := r.queue.Take(1000)
+		default:
+			ms := r.Take(100)
 			if len(ms) == 0 {
 				return
 			}
 			for _, m := range ms {
-				m.retry++
-
-				client := r.svc.ConnManager.GetWithFD(m.ConnFD)
-				if client == nil {
-					return
-				}
-
-				_, _ = client.Write(m.MsgBytes)
-
-				if m.retry < r.maxRetry {
-					r.Add(m)
-				}
+				r.runRetry(m)
 			}
 		}
+	}
+}
+
+func (r *RetryDelivery) runRetry(msg *RetryMsg) {
+	msg.retry++
+	logger.Log().Info().Msgf("UID=[%s]重试消息msgID=%s, retryCount=%d", msg.UID, msg.MsgID, msg.retry)
+
+	client := r.svc.ConnManager.GetWithFD(msg.ConnFD)
+	if client == nil {
+		return
+	}
+
+	_, _ = client.Write(msg.MsgBytes)
+
+	if msg.retry >= r.maxRetries {
+		return
+	}
+	r.Add(msg)
+}
+
+// RetryManager 通过重试队列保障消息可靠投递
+type RetryManager struct {
+	svc     *ServerContext
+	size    int
+	buckets []*RetryDelivery
+}
+
+func newRetryManager(svc *ServerContext, size int) *RetryManager {
+	return &RetryManager{
+		svc:     svc,
+		size:    size,
+		buckets: make([]*RetryDelivery, size),
+	}
+}
+
+func (r *RetryManager) Add(msg *RetryMsg) {
+	index := int(util.DigitizeWithAdler32(msg.MsgID))
+	r.buckets[index%r.size].Add(msg)
+}
+
+func (r *RetryManager) Remove(msgId string) {
+	index := int(util.DigitizeWithAdler32(msgId))
+	r.buckets[index%r.size].Remove(msgId)
+}
+
+func (r *RetryManager) Start() {
+	for i := 0; i < r.size; i++ {
+		r.buckets[i] = newRetryDelivery(r.svc, 1)
+		r.buckets[i].start()
+	}
+}
+
+func (r *RetryManager) Stop() {
+	for _, t := range r.buckets {
+		t.stop()
 	}
 }
