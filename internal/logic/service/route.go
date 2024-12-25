@@ -86,7 +86,3 @@ func (s *RouteSrv) convert(msg *types.MessageDTO) *chatlib.ChatMsg {
 func (s *RouteSrv) genRouteKey(uid string) string {
 	return fmt.Sprintf(cacheRouteUid, uid)
 }
-
-func (s *RouteSrv) buildVal(ol *types.RouteDTO) string {
-	return fmt.Sprintf("%s_%s_%s", ol.Uid, ol.Did, ol.Topic)
-}

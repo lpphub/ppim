@@ -113,6 +113,7 @@ func (s *MessageSrv) HandleMsg(ctx context.Context, msg *types.MessageDTO) error
 
 	if len(offlineSlice) > 0 {
 		// todo 消息离线通知
+		logger.Warn(ctx, "offline push")
 	}
 	return nil
 }

@@ -14,7 +14,7 @@ func TestConversationSrv_IndexConversation(t *testing.T) {
 	global.InitGlobalCtx()
 
 	srv := ConversationSrv{
-		segmentLock: *ext.NewSegmentLock(3),
+		segmentLock: ext.NewSegmentLock(3),
 	}
 
 	msg := &types.MessageDTO{

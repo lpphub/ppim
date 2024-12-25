@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"github.com/gobwas/ws"
 	"github.com/gobwas/ws/wsutil"
-	"github.com/golang/protobuf/proto"
 	"github.com/pkg/errors"
+	"google.golang.org/protobuf/proto"
 	"io"
 	"net"
 	"os"
@@ -123,7 +123,7 @@ func TestClient_2(t *testing.T) {
 
 			if msg.GetMsgType() == protocol.MsgType_RECEIVE {
 				d := msg.GetReceivePacket()
-				fmt.Printf("接收到的消息：data=%s fromID=%s convID=%s \n", d.GetPayload().GetContent(), d.GetFromID(), d.GetConversationID())
+				fmt.Printf("接收到的消息：data=%s fromID=%s convID=%s \n", d.GetPayload().GetContent(), d.GetFromUID(), d.GetConversationID())
 			}
 		}
 	}()
