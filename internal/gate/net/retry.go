@@ -2,6 +2,7 @@ package net
 
 import (
 	"context"
+	"fmt"
 	"github.com/lpphub/golib/logger"
 	"ppim/pkg/util"
 	"sync"
@@ -15,11 +16,12 @@ type RetryMsg struct {
 	MsgID    string // 消息ID
 	UID      string // 用户ID
 	retry    int    // 重试次数
+	deleted  bool   // 是否删除
 }
 
 type RetryDelivery struct {
-	list []*RetryMsg
-	hash map[string]*RetryMsg
+	queue []*RetryMsg
+	hash  map[string]*RetryMsg
 
 	svc        *ServerContext
 	maxRetries int
@@ -37,8 +39,8 @@ func newRetryDelivery(svc *ServerContext, maxRetries int) *RetryDelivery {
 		maxRetries: maxRetries,
 		ctx:        ctx,
 		cancel:     cancel,
+		queue:      make([]*RetryMsg, 0, 1024),
 		hash:       make(map[string]*RetryMsg),
-		list:       make([]*RetryMsg, 0, 1024),
 	}
 }
 
@@ -46,46 +48,49 @@ func (r *RetryDelivery) Add(el *RetryMsg) {
 	r.mtx.Lock()
 	defer r.mtx.Unlock()
 
-	r.list = append(r.list, el)
-	r.hash[el.MsgID] = el
+	r.queue = append(r.queue, el)
+	r.hash[fmt.Sprintf("%d:%s", el.ConnFD, el.MsgID)] = el
 }
 
-func (r *RetryDelivery) Remove(msgId string) {
+func (r *RetryDelivery) Remove(connFD int, msgId string) {
 	r.mtx.Lock()
 	defer r.mtx.Unlock()
 
-	delete(r.hash, msgId)
-	// todo list遍历时判断下即可
+	key := fmt.Sprintf("%d:%s", connFD, msgId)
+	if el, ok := r.hash[key]; ok {
+		el.deleted = true
+		delete(r.hash, key)
+	}
 }
 
 func (r *RetryDelivery) Take(num int) []*RetryMsg {
 	r.mtx.Lock()
 	defer r.mtx.Unlock()
 
-	if len(r.list) == 0 {
+	if len(r.queue) == 0 {
 		return nil
 	}
-	if num > len(r.list) {
-		num = len(r.list)
+	if num > len(r.queue) {
+		num = len(r.queue)
 	}
 
-	batch := r.list[:num]
-	r.list = r.list[num:]
+	batch := r.queue[:num]
+	r.queue = r.queue[num:]
 	return batch
 }
 
 func (r *RetryDelivery) start() {
-	go func() {
+	go util.WithRecover(func() {
 		ticker := time.NewTicker(5 * time.Second)
 		for {
 			select {
 			case <-r.ctx.Done():
 				return
 			case <-ticker.C:
-				go r.work()
+				go util.WithRecover(r.work)
 			}
 		}
-	}()
+	})
 }
 
 func (r *RetryDelivery) stop() {
@@ -116,8 +121,11 @@ func (r *RetryDelivery) work() {
 }
 
 func (r *RetryDelivery) runRetry(msg *RetryMsg) {
+	if msg.deleted {
+		return
+	}
 	msg.retry++
-	logger.Log().Info().Msgf("UID=[%s]重试消息msgID=%s, retryCount=%d", msg.UID, msg.MsgID, msg.retry)
+	logger.Log().Info().Msgf("重试消息发送：uid=%s, msgID=%s, retryCount=%d", msg.UID, msg.MsgID, msg.retry)
 
 	client := r.svc.ConnManager.GetWithFD(msg.ConnFD)
 	if client == nil {
@@ -152,9 +160,9 @@ func (r *RetryManager) Add(msg *RetryMsg) {
 	r.buckets[index%r.size].Add(msg)
 }
 
-func (r *RetryManager) Remove(msgId string) {
+func (r *RetryManager) Remove(connFD int, msgId string) {
 	index := int(util.DigitizeWithAdler32(msgId))
-	r.buckets[index%r.size].Remove(msgId)
+	r.buckets[index%r.size].Remove(connFD, msgId)
 }
 
 func (r *RetryManager) Start() {

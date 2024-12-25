@@ -187,7 +187,7 @@ func (p *Processor) receiveAck(_c *Client, msg *protocol.ReceiveAckPacket) error
 
 	err := p.workerPool.Submit(func() {
 		// 从重试队列移除
-		p.svc.RetryManager.Remove(msg.GetMsgId())
+		p.svc.RetryManager.Remove(_c.Conn.Fd(), msg.GetMsgId())
 	})
 	return err
 }

@@ -70,3 +70,12 @@ func PacketReceive(receive *ReceivePacket) ([]byte, error) {
 		},
 	})
 }
+
+func PacketReceiveAck(receiveAck *ReceiveAckPacket) ([]byte, error) {
+	return proto.Marshal(&Message{
+		MsgType: MsgType_RECEIVE_ACK,
+		Payload: &Message_ReceiveAckPacket{
+			ReceiveAckPacket: receiveAck,
+		},
+	})
+}
