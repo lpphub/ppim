@@ -20,7 +20,7 @@ func (u *User) Collection() *mongo.Collection {
 }
 
 func (u *User) GetOne(ctx context.Context, uid string) (*User, error) {
-	filter := bson.D{{"uid", uid}}
+	filter := bson.D{bson.E{Key: "uid", Value: uid}}
 	err := u.Collection().FindOne(ctx, filter).Decode(u)
 	return u, err
 }

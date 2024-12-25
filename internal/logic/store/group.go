@@ -20,8 +20,8 @@ func (*Group) Collection() *mongo.Collection {
 }
 
 func (g *Group) ListMembers(ctx context.Context, groupId string) ([]string, error) {
-	filter := bson.D{{"group_id", groupId}}
-	opts := options.Find().SetProjection(bson.D{{"uid", 1}})
+	filter := bson.D{bson.E{Key: "group_id", Value: groupId}}
+	opts := options.Find().SetProjection(bson.D{bson.E{Key: "uid", Value: 1}})
 
 	cur, err := g.Collection().Find(ctx, filter, opts)
 	if err != nil {

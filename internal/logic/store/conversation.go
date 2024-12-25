@@ -28,7 +28,7 @@ func (*Conversation) Collection() *mongo.Collection {
 }
 
 func (c *Conversation) GetOne(ctx context.Context, uid, conversationID string) (*Conversation, error) {
-	filter := bson.D{{"conversation_id", conversationID}, {"uid", uid}}
+	filter := bson.D{bson.E{Key: "conversation_id", Value: conversationID}, bson.E{Key: "uid", Value: uid}}
 	err := c.Collection().FindOne(ctx, filter).Decode(c)
 	return c, err
 }
@@ -39,14 +39,14 @@ func (c *Conversation) Insert(ctx context.Context) error {
 }
 
 func (c *Conversation) Update(ctx context.Context) error {
-	filter := bson.D{{"conversation_id", c.ConversationID}, {"uid", c.UID}}
+	filter := bson.D{bson.E{Key: "conversation_id", Value: c.ConversationID}, bson.E{Key: "uid", Value: c.UID}}
 	_, err := c.Collection().ReplaceOne(ctx, filter, c)
 	return err
 }
 
 func (c *Conversation) ListRecent(ctx context.Context, uid string) ([]Conversation, error) {
-	filter := bson.D{{"uid", uid}}
-	opts := options.Find().SetSort(bson.D{{"updated_at", -1}}).SetLimit(100)
+	filter := bson.D{bson.E{Key: "uid", Value: uid}}
+	opts := options.Find().SetSort(bson.D{bson.E{Key: "updated_at", Value: -1}}).SetLimit(100)
 
 	cursor, err := c.Collection().Find(ctx, filter, opts)
 	if err != nil {
