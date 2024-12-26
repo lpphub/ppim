@@ -10,7 +10,6 @@ import (
 	"github.com/panjf2000/gnet/v2"
 	"github.com/spf13/cast"
 	"ppim/api/protocol"
-	"ppim/api/rpctypes"
 	"ppim/internal/chatlib"
 	"ppim/internal/gate/rpc"
 	"time"
@@ -135,7 +134,7 @@ func (p *Processor) send(_c *Client, message *protocol.SendPacket) error {
 		msgSeq            = cast.ToUint64(msgId) // todo 消息序列号（先暂用msgId简单替代, 后可建seq服务）
 		conversationID, _ = chatlib.GenConversationID(_c.UID, message.ToID, message.ConversationType)
 	)
-	msg := &rpctypes.MessageReq{
+	msg := &chatlib.MessageReq{
 		FromUID:          _c.UID,
 		FromDID:          _c.DID,
 		ToID:             message.ToID,

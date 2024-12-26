@@ -5,7 +5,7 @@ import (
 	"github.com/lpphub/golib/logger"
 	etcdclient "github.com/rpcxio/rpcx-etcd/client"
 	"github.com/smallnest/rpcx/client"
-	"ppim/api/rpctypes"
+	"ppim/internal/chatlib"
 	"ppim/internal/gate/global"
 	"strings"
 	"sync"
@@ -55,12 +55,12 @@ func Context() context.Context {
 }
 
 func (c *RpcCaller) Auth(ctx context.Context, uid, did, token string) (bool, error) {
-	req := &rpctypes.AuthReq{
+	req := &chatlib.AuthReq{
 		Uid:   uid,
 		Did:   did,
 		Token: token,
 	}
-	resp := &rpctypes.AuthResp{}
+	resp := &chatlib.AuthResp{}
 
 	err := c.logic.Call(ctx, methodAuth, req, resp)
 	if err != nil {
@@ -72,12 +72,12 @@ func (c *RpcCaller) Auth(ctx context.Context, uid, did, token string) (bool, err
 
 // Register 将当前连接对应的topic注册到logic route
 func (c *RpcCaller) Register(ctx context.Context, uid, did string) error {
-	req := &rpctypes.RouterReq{
+	req := &chatlib.RouterReq{
 		Uid:   uid,
 		Did:   did,
 		Topic: global.Conf.Kafka.Topic, // 将当前连接
 	}
-	err := c.logic.Call(ctx, methodRegister, req, &rpctypes.RouterReq{})
+	err := c.logic.Call(ctx, methodRegister, req, &chatlib.RouterReq{})
 	if err != nil {
 		logger.Err(ctx, err, "")
 		return err
@@ -86,12 +86,12 @@ func (c *RpcCaller) Register(ctx context.Context, uid, did string) error {
 }
 
 func (c *RpcCaller) UnRegister(ctx context.Context, uid, did string) error {
-	req := &rpctypes.RouterReq{
+	req := &chatlib.RouterReq{
 		Uid:   uid,
 		Did:   did,
 		Topic: global.Conf.Kafka.Topic,
 	}
-	err := c.logic.Call(ctx, methodUnRegister, req, &rpctypes.RouterReq{})
+	err := c.logic.Call(ctx, methodUnRegister, req, &chatlib.RouterReq{})
 	if err != nil {
 		logger.Err(ctx, err, "")
 		return err
@@ -99,9 +99,9 @@ func (c *RpcCaller) UnRegister(ctx context.Context, uid, did string) error {
 	return nil
 }
 
-func (c *RpcCaller) SendMsg(ctx context.Context, msg *rpctypes.MessageReq) (*rpctypes.MessageResp, error) {
+func (c *RpcCaller) SendMsg(ctx context.Context, msg *chatlib.MessageReq) (*chatlib.MessageResp, error) {
 	req := msg
-	resp := &rpctypes.MessageResp{}
+	resp := &chatlib.MessageResp{}
 
 	err := c.logic.Call(ctx, methodSendMsg, req, resp)
 	if err != nil {

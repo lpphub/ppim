@@ -1,4 +1,4 @@
-package rpctypes
+package chatlib
 
 type AuthReq struct {
 	Uid   string

@@ -4,16 +4,16 @@ import (
 	"context"
 	etcdclient "github.com/rpcxio/rpcx-etcd/client"
 	"github.com/smallnest/rpcx/client"
-	"ppim/api/rpctypes"
+	"ppim/internal/chatlib"
 	"testing"
 )
 
 func Test_Auth(t *testing.T) {
-	req := &rpctypes.AuthReq{
+	req := &chatlib.AuthReq{
 		Uid: "123",
 		Did: "bbc",
 	}
-	resp := &rpctypes.AuthResp{}
+	resp := &chatlib.AuthResp{}
 
 	//discovery, _ := client.NewPeer2PeerDiscovery("tcp@localhost:9090", "")
 	discovery, _ := etcdclient.NewEtcdV3Discovery("rpcx", "logic", []string{"localhost:2379"}, false, nil)
