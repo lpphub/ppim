@@ -4,8 +4,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/lpphub/golib/logger/logx"
 	"github.com/lpphub/golib/web"
+	"ppim/internal/logic/http/errs"
 	"ppim/internal/logic/http/srv"
-	"ppim/pkg/errs"
 )
 
 type MsgHandler struct {

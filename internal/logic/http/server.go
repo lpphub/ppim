@@ -4,7 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/lpphub/golib/web"
 	"net/http"
-	"ppim/pkg/errs"
+	"ppim/internal/logic/http/errs"
 	"ppim/pkg/ext"
 )
 
