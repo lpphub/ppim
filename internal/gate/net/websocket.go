@@ -13,7 +13,7 @@ func NewWsServer(svc *ServerContext, addr string) *WsServer {
 
 	server := &WsServer{
 		svc:    svc,
-		engine: NewEventEngine(svc, engOpt),
+		engine: newEventEngine(svc, engOpt),
 	}
 	return server
 }

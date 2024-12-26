@@ -13,7 +13,7 @@ func NewTCPServer(ctx *ServerContext, addr string) *TCPServer {
 
 	server := &TCPServer{
 		svc:    ctx,
-		engine: NewEventEngine(ctx, engOpt),
+		engine: newEventEngine(ctx, engOpt),
 	}
 	return server
 }
