@@ -8,17 +8,19 @@ import (
 	"github.com/lpphub/golib/gowork"
 	"github.com/lpphub/golib/logger"
 	"github.com/panjf2000/gnet/v2"
-	"github.com/spf13/cast"
 	"ppim/api/protocol"
 	"ppim/internal/chatlib"
+	"ppim/internal/gate/global"
 	"ppim/internal/gate/rpc"
+	"ppim/internal/gate/seq"
 	"time"
 )
 
 type Processor struct {
-	svc            *ServerContext
-	workerPool     *gowork.Pool
-	msgIDGenerator *snowflake.Node
+	svc         *ServerContext
+	workerPool  *gowork.Pool
+	idGenerator *snowflake.Node
+	seq         seq.Sequence
 }
 
 var (
@@ -30,9 +32,10 @@ func newProcessor(svc *ServerContext) *Processor {
 	// todo 集群模式时需兼容
 	node, _ := snowflake.NewNode(1)
 	return &Processor{
-		svc:            svc,
-		msgIDGenerator: node,
-		workerPool:     gowork.Default(),
+		svc:         svc,
+		idGenerator: node,
+		seq:         seq.NewRedisSequence(global.Redis, 100),
+		workerPool:  gowork.Default(),
 	}
 }
 
@@ -130,10 +133,17 @@ func (p *Processor) ping(_c *Client, _ *protocol.PingPacket) error {
 
 func (p *Processor) send(_c *Client, message *protocol.SendPacket) error {
 	var (
-		msgId             = p.msgIDGenerator.Generate().String()
-		msgSeq            = cast.ToUint64(msgId) // todo 消息序列号（先暂用msgId简单替代, 后可建seq服务）
+		ctx = logger.WithCtx(context.Background())
+
 		conversationID, _ = chatlib.GenConversationID(_c.UID, message.ToID, message.ConversationType)
+		msgId             = p.idGenerator.Generate().String()
 	)
+	msgSeq, err := p.seq.Next(ctx, conversationID)
+	if err != nil {
+		logger.Err(ctx, err, "generate msg_seq err")
+		return err
+	}
+
 	msg := &chatlib.MessageReq{
 		FromUID:          _c.UID,
 		FromDID:          _c.DID,
@@ -148,16 +158,14 @@ func (p *Processor) send(_c *Client, message *protocol.SendPacket) error {
 		SendTime:         int64(message.Payload.SendTime),
 		CreatedAt:        time.Now().UnixMilli(),
 	}
-	logger.Log().Debug().Msgf("UID=[%s]发送消息: %v", _c.UID, msg)
+	logger.Debugf(ctx, "UID=[%s]发送消息: %v", _c.UID, msg)
 
 	// 异步处理业务
-	err := p.workerPool.Submit(func() {
-		ctx := logger.WithCtx(context.Background())
-
+	err = p.workerPool.Submit(func() {
 		var bytes []byte
-		_, err := rpc.Caller().SendMsg(ctx, msg)
-		if err != nil {
-			logger.Err(ctx, err, "rpc - send msg error")
+		_, serr := rpc.Caller().SendMsg(ctx, msg)
+		if serr != nil {
+			logger.Err(ctx, serr, "rpc: send msg error")
 
 			bytes, _ = protocol.PacketSendAck(&protocol.SendAckPacket{
 				Code:   protocol.SendFail,
@@ -174,8 +182,8 @@ func (p *Processor) send(_c *Client, message *protocol.SendPacket) error {
 			})
 		}
 
-		if _, err = _c.Write(bytes); err != nil {
-			logger.Err(ctx, err, "write ack error: send msg")
+		if _, serr = _c.Write(bytes); serr != nil {
+			logger.Err(ctx, serr, "write ack error: send msg")
 		}
 	})
 	return err

@@ -44,7 +44,7 @@ func PreInit() {
 	logger.Setup()
 }
 
-func InitGlobalCtx() {
+func InitCtx() {
 	PreInit()
 
 	initDb()

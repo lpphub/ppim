@@ -9,7 +9,7 @@ import (
 )
 
 func Serve() {
-	global.InitGlobalCtx()
+	global.InitCtx()
 
 	service.InitService()
 

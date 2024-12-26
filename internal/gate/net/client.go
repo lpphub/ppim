@@ -141,5 +141,6 @@ func (cm *ClientManager) GetWithUIDAndDID(uid, did string) *Client {
 func (cm *ClientManager) GetWithFD(fd int) *Client {
 	cm.rwMtx.RLock()
 	defer cm.rwMtx.RUnlock()
+
 	return cm.connMap[fd]
 }
