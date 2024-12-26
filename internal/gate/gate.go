@@ -15,9 +15,8 @@ func Serve() {
 	}
 
 	svc := net.InitServerContext()
-	svc.StartBackground()
 
-	mq.RegisterSubscriber(svc)
+	startBackgroundTask(svc)
 
 	go func() {
 		tcp := net.NewTCPServer(svc, global.Conf.Server.Tcp)
@@ -32,4 +31,9 @@ func Serve() {
 		panic(err.Error())
 	}
 	defer ws.Stop()
+}
+
+func startBackgroundTask(svc *net.ServerContext) {
+	svc.RetryManager.Start()
+	mq.RegisterSubscriber(svc)
 }

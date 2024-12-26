@@ -80,7 +80,7 @@ func (r *RetryDelivery) Take(num int) []*RetryMsg {
 }
 
 func (r *RetryDelivery) start() {
-	go util.WithRecover(func() {
+	go func() {
 		ticker := time.NewTicker(5 * time.Second)
 		for {
 			select {
@@ -90,7 +90,7 @@ func (r *RetryDelivery) start() {
 				go util.WithRecover(r.work)
 			}
 		}
-	})
+	}()
 }
 
 func (r *RetryDelivery) stop() {

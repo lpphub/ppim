@@ -17,7 +17,3 @@ func InitServerContext() *ServerContext {
 	svc.RetryManager = newRetryManager(svc, 2)
 	return svc
 }
-
-func (svc *ServerContext) StartBackground() {
-	svc.RetryManager.Start()
-}

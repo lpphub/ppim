@@ -22,7 +22,7 @@ type ConsumerConfig struct {
 	Logger      *logger.Logger
 }
 
-func (c *ConsumerConfig) Validate() error {
+func (c ConsumerConfig) Validate() error {
 	if len(c.Brokers) == 0 || c.Topic == "" || c.GroupID == "" {
 		return errors.New("invalid consumer config: Brokers, topic and groupID are required")
 	}

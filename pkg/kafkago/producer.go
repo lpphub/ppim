@@ -21,7 +21,7 @@ type ProducerConfig struct {
 	Logger       *logger.Logger
 }
 
-func (c *ProducerConfig) Validate() error {
+func (c ProducerConfig) Validate() error {
 	if len(c.Brokers) == 0 {
 		return errors.New("invalid producer configuration")
 	}

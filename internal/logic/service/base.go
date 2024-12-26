@@ -24,13 +24,13 @@ func InitService() {
 		RequiredAcks: kafka.RequireAll,
 		Async:        true,
 	}
-	mqProducer, err := kafkago.NewProducer(conf)
+	producer, err := kafkago.NewProducer(conf)
 	if err != nil {
 		logger.Log().Err(err).Msg("failed to create kafka producer")
 		return
 	}
 
-	route := newRouterSrv(mqProducer)
+	route := newRouterSrv(producer)
 	conv := newConversationSrv()
 	msg := newMessageSrv(conv, route)
 
