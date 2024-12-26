@@ -18,7 +18,6 @@ type ProducerConfig struct {
 	RequiredAcks kafka.RequiredAcks
 	BatchTimeout time.Duration
 	Async        bool
-	Logger       *logger.Logger
 }
 
 func (c ProducerConfig) Validate() error {
@@ -36,9 +35,6 @@ type Producer struct {
 }
 
 func NewProducer(config ProducerConfig) (*Producer, error) {
-	if config.Logger == nil {
-		config.Logger = logger.Log()
-	}
 	if config.BatchTimeout <= 0 {
 		config.BatchTimeout = 1 * time.Second
 	}
@@ -57,7 +53,7 @@ func NewProducer(config ProducerConfig) (*Producer, error) {
 		RequiredAcks: config.RequiredAcks,
 		BatchTimeout: config.BatchTimeout,
 		Async:        config.Async,
-		Logger:       config.Logger,
+		Logger:       logger.Log(),
 	}
 	if config.Topic != "" {
 		writer.Topic = config.Topic

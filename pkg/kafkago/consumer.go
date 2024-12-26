@@ -19,7 +19,6 @@ type ConsumerConfig struct {
 	MaxAttempts int
 	StartOffset int64
 	MaxWait     time.Duration
-	Logger      *logger.Logger
 }
 
 func (c ConsumerConfig) Validate() error {
@@ -58,9 +57,7 @@ func NewConsumer(handler MessageHandler, config ConsumerConfig) (*Consumer, erro
 	if config.StartOffset == 0 {
 		config.StartOffset = kafka.LastOffset
 	}
-	if config.Logger == nil {
-		config.Logger = logger.Log()
-	}
+
 	if err := config.Validate(); err != nil {
 		return nil, err
 	}
@@ -75,7 +72,7 @@ func NewConsumer(handler MessageHandler, config ConsumerConfig) (*Consumer, erro
 }
 
 func (c *Consumer) Start() {
-	c.config.Logger.Info().Msgf("start consumer: topic=%s, groupID=%s", c.config.Topic, c.config.GroupID)
+	logger.Log().Info().Msgf("start consumer: topic=%s, groupID=%s", c.config.Topic, c.config.GroupID)
 
 	c.reader = kafka.NewReader(kafka.ReaderConfig{
 		Brokers:     c.config.Brokers,
@@ -85,7 +82,7 @@ func (c *Consumer) Start() {
 		MaxBytes:    c.config.MaxBytes,
 		MaxWait:     c.config.MaxWait,
 		StartOffset: c.config.StartOffset,
-		ErrorLogger: kafka.LoggerFunc(c.config.Logger.Printf),
+		ErrorLogger: kafka.LoggerFunc(logger.Log().Printf),
 	})
 
 	c.wg.Add(1)
@@ -104,7 +101,7 @@ func (c *Consumer) consume() {
 			msg, err := c.reader.FetchMessage(c.ctx)
 			if err != nil {
 				if !errors.Is(err, context.Canceled) {
-					c.config.Logger.Printf("Error fetching message: %v", err)
+					logger.Log().Printf("Error fetching message: %v", err)
 				}
 				continue
 			}
@@ -117,11 +114,11 @@ func (c *Consumer) consume() {
 					break
 				}
 				attempts++
-				c.config.Logger.Printf("Error processing message (attempt %d/%d): %v", attempts, c.config.MaxAttempts, err)
+				logger.Log().Printf("Error processing message (attempt %d/%d): %v", attempts, c.config.MaxAttempts, err)
 			}
 
 			if err = c.reader.CommitMessages(c.ctx, msg); err != nil {
-				c.config.Logger.Printf("Error committing message: %v", err)
+				logger.Log().Printf("Error committing message: %v", err)
 			}
 		}
 	}
