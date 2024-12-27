@@ -1,6 +1,8 @@
 package protocol
 
-import "google.golang.org/protobuf/proto"
+import (
+	"google.golang.org/protobuf/proto"
+)
 
 const (
 	OK           = iota
@@ -78,4 +80,12 @@ func PacketReceiveAck(receiveAck *ReceiveAckPacket) ([]byte, error) {
 			ReceiveAckPacket: receiveAck,
 		},
 	})
+}
+
+func Unmarshal(buf []byte) (*Message, error) {
+	var msg Message
+	if err := proto.Unmarshal(buf, &msg); err != nil {
+		return nil, err
+	}
+	return &msg, nil
 }

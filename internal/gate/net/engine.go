@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"github.com/lpphub/golib/logger"
 	"github.com/panjf2000/gnet/v2"
-	"google.golang.org/protobuf/proto"
 	"ppim/api/protocol"
 	"ppim/internal/gate/net/codec"
 	"sync/atomic"
@@ -97,7 +96,10 @@ func (e *EventEngine) OnClose(c gnet.Conn, err error) (action gnet.Action) {
 }
 
 func (e *EventEngine) OnTraffic(_c gnet.Conn) gnet.Action {
-	connCtx := _c.Context().(*EventConnContext)
+	var (
+		connCtx  = _c.Context().(*EventConnContext)
+		messages []*protocol.Message
+	)
 	if connCtx.Network == _tcp {
 		buf, err := connCtx.Codec.Decode(_c)
 		if err != nil {
@@ -107,36 +109,45 @@ func (e *EventEngine) OnTraffic(_c gnet.Conn) gnet.Action {
 			logger.Log().Err(err).Msg("failed to decode")
 			return gnet.Close
 		}
-		var msg protocol.Message
-		if err = proto.Unmarshal(buf, &msg); err != nil {
-			logger.Log().Err(err).Msg("failed to unmarshal proto")
-		}
 
-		if act := e.process(_c, &msg, connCtx.Authed); act == gnet.Close {
-			return act
+		msg, err := protocol.Unmarshal(buf)
+		if err != nil {
+			logger.Log().Err(err).Msg("failed to unmarshal proto")
+		} else {
+			messages = append(messages, msg)
 		}
 	} else if connCtx.Network == _ws {
 		ws := connCtx.WsCodec
 		if ws.ReadBufferBytes(_c) == gnet.Close {
 			return gnet.Close
 		}
-
-		messages, err := ws.Decode(_c)
+		wsMessages, err := ws.Decode(_c)
 		if err != nil {
 			return gnet.Close
 		}
-		if messages == nil {
+		if wsMessages == nil {
 			return gnet.None
 		}
 
-		for i := range messages {
-			var msg protocol.Message
-			if err = proto.Unmarshal(messages[i].Payload, &msg); err != nil {
-				logger.Log().Err(err).Msg("failed to unmarshal proto")
+		for i := range wsMessages {
+			if msg, perr := protocol.Unmarshal(wsMessages[i].Payload); perr != nil {
+				logger.Log().Err(perr).Msg("failed to unmarshal proto")
+			} else {
+				messages = append(messages, msg)
 			}
+		}
+	}
 
-			if act := e.process(_c, &msg, connCtx.Authed); act == gnet.Close {
-				return act
+	// process msg
+	for _, msg := range messages {
+		if !connCtx.Authed {
+			if err := e.svc.processor.Auth(_c, msg.GetConnectPacket()); err != nil {
+				logger.Log().Err(err).Msg("failed to auth the connection")
+				return gnet.Close
+			}
+		} else {
+			if err := e.svc.processor.Process(_c, msg); err != nil {
+				logger.Log().Err(err).Msg("failed to process msg")
 			}
 		}
 	}
@@ -145,20 +156,6 @@ func (e *EventEngine) OnTraffic(_c gnet.Conn) gnet.Action {
 		if err := _c.Wake(nil); err != nil { // wake up the connection manually to avoid missing the leftover data
 			logger.Log().Err(err).Msg("failed to wake up the connection")
 			return gnet.Close
-		}
-	}
-	return gnet.None
-}
-
-func (e *EventEngine) process(_c gnet.Conn, msg *protocol.Message, isAuthed bool) gnet.Action {
-	if !isAuthed {
-		if err := e.svc.processor.Auth(_c, msg.GetConnectPacket()); err != nil {
-			logger.Log().Err(err).Msg("failed to auth the connection")
-			return gnet.Close
-		}
-	} else {
-		if err := e.svc.processor.Process(_c, msg); err != nil {
-			logger.Log().Err(err).Msg("failed to process msg")
 		}
 	}
 	return gnet.None

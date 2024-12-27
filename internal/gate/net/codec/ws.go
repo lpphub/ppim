@@ -123,7 +123,7 @@ func (w *WsCodec) readWsMessages() (messages []wsutil.Message, err error) {
 						return messages, nil
 					}
 					in.Next(skipN)
-					return nil, err
+					return
 				}
 				in.Next(skipN)
 			}
@@ -131,7 +131,7 @@ func (w *WsCodec) readWsMessages() (messages []wsutil.Message, err error) {
 			msgBuf.curHeader = &head
 			err = ws.WriteHeader(&msgBuf.cachedBuf, head)
 			if err != nil {
-				return nil, err
+				return
 			}
 		}
 		dataLen := (int)(msgBuf.curHeader.Length)
@@ -150,7 +150,7 @@ func (w *WsCodec) readWsMessages() (messages []wsutil.Message, err error) {
 		if msgBuf.curHeader.Fin { //当前 header 已经是一个完整消息
 			messages, err = wsutil.ReadClientMessage(&msgBuf.cachedBuf, messages)
 			if err != nil {
-				return nil, err
+				return
 			}
 			msgBuf.cachedBuf.Reset()
 		} else {

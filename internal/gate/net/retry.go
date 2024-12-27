@@ -91,7 +91,7 @@ func (r *RetryDelivery) start() {
 			case <-r.ctx.Done():
 				return
 			case <-ticker.C:
-				logger.Log().Info().Msgf("重试消息队列size: %d", len(r.queue))
+				logger.Log().Debug().Msgf("重试消息 size: %d", len(r.queue))
 
 				go util.WithRecover(r.work)
 			}
