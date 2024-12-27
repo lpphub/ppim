@@ -49,18 +49,22 @@ func (r *RetryDelivery) Add(el *RetryMsg) {
 	defer r.mtx.Unlock()
 
 	r.queue = append(r.queue, el)
-	r.hash[fmt.Sprintf("%d:%s", el.ConnFD, el.MsgID)] = el
+	r.hash[r.getUk(el.ConnFD, el.MsgID)] = el
 }
 
 func (r *RetryDelivery) Remove(connFD int, msgId string) {
 	r.mtx.Lock()
 	defer r.mtx.Unlock()
 
-	key := fmt.Sprintf("%d:%s", connFD, msgId)
+	key := r.getUk(connFD, msgId)
 	if el, ok := r.hash[key]; ok {
 		el.deleted = true
 		delete(r.hash, key)
 	}
+}
+
+func (r *RetryDelivery) getUk(connFD int, msgId string) string {
+	return fmt.Sprintf("%d:%s", connFD, msgId)
 }
 
 func (r *RetryDelivery) Take(num int) []*RetryMsg {
@@ -87,6 +91,8 @@ func (r *RetryDelivery) start() {
 			case <-r.ctx.Done():
 				return
 			case <-ticker.C:
+				logger.Log().Info().Msgf("重试消息队列size: %d", len(r.queue))
+
 				go util.WithRecover(r.work)
 			}
 		}
@@ -135,9 +141,10 @@ func (r *RetryDelivery) runRetry(msg *RetryMsg) {
 	_, _ = client.Write(msg.MsgBytes)
 
 	if msg.retry >= r.maxRetries {
-		return
+		r.Remove(msg.ConnFD, msg.MsgID)
+	} else {
+		r.Add(msg)
 	}
-	r.Add(msg)
 }
 
 // RetryManager 通过重试队列保障消息可靠投递
@@ -156,13 +163,13 @@ func newRetryManager(svc *ServerContext, size int) *RetryManager {
 }
 
 func (r *RetryManager) Add(msg *RetryMsg) {
-	index := int(util.DigitizeWithAdler32(msg.MsgID))
-	r.buckets[index%r.size].Add(msg)
+	index := (int(util.XXHash64(msg.MsgID))%r.size + r.size) % r.size
+	r.buckets[index].Add(msg)
 }
 
 func (r *RetryManager) Remove(connFD int, msgId string) {
-	index := int(util.DigitizeWithAdler32(msgId))
-	r.buckets[index%r.size].Remove(connFD, msgId)
+	index := (int(util.XXHash64(msgId))%r.size + r.size) % r.size
+	r.buckets[index].Remove(connFD, msgId)
 }
 
 func (r *RetryManager) Start() {

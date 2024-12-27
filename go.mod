@@ -4,9 +4,9 @@ go 1.23.1
 
 require (
 	github.com/bwmarrin/snowflake v0.3.0
+	github.com/cespare/xxhash/v2 v2.3.0
 	github.com/gin-gonic/gin v1.10.0
 	github.com/gobwas/ws v1.4.0
-	github.com/golang/protobuf v1.5.4
 	github.com/google/uuid v1.6.0
 	github.com/jinzhu/copier v0.4.0
 	github.com/json-iterator/go v1.1.12
@@ -22,7 +22,6 @@ require (
 	github.com/spf13/cobra v1.8.1
 	go.mongodb.org/mongo-driver v1.17.1
 	google.golang.org/protobuf v1.36.1
-
 )
 
 require (
@@ -34,7 +33,6 @@ require (
 	github.com/bytedance/sonic/loader v0.2.1 // indirect
 	github.com/cenk/backoff v2.2.1+incompatible // indirect
 	github.com/cenkalti/backoff v2.2.1+incompatible // indirect
-	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/cloudwego/base64x v0.1.4 // indirect
 	github.com/cloudwego/iasm v0.2.0 // indirect
 	github.com/coreos/go-semver v0.3.0 // indirect
@@ -57,6 +55,7 @@ require (
 	github.com/goccy/go-json v0.10.4 // indirect
 	github.com/godzie44/go-uring v0.0.0-20220926161041-69611e8b13d5 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
+	github.com/golang/protobuf v1.5.4 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/google/pprof v0.0.0-20241128161848-dc51965c6481 // indirect
 	github.com/grandcat/zeroconf v1.0.0 // indirect

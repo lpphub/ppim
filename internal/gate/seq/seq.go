@@ -55,32 +55,6 @@ func (s *RedisSequence) Next(ctx context.Context, key string) (uint64, error) {
 	return val, nil
 }
 
-func (s *RedisSequence) fillBufferWithLock(ctx context.Context, key string) error {
-	var unlock func()
-	for attempt := 0; attempt < 3; attempt++ {
-		lock, err := s.redisClient.SetNX(ctx, fmt.Sprintf(cacheSeqLock, key), 1, lockExpireTime).Result()
-		if err != nil {
-			return err
-		}
-		if lock {
-			unlock = func() { s.redisClient.Del(ctx, fmt.Sprintf(cacheSeqLock, key)) }
-			break
-		}
-		// 等待一段时间后重试
-		select {
-		case <-time.After(300 * time.Millisecond):
-		case <-ctx.Done():
-			return ctx.Err()
-		}
-	}
-	if unlock == nil {
-		return errors.New("failed to acquire lock")
-	}
-	defer unlock()
-
-	return s.fillBuffer(ctx, key)
-}
-
 func (s *RedisSequence) fillBuffer(ctx context.Context, key string) error {
 	cacheKey := fmt.Sprintf(cacheSeqPrefix, key)
 	current, err := s.redisClient.Get(ctx, cacheKey).Int64()
@@ -110,4 +84,30 @@ func (s *RedisSequence) fillBuffer(ctx context.Context, key string) error {
 	}
 	s.nextIndex[key] = 0
 	return nil
+}
+
+func (s *RedisSequence) fillBufferWithLock(ctx context.Context, key string) error {
+	var unlock func()
+	for attempt := 0; attempt < 3; attempt++ {
+		lock, err := s.redisClient.SetNX(ctx, fmt.Sprintf(cacheSeqLock, key), 1, lockExpireTime).Result()
+		if err != nil {
+			return err
+		}
+		if lock {
+			unlock = func() { s.redisClient.Del(ctx, fmt.Sprintf(cacheSeqLock, key)) }
+			break
+		}
+		// 等待一段时间后重试
+		select {
+		case <-time.After(300 * time.Millisecond):
+		case <-ctx.Done():
+			return ctx.Err()
+		}
+	}
+	if unlock == nil {
+		return errors.New("failed to acquire lock")
+	}
+	defer unlock()
+
+	return s.fillBuffer(ctx, key)
 }
