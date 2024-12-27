@@ -10,8 +10,8 @@ func TestSegmentLock_Lock(t *testing.T) {
 
 	for i := 0; i < 10; i++ {
 		go func() {
-			sl.Lock(uint64(i))
-			defer sl.Unlock(uint64(i))
+			sl.Lock(i)
+			defer sl.Unlock(i)
 
 			t.Logf("lock %d", i)
 		}()

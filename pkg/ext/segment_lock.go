@@ -4,10 +4,10 @@ import "sync"
 
 type SegmentRWLock struct {
 	segments []sync.RWMutex
-	size     uint64
+	size     int
 }
 
-func NewSegmentLock(size uint64) *SegmentRWLock {
+func NewSegmentLock(size int) *SegmentRWLock {
 	sl := &SegmentRWLock{
 		segments: make([]sync.RWMutex, size),
 		size:     size,
@@ -15,22 +15,22 @@ func NewSegmentLock(size uint64) *SegmentRWLock {
 	return sl
 }
 
-func (sl *SegmentRWLock) Lock(index uint64) {
+func (sl *SegmentRWLock) Lock(index int) {
 	sl.getSegmentLock(index).Lock()
 }
 
-func (sl *SegmentRWLock) Unlock(index uint64) {
+func (sl *SegmentRWLock) Unlock(index int) {
 	sl.getSegmentLock(index).Unlock()
 }
 
-func (sl *SegmentRWLock) RLock(index uint64) {
+func (sl *SegmentRWLock) RLock(index int) {
 	sl.getSegmentLock(index).RLock()
 }
 
-func (sl *SegmentRWLock) RUnlock(index uint64) {
+func (sl *SegmentRWLock) RUnlock(index int) {
 	sl.getSegmentLock(index).RUnlock()
 }
 
-func (sl *SegmentRWLock) getSegmentLock(index uint64) *sync.RWMutex {
+func (sl *SegmentRWLock) getSegmentLock(index int) *sync.RWMutex {
 	return &sl.segments[index%sl.size]
 }

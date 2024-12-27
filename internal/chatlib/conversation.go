@@ -26,6 +26,6 @@ func GenConversationID(from, to, conversationType string) (string, error) {
 	return "", errors.New("unknown conversation type")
 }
 
-func DigitizeUID(uid string) uint64 {
-	return util.XXHash64(uid)
+func DigitizeUID(uid string) uint32 {
+	return util.CRC32(uid)
 }

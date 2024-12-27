@@ -72,7 +72,7 @@ func (c *ConversationSrv) IndexRecent(ctx context.Context, msg *types.MessageDTO
 
 func (c *ConversationSrv) indexWithLock(ctx context.Context, msg *types.MessageDTO, uid string) {
 	// todo 集群模式下，分布式锁
-	index := chatlib.DigitizeUID(uid)
+	index := cast.ToInt(chatlib.DigitizeUID(uid))
 	c.segmentLock.Lock(index)
 	defer c.segmentLock.Unlock(index)
 
