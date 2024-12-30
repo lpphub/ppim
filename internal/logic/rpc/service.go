@@ -38,8 +38,14 @@ func (s *logicService) UnRegister(ctx context.Context, req *chatlib.RouterReq, _
 	return service.Hints().Route.Offline(ctx, &ol)
 }
 
-func (s *logicService) SendMsg(ctx context.Context, req *chatlib.MessageReq, _ *chatlib.MessageResp) error {
+func (s *logicService) SendMsg(ctx context.Context, req *chatlib.MessageReq, resp *chatlib.MessageResp) error {
 	var msg types.MessageDTO
 	_ = copier.Copy(&msg, req)
-	return service.Hints().Msg.HandleMsg(ctx, &msg)
+
+	err := service.Hints().Msg.HandleMsg(ctx, &msg)
+	if err != nil {
+		return err
+	}
+	resp.MsgSeq = msg.MsgSeq
+	return nil
 }

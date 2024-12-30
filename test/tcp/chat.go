@@ -66,7 +66,8 @@ func main() {
 				}
 
 				if msg.GetMsgType() == protocol.MsgType_SEND_ACK {
-					fmt.Printf("发送结果：code=%d msgId=%s \n", msg.GetSendAckPacket().GetCode(), msg.GetSendAckPacket().GetMsgId())
+					d := msg.GetSendAckPacket()
+					fmt.Printf("发送结果：code=%d msgId=%s msgSeq=%d\n", d.GetCode(), d.GetMsgId(), d.GetMsgSeq())
 				}
 
 				if msg.GetMsgType() == protocol.MsgType_RECEIVE {

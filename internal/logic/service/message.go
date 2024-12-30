@@ -7,6 +7,7 @@ import (
 	"github.com/pkg/errors"
 	"ppim/internal/chatlib"
 	"ppim/internal/logic/global"
+	"ppim/internal/logic/service/seq"
 	"ppim/internal/logic/store"
 	"ppim/internal/logic/types"
 	"ppim/pkg/util"
@@ -22,24 +23,34 @@ var (
 type MessageSrv struct {
 	conv  *ConversationSrv
 	route *RouteSrv
+	seq   seq.Sequence
 }
 
-func newMessageSrv(conv *ConversationSrv, route *RouteSrv) *MessageSrv {
+func newMessageSrv(conv *ConversationSrv, route *RouteSrv, seq seq.Sequence) *MessageSrv {
 	return &MessageSrv{
 		conv:  conv,
 		route: route,
+		seq:   seq,
 	}
 }
 
 func (s *MessageSrv) HandleMsg(ctx context.Context, msg *types.MessageDTO) error {
-	// todo 优化：异步处理
 	ctx = logger.WithCtx(ctx)
+
+	msgSeq, err := s.seq.Next(ctx, msg.ConversationID)
+	if err != nil {
+		logger.Err(ctx, err, "generate msg_seq err")
+		return err
+	}
+	msg.MsgSeq = msgSeq
+
+	// todo 优化：异步处理
 
 	// 1.消息持久化
 	mm := &store.Message{
+		MsgNo:            msg.MsgNo,
 		MsgID:            msg.MsgID,
 		MsgSeq:           msg.MsgSeq,
-		MsgNo:            msg.MsgNo,
 		MsgType:          msg.MsgType,
 		Content:          msg.Content,
 		ConversationID:   msg.ConversationID,
@@ -50,7 +61,7 @@ func (s *MessageSrv) HandleMsg(ctx context.Context, msg *types.MessageDTO) error
 		CreatedAt:        time.Now(),
 		UpdatedAt:        time.Now(),
 	}
-	if err := mm.Insert(ctx); err != nil {
+	if err = mm.Insert(ctx); err != nil {
 		logger.Err(ctx, err, "")
 		return ErrMsgStore
 	}
@@ -60,9 +71,9 @@ func (s *MessageSrv) HandleMsg(ctx context.Context, msg *types.MessageDTO) error
 	if msg.ConversationType == chatlib.ConvSingle {
 		receivers = append(receivers, msg.ToID)
 	} else if msg.ConversationType == chatlib.ConvGroup {
-		members, err := new(store.Group).ListMembers(ctx, msg.ToID)
-		if err != nil {
-			logger.Err(ctx, err, "")
+		members, serr := new(store.Group).ListMembers(ctx, msg.ToID)
+		if serr != nil {
+			logger.Err(ctx, serr, "")
 		} else {
 			receivers = append(receivers, members...)
 		}
@@ -73,7 +84,7 @@ func (s *MessageSrv) HandleMsg(ctx context.Context, msg *types.MessageDTO) error
 	}
 
 	// 3.索引会话最新消息
-	if err := s.conv.IndexRecent(ctx, msg, receivers); err != nil {
+	if err = s.conv.IndexRecent(ctx, msg, receivers); err != nil {
 		logger.Err(ctx, err, "")
 		return ErrConvIndex
 	}
@@ -104,7 +115,7 @@ func (s *MessageSrv) HandleMsg(ctx context.Context, msg *types.MessageDTO) error
 	}
 
 	if len(onlineSlice) > 0 {
-		err := s.route.RouteDelivery(ctx, util.RemoveDup(onlineSlice), msg)
+		err = s.route.RouteDelivery(ctx, util.RemoveDup(onlineSlice), msg)
 		if err != nil {
 			logger.Err(ctx, err, "")
 			return ErrMsgRoute

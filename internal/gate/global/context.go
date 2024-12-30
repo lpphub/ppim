@@ -3,14 +3,12 @@ package global
 import (
 	"github.com/lpphub/golib/env"
 	"github.com/lpphub/golib/logger"
-	"github.com/redis/go-redis/v9"
 	"path/filepath"
 	"ppim/internal/gate/conf"
 )
 
 var (
-	Conf  conf.Config
-	Redis *redis.Client
+	Conf conf.Config
 )
 
 func Init() {
@@ -20,6 +18,4 @@ func Init() {
 
 	// 配置日志
 	logger.Setup()
-
-	initRedis()
 }

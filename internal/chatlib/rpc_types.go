@@ -37,4 +37,5 @@ type MessageReq struct {
 }
 
 type MessageResp struct {
+	MsgSeq uint64
 }

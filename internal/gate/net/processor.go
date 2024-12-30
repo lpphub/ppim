@@ -10,9 +10,7 @@ import (
 	"github.com/panjf2000/gnet/v2"
 	"ppim/api/protocol"
 	"ppim/internal/chatlib"
-	"ppim/internal/gate/global"
 	"ppim/internal/gate/rpc"
-	"ppim/internal/gate/seq"
 	"time"
 )
 
@@ -20,7 +18,6 @@ type Processor struct {
 	svc         *ServerContext
 	workerPool  *gowork.Pool
 	idGenerator *snowflake.Node
-	seq         seq.Sequence
 }
 
 var (
@@ -34,7 +31,6 @@ func newProcessor(svc *ServerContext) *Processor {
 	return &Processor{
 		svc:         svc,
 		idGenerator: node,
-		seq:         seq.NewRedisSequence(global.Redis, 100),
 		workerPool:  gowork.Default(),
 	}
 }
@@ -133,16 +129,10 @@ func (p *Processor) ping(_c *Client, _ *protocol.PingPacket) error {
 
 func (p *Processor) send(_c *Client, message *protocol.SendPacket) error {
 	var (
-		ctx = logger.WithCtx(context.Background())
-
+		ctx               = logger.WithCtx(context.Background())
 		conversationID, _ = chatlib.GenConversationID(_c.UID, message.ToID, message.ConversationType)
 		msgId             = p.idGenerator.Generate().String()
 	)
-	msgSeq, err := p.seq.Next(ctx, conversationID)
-	if err != nil {
-		logger.Err(ctx, err, "generate msg_seq err")
-		return err
-	}
 
 	msg := &chatlib.MessageReq{
 		FromUID:          _c.UID,
@@ -151,7 +141,6 @@ func (p *Processor) send(_c *Client, message *protocol.SendPacket) error {
 		ConversationType: message.ConversationType,
 		ConversationID:   conversationID,
 		MsgID:            msgId,
-		MsgSeq:           msgSeq,
 		MsgNo:            message.Payload.MsgNo,
 		MsgType:          int8(message.Payload.MsgType),
 		Content:          message.Payload.Content,
@@ -161,24 +150,22 @@ func (p *Processor) send(_c *Client, message *protocol.SendPacket) error {
 	logger.Debugf(ctx, "UID=[%s]发送消息: %v", _c.UID, msg)
 
 	// 异步处理业务
-	err = p.workerPool.Submit(func() {
+	err := p.workerPool.Submit(func() {
 		var bytes []byte
-		_, serr := rpc.Caller().SendMsg(ctx, msg)
+		resp, serr := rpc.Caller().SendMsg(ctx, msg)
 		if serr != nil {
 			logger.Err(ctx, serr, "rpc: send msg error")
 
 			bytes, _ = protocol.PacketSendAck(&protocol.SendAckPacket{
-				Code:   protocol.SendFail,
-				MsgNo:  msg.MsgNo,
-				MsgId:  msg.MsgID,
-				MsgSeq: msg.MsgSeq,
+				Code:  protocol.SendFail,
+				MsgNo: msg.MsgNo,
 			})
 		} else {
 			bytes, _ = protocol.PacketSendAck(&protocol.SendAckPacket{
 				Code:   protocol.OK,
 				MsgNo:  msg.MsgNo,
 				MsgId:  msg.MsgID,
-				MsgSeq: msg.MsgSeq,
+				MsgSeq: resp.MsgSeq,
 			})
 		}
 

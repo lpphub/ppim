@@ -37,7 +37,8 @@ func RegisterRpcClient(registryAddr string) (err error) {
 			err = cerr
 			return
 		}
-		logic := client.NewXClient(serviceName, client.Failtry, client.RandomSelect, discovery, client.DefaultOption)
+		logic := client.NewXClient(serviceName, client.Failtry, client.SelectByUser, discovery, client.DefaultOption)
+		logic.SetSelector(&customSelector{})
 
 		caller = &RpcCaller{
 			logic: logic,
