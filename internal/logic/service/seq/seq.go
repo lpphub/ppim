@@ -11,7 +11,7 @@ import (
 	"time"
 )
 
-// Sequence todo 抽离序列号生成器为单独的服务，避免每个服务都维护自己的序列号生成器
+// Sequence 序列号生成器可抽离为单独的服务，避免每个logic服务节点维护管理自己的序列号
 type Sequence interface {
 	Next(ctx context.Context, key string) (uint64, error)
 }
