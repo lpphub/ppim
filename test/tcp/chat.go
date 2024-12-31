@@ -17,7 +17,7 @@ import (
 )
 
 func main() {
-	c, err := net.Dial("tcp", ":5050")
+	c, err := net.Dial("tcp", ":5001")
 	if err != nil {
 		fmt.Printf("%v\n", err)
 		return

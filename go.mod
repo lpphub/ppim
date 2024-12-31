@@ -3,7 +3,6 @@ module ppim
 go 1.23.1
 
 require (
-	github.com/bwmarrin/snowflake v0.3.0
 	github.com/cespare/xxhash/v2 v2.3.0
 	github.com/gin-gonic/gin v1.10.0
 	github.com/gobwas/ws v1.4.0
@@ -16,10 +15,12 @@ require (
 	github.com/prometheus/client_golang v1.20.5
 	github.com/redis/go-redis/v9 v9.7.0
 	github.com/rpcxio/rpcx-etcd v0.4.4
+	github.com/rs/xid v1.6.0
 	github.com/segmentio/kafka-go v0.4.47
 	github.com/smallnest/rpcx v1.8.36
 	github.com/spf13/cast v1.7.1
 	github.com/spf13/cobra v1.8.1
+	github.com/valyala/fastrand v1.1.0
 	go.mongodb.org/mongo-driver v1.17.1
 	google.golang.org/protobuf v1.36.1
 )
@@ -112,7 +113,6 @@ require (
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	github.com/ugorji/go/codec v1.2.12 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
-	github.com/valyala/fastrand v1.1.0 // indirect
 	github.com/vmihailenco/msgpack/v5 v5.4.1 // indirect
 	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
 	github.com/xdg-go/pbkdf2 v1.0.0 // indirect

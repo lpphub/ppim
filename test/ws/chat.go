@@ -17,7 +17,7 @@ import (
 )
 
 func main() {
-	c, _, _, err := ws.Dial(context.Background(), "ws://localhost:5051")
+	c, _, _, err := ws.Dial(context.Background(), "ws://localhost:5002")
 	if err != nil {
 		fmt.Printf("%v\n", err)
 		return

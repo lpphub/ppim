@@ -3,11 +3,11 @@ package net
 import (
 	"context"
 	"errors"
-	"github.com/bwmarrin/snowflake"
 	"github.com/gobwas/ws/wsutil"
 	"github.com/lpphub/golib/gowork"
 	"github.com/lpphub/golib/logger"
 	"github.com/panjf2000/gnet/v2"
+	"github.com/rs/xid"
 	"ppim/api/protocol"
 	"ppim/internal/chatlib"
 	"ppim/internal/gate/rpc"
@@ -15,9 +15,8 @@ import (
 )
 
 type Processor struct {
-	svc         *ServerContext
-	workerPool  *gowork.Pool
-	idGenerator *snowflake.Node
+	svc        *ServerContext
+	workerPool *gowork.Pool
 }
 
 var (
@@ -26,12 +25,9 @@ var (
 )
 
 func newProcessor(svc *ServerContext) *Processor {
-	// todo 集群模式时需兼容
-	node, _ := snowflake.NewNode(1)
 	return &Processor{
-		svc:         svc,
-		idGenerator: node,
-		workerPool:  gowork.Default(),
+		svc:        svc,
+		workerPool: gowork.Default(),
 	}
 }
 
@@ -131,7 +127,7 @@ func (p *Processor) send(_c *Client, message *protocol.SendPacket) error {
 	var (
 		ctx               = logger.WithCtx(context.Background())
 		conversationID, _ = chatlib.GenConversationID(_c.UID, message.ToID, message.ConversationType)
-		msgId             = p.idGenerator.Generate().String()
+		msgId             = xid.New().String()
 	)
 
 	msg := &chatlib.MessageReq{

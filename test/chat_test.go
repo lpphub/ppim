@@ -19,7 +19,7 @@ import (
 )
 
 func TestClient_1(t *testing.T) {
-	c, err := net.Dial("tcp", ":5050")
+	c, err := net.Dial("tcp", ":5001")
 	if err != nil {
 		t.Log(err)
 		return
@@ -91,7 +91,7 @@ func TestClient_1(t *testing.T) {
 }
 
 func TestClient_2(t *testing.T) {
-	c, _, _, err := ws.Dial(context.Background(), "ws://localhost:5051")
+	c, _, _, err := ws.Dial(context.Background(), "ws://localhost:5002")
 	if err != nil {
 		fmt.Printf("%v\n", err)
 		return
