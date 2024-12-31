@@ -46,7 +46,7 @@ func (s *RedisSequence) Next(ctx context.Context, key string) (uint64, error) {
 	return s.incrWithBuf(ctx, key)
 }
 
-// 使用redis incr生成序列号
+// redis incr生成序列号
 func (s *RedisSequence) incr(ctx context.Context, key string) (uint64, error) {
 	cacheKey := fmt.Sprintf(cacheSeqPrefix, key)
 	current, err := s.redisClient.Incr(ctx, cacheKey).Result()
@@ -64,7 +64,7 @@ func (s *RedisSequence) incr(ctx context.Context, key string) (uint64, error) {
 	return uint64(current), nil
 }
 
-// 使用缓冲区 + redis incrBy 生成序列号
+// redis incrBy + 缓冲区生成序列号
 func (s *RedisSequence) incrWithBuf(ctx context.Context, key string) (uint64, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -102,7 +102,6 @@ func (s *RedisSequence) fillBuffer(ctx context.Context, key string) error {
 	start := current + 1
 	end := start + s.bufferSize - 1
 
-	// 使用 Redis 的 IncrBy 命令获取新的序列号范围
 	newCurrent, err := s.redisClient.IncrBy(ctx, cacheKey, s.bufferSize).Result()
 	if err != nil {
 		return err
@@ -121,14 +120,17 @@ func (s *RedisSequence) fillBuffer(ctx context.Context, key string) error {
 }
 
 func (s *RedisSequence) fillBufferWithLock(ctx context.Context, key string) error {
-	var unlock func()
+	var (
+		lockKey = fmt.Sprintf(cacheSeqLock, key)
+		unlock  func()
+	)
 	for attempt := 0; attempt < 3; attempt++ {
-		lock, err := s.redisClient.SetNX(ctx, fmt.Sprintf(cacheSeqLock, key), 1, lockExpireTime).Result()
+		lock, err := s.redisClient.SetNX(ctx, lockKey, 1, lockExpireTime).Result()
 		if err != nil {
 			return err
 		}
 		if lock {
-			unlock = func() { s.redisClient.Del(ctx, fmt.Sprintf(cacheSeqLock, key)) }
+			unlock = func() { s.redisClient.Del(ctx, lockKey) }
 			break
 		}
 		// 等待一段时间后重试
