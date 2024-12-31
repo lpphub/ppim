@@ -59,3 +59,14 @@ func (c *Conversation) ListRecent(ctx context.Context, uid string) ([]Conversati
 	}
 	return results, nil
 }
+
+func (c *Conversation) GetMaxSeq(ctx context.Context, conversationID string) (uint64, error) {
+	filter := bson.D{bson.E{Key: "conversation_id", Value: conversationID}}
+	opts := options.FindOne().SetProjection(bson.M{"last_msg_seq": 1}).SetSort(bson.D{bson.E{Key: "last_msg_seq", Value: -1}})
+
+	err := c.Collection().FindOne(ctx, filter, opts).Decode(c)
+	if err != nil {
+		return 0, err
+	}
+	return c.LastMsgSeq, nil
+}

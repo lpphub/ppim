@@ -19,7 +19,7 @@ func TestRedisSequence_Next(t *testing.T) {
 	s1 := NewRedisSequence(r, 100)
 	for range 123 {
 		go func() {
-			seq, err := s1.Next(context.TODO(), "test")
+			seq, err := s1.Next(context.TODO(), "single|20906144@19726487")
 			if err != nil {
 				t.Error(err)
 				return
@@ -31,7 +31,7 @@ func TestRedisSequence_Next(t *testing.T) {
 	s2 := NewRedisSequence(r, 100)
 	for range 13 {
 		go func() {
-			seq, err := s2.Next(context.TODO(), "test")
+			seq, err := s2.Next(context.TODO(), "single|20906144@19726487")
 			if err != nil {
 				t.Error(err)
 				return

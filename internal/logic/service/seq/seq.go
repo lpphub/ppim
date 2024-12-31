@@ -5,10 +5,13 @@ import (
 	"errors"
 	"fmt"
 	"github.com/redis/go-redis/v9"
+	"go.mongodb.org/mongo-driver/mongo"
+	"ppim/internal/logic/store"
 	"sync"
 	"time"
 )
 
+// Sequence todo 抽离序列号生成器为单独的服务，避免每个服务都维护自己的序列号生成器
 type Sequence interface {
 	Next(ctx context.Context, key string) (uint64, error)
 }
@@ -38,6 +41,31 @@ func NewRedisSequence(redisClient *redis.Client, bufferSize int64) Sequence {
 }
 
 func (s *RedisSequence) Next(ctx context.Context, key string) (uint64, error) {
+	// 使用incr时，利用redis实现全局序列号，但高并发时redis压力大；
+	// 使用incrWithBuf时，需要保证同一会话key路由至同一logic节点，且扩缩容时重置每个节点的缓冲区
+	return s.incrWithBuf(ctx, key)
+}
+
+// 使用redis incr生成序列号
+func (s *RedisSequence) incr(ctx context.Context, key string) (uint64, error) {
+	cacheKey := fmt.Sprintf(cacheSeqPrefix, key)
+	current, err := s.redisClient.Incr(ctx, cacheKey).Result()
+	if err != nil {
+		return 0, err
+	}
+
+	if current == 1 { // 获取序列号=1时可能缓存丢失，尝试从db中获取key当前最大值初始化缓存
+		maxSeq, err := new(store.Conversation).GetMaxSeq(ctx, key)
+		if err != nil && !errors.Is(err, mongo.ErrNoDocuments) {
+			return 0, err
+		}
+		current, err = s.redisClient.IncrBy(ctx, cacheKey, int64(maxSeq)+1).Result()
+	}
+	return uint64(current), nil
+}
+
+// 使用缓冲区 + redis incrBy 生成序列号
+func (s *RedisSequence) incrWithBuf(ctx context.Context, key string) (uint64, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -62,7 +90,13 @@ func (s *RedisSequence) fillBuffer(ctx context.Context, key string) error {
 		return err
 	}
 
-	// todo redis查不到时，尝试从db中获取key的当前最大值
+	if current == 0 { // 未获取到序列号时可能缓存丢失，尝试从db中获取key当前最大值初始化缓存
+		curr, err := new(store.Conversation).GetMaxSeq(ctx, key)
+		if err != nil && !errors.Is(err, mongo.ErrNoDocuments) {
+			return err
+		}
+		current = int64(curr)
+	}
 
 	// 设置新的序列号范围
 	start := current + 1
