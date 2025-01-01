@@ -35,7 +35,7 @@ type RecentConvVO struct {
 	Version          int64       `json:"version"`
 }
 
-type ConvMsgReq struct {
+type ConvMsgDTO struct {
 	ConversationID string `json:"conversationID" form:"conversationID"`
 	StartSeq       int64  `json:"startSeq" form:"startSeq"`
 	Limit          int64  `json:"limit" form:"limit"`

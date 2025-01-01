@@ -14,7 +14,7 @@ type ChatHandler struct {
 	msg  *srv.MsgSrv
 }
 
-func (h *ChatHandler) RecentConvList(ctx *gin.Context) {
+func (h ChatHandler) ConvRecentList(ctx *gin.Context) {
 	uid := ctx.Query("uid")
 	if uid == "" {
 		web.JsonWithError(ctx, errs.ErrInvalidParam)
@@ -29,8 +29,8 @@ func (h *ChatHandler) RecentConvList(ctx *gin.Context) {
 	}
 }
 
-func (h *ChatHandler) ListConvMsg(ctx *gin.Context) {
-	var req types.ConvMsgReq
+func (h ChatHandler) ConvListMsg(ctx *gin.Context) {
+	var req types.ConvMsgDTO
 	if err := ctx.ShouldBind(&req); err != nil {
 		web.JsonWithError(ctx, errs.ErrInvalidParam)
 		return
@@ -42,4 +42,39 @@ func (h *ChatHandler) ListConvMsg(ctx *gin.Context) {
 	} else {
 		web.JsonWithSuccess(ctx, list)
 	}
+}
+
+func (h ChatHandler) ConvPin(ctx *gin.Context) {
+	// todo
+	web.JsonWithSuccess(ctx, "ok")
+}
+
+func (h ChatHandler) ConvMute(ctx *gin.Context) {
+	// todo
+	web.JsonWithSuccess(ctx, "ok")
+}
+
+func (h ChatHandler) ConvSetUnread(ctx *gin.Context) {
+	// todo
+	web.JsonWithSuccess(ctx, "ok")
+}
+
+func (h ChatHandler) ConvDel(ctx *gin.Context) {
+	// todo
+	web.JsonWithSuccess(ctx, "ok")
+}
+
+func (h ChatHandler) MsgDel(ctx *gin.Context) {
+	// todo
+	web.JsonWithSuccess(ctx, "ok")
+}
+
+func (h ChatHandler) MsgRevoke(ctx *gin.Context) {
+	// todo
+	web.JsonWithSuccess(ctx, "ok")
+}
+
+func (h ChatHandler) MsgRead(ctx *gin.Context) {
+	// todo
+	web.JsonWithSuccess(ctx, "ok")
 }
