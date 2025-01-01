@@ -11,17 +11,11 @@ import (
 
 type logicService struct{}
 
-func (s *logicService) Auth(ctx context.Context, req *chatlib.AuthReq, resp *chatlib.AuthResp) error {
-	user, err := new(store.User).GetOne(ctx, req.Uid)
+func (s *logicService) Auth(ctx context.Context, req *chatlib.AuthReq, _ *chatlib.AuthResp) error {
+	// todo 先从缓存验证
+	_, err := new(store.User).GetByToken(ctx, req.Uid, req.Token)
 	if err != nil {
 		return err
-	}
-	code := 0
-	if user.Token != req.Token {
-		code = 1 // 鉴权失败
-	}
-	*resp = chatlib.AuthResp{
-		Code: code,
 	}
 	return nil
 }

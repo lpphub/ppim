@@ -40,11 +40,11 @@ func (m *Message) ListByMsgIds(ctx context.Context, msgIds []string) ([]Message,
 		return nil, err
 	}
 
-	var results []Message
-	if err = cursor.All(ctx, &results); err != nil {
+	var result []Message
+	if err = cursor.All(ctx, &result); err != nil {
 		return nil, err
 	}
-	return results, nil
+	return result, nil
 }
 
 func (m *Message) ListByConvSeq(ctx context.Context, conversationID string, startSeq, limit int64) ([]Message, error) {
@@ -64,9 +64,9 @@ func (m *Message) ListByConvSeq(ctx context.Context, conversationID string, star
 		return nil, err
 	}
 
-	var results []Message
-	if err = cursor.All(ctx, &results); err != nil {
+	var result []Message
+	if err = cursor.All(ctx, &result); err != nil {
 		return nil, err
 	}
-	return results, nil
+	return result, nil
 }

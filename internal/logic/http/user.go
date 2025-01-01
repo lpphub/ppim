@@ -15,13 +15,13 @@ type UserHandler struct {
 	srv *srv.UserSrv
 }
 
-func (h UserHandler) GetOne(ctx *gin.Context) {
+func (h UserHandler) Get(ctx *gin.Context) {
 	uid := ctx.Query("uid")
 	if uid == "" {
 		web.JsonWithError(ctx, errs.ErrInvalidParam)
 		return
 	}
-	if u, err := h.srv.GetOne(ctx, uid); err != nil {
+	if us, err := h.srv.Get(ctx, uid); err != nil {
 		logx.Error(ctx, err.Error())
 		if errors.Is(err, mongo.ErrNoDocuments) {
 			web.JsonWithError(ctx, errs.ErrRecordNotFound)
@@ -29,7 +29,7 @@ func (h UserHandler) GetOne(ctx *gin.Context) {
 			web.JsonWithError(ctx, errs.ErrServerInternal)
 		}
 	} else {
-		web.JsonWithSuccess(ctx, u)
+		web.JsonWithSuccess(ctx, us)
 	}
 }
 

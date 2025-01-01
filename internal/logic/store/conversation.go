@@ -53,11 +53,11 @@ func (c *Conversation) ListRecent(ctx context.Context, uid string) ([]Conversati
 		return nil, err
 	}
 
-	var results []Conversation
-	if err = cursor.All(ctx, &results); err != nil {
+	var result []Conversation
+	if err = cursor.All(ctx, &result); err != nil {
 		return nil, err
 	}
-	return results, nil
+	return result, nil
 }
 
 func (c *Conversation) GetMaxSeq(ctx context.Context, conversationID string) (uint64, error) {

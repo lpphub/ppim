@@ -28,9 +28,9 @@ func (g *Group) ListMembers(ctx context.Context, groupId string) ([]string, erro
 		return nil, err
 	}
 
-	var results []string
-	if err = cur.All(context.TODO(), &results); err != nil {
+	var result []string
+	if err = cur.All(context.TODO(), &result); err != nil {
 		return nil, err
 	}
-	return results, nil
+	return result, nil
 }

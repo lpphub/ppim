@@ -28,7 +28,7 @@ func setupRoutes(r *gin.Engine) {
 
 	u := r.Group("/user")
 	{
-		u.GET("/get", user.GetOne)
+		u.GET("/get", user.Get)
 		u.POST("/register", user.Register)
 	}
 
