@@ -4,6 +4,7 @@ import (
 	"context"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 	"ppim/internal/logic/global"
 	"time"
 )
@@ -35,6 +36,30 @@ func (m *Message) Insert(ctx context.Context) error {
 func (m *Message) ListByMsgIds(ctx context.Context, msgIds []string) ([]Message, error) {
 	filter := bson.M{"msg_id": bson.M{"$in": msgIds}}
 	cursor, err := m.Collection().Find(ctx, filter)
+	if err != nil {
+		return nil, err
+	}
+
+	var results []Message
+	if err = cursor.All(ctx, &results); err != nil {
+		return nil, err
+	}
+	return results, nil
+}
+
+func (m *Message) ListByConvSeq(ctx context.Context, conversationID string, startSeq, limit int64) ([]Message, error) {
+	filter := bson.D{{Key: "conversation_id", Value: conversationID}}
+	opts := options.Find()
+
+	if limit < 0 { // 向前翻页
+		filter = append(filter, bson.E{Key: "msg_seq", Value: bson.M{"$lt": startSeq}})
+		opts.SetSort(bson.D{{Key: "msg_seq", Value: -1}}).SetLimit(limit * -1)
+	} else { // 向后翻页
+		filter = append(filter, bson.E{Key: "msg_seq", Value: bson.M{"$gt": startSeq}})
+		opts.SetSort(bson.D{{Key: "msg_seq", Value: 1}}).SetLimit(limit)
+	}
+
+	cursor, err := m.Collection().Find(ctx, filter, opts)
 	if err != nil {
 		return nil, err
 	}

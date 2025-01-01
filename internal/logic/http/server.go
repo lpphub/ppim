@@ -16,7 +16,7 @@ type ApiServer struct {
 func NewApiServer(addr string) *ApiServer {
 	r := gin.New()
 	bootstraps(r)
-	registerRoutes(r)
+	setupRoutes(r)
 	return &ApiServer{
 		addr:   addr,
 		engine: r,

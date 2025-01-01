@@ -34,6 +34,7 @@ func (srv *ConvSrv) RecentList(ctx *gin.Context, uid string) (list []*types.Rece
 			Pin:              d.Pin,
 			FromUID:          d.FromUID,
 			LastMsgID:        d.LastMsgId,
+			LastMsgSeq:       d.LastMsgSeq,
 			Version:          d.CreatedAt.UnixMilli(),
 		})
 

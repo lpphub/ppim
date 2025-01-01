@@ -4,7 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func TestA() gin.HandlerFunc {
+func authorize() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		ctx.Next()
 	}

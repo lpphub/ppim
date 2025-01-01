@@ -30,6 +30,13 @@ type RecentConvVO struct {
 	Mute             bool        `json:"mute"`
 	FromUID          string      `json:"fromUID"`
 	LastMsgID        string      `json:"lastMsgID"`
+	LastMsgSeq       uint64      `json:"lastMsgSeq"`
 	LastMsg          *MessageDTO `json:"lastMsg"`
 	Version          int64       `json:"version"`
+}
+
+type ConvMsgReq struct {
+	ConversationID string `json:"conversationID" form:"conversationID"`
+	StartSeq       int64  `json:"startSeq" form:"startSeq"`
+	Limit          int64  `json:"limit" form:"limit"`
 }

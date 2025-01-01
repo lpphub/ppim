@@ -164,6 +164,7 @@ func (c *ConversationSrv) CacheQueryRecent(ctx context.Context, uid string) ([]*
 			vo.ConversationType = mt.ConversationType
 			vo.FromUID = mt.FromUID
 			vo.LastMsgID = mt.MsgID
+			vo.LastMsgSeq = mt.MsgSeq
 			vo.Version = mt.CreatedAt
 			vo.LastMsg = &mt
 		}

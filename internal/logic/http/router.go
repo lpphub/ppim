@@ -11,18 +11,20 @@ import (
 
 var (
 	user UserHandler
-	msg  MsgHandler
+	chat ChatHandler
 )
 
 func initHandlers() {
 	user = UserHandler{srv: srv.NewUserSrv()}
-	msg = MsgHandler{conv: srv.NewConvSrv()}
+	chat = ChatHandler{conv: srv.NewConvSrv(), msg: srv.NewMsgSrv()}
 }
 
-func registerRoutes(r *gin.Engine) {
+func setupRoutes(r *gin.Engine) {
 	initHandlers()
 
 	r.GET("/test", Test)
+
+	r.Use(authorize())
 
 	u := r.Group("/user")
 	{
@@ -32,7 +34,8 @@ func registerRoutes(r *gin.Engine) {
 
 	c := r.Group("/conversation")
 	{
-		c.GET("/recent", msg.RecentConvList)
+		c.GET("/recent", chat.RecentConvList) // 最近会话列表
+		c.GET("/message", chat.ListConvMsg)   // 会话历史消息
 	}
 }
 
