@@ -46,6 +46,11 @@ func (h ChatHandler) ConvListMsg(ctx *gin.Context) {
 
 func (h ChatHandler) ConvPin(ctx *gin.Context) {
 	// todo
+	var req types.ConvOpDTO
+	if err := ctx.ShouldBind(&req); err != nil {
+		web.JsonWithError(ctx, errs.ErrInvalidParam)
+		return
+	}
 	web.JsonWithSuccess(ctx, "ok")
 }
 
