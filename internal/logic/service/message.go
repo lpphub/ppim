@@ -94,22 +94,13 @@ func (s *MessageSrv) HandleMsg(ctx context.Context, msg *types.MessageDTO) error
 		online, _ := global.Redis.HGetAll(ctx, s.route.genRouteKey(uid)).Result()
 		if len(online) > 0 {
 			for did, topic := range online {
-				if did == msg.FromDID && uid == msg.FromUID { // 排除发送者同一设备
+				if did == msg.FromDID && uid == msg.FromUID { // 排除发送者同一设备，而不同设备时则接收消息
 					continue
 				}
 				onlineSlice = append(onlineSlice, fmt.Sprintf("%s#%s", uid, topic))
 			}
 		} else {
 			offlineSlice = append(offlineSlice, uid)
-		}
-	}
-	// 发送者的其他在线设备也接收消息
-	selfOnline, _ := global.Redis.HGetAll(ctx, s.route.genRouteKey(msg.FromUID)).Result()
-	if len(selfOnline) > 1 {
-		for did, topic := range selfOnline {
-			if msg.FromDID != did {
-				onlineSlice = append(onlineSlice, fmt.Sprintf("%s#%s", msg.FromUID, topic))
-			}
 		}
 	}
 
