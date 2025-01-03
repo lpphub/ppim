@@ -20,7 +20,7 @@ type RedisSequence struct {
 	redisClient *redis.Client
 
 	mu         sync.Mutex
-	bufferSize int64
+	bufferSize uint64
 	buffers    map[string][]uint64
 	nextIndex  map[string]int
 }
@@ -31,7 +31,7 @@ const (
 	lockExpireTime = 3 * time.Second
 )
 
-func NewRedisSequence(redisClient *redis.Client, bufferSize int64) Sequence {
+func NewRedisSequence(redisClient *redis.Client, bufferSize uint64) Sequence {
 	return &RedisSequence{
 		redisClient: redisClient,
 		bufferSize:  bufferSize,
@@ -49,19 +49,19 @@ func (s *RedisSequence) Next(ctx context.Context, key string) (uint64, error) {
 // redis incr生成序列号
 func (s *RedisSequence) incr(ctx context.Context, key string) (uint64, error) {
 	cacheKey := fmt.Sprintf(cacheSeqPrefix, key)
-	current, err := s.redisClient.Incr(ctx, cacheKey).Result()
+	current, err := s.redisClient.Incr(ctx, cacheKey).Uint64()
 	if err != nil {
 		return 0, err
 	}
 
 	if current == 1 { // 获取序列号=1时可能缓存丢失，尝试从db中获取key当前最大值初始化缓存
-		maxSeq, err := new(store.Conversation).GetMaxSeq(ctx, key)
+		current, err = new(store.Conversation).GetMaxSeq(ctx, key)
 		if err != nil && !errors.Is(err, mongo.ErrNoDocuments) {
 			return 0, err
 		}
-		current, err = s.redisClient.IncrBy(ctx, cacheKey, int64(maxSeq)+1).Result()
+		current, err = s.redisClient.IncrBy(ctx, cacheKey, int64(current)+1).Uint64()
 	}
-	return uint64(current), nil
+	return current, nil
 }
 
 // redis incrBy + 缓冲区生成序列号
@@ -85,24 +85,23 @@ func (s *RedisSequence) incrWithBuf(ctx context.Context, key string) (uint64, er
 
 func (s *RedisSequence) fillBuffer(ctx context.Context, key string) error {
 	cacheKey := fmt.Sprintf(cacheSeqPrefix, key)
-	current, err := s.redisClient.Get(ctx, cacheKey).Int64()
+	current, err := s.redisClient.Get(ctx, cacheKey).Uint64()
 	if err != nil && !errors.Is(err, redis.Nil) {
 		return err
 	}
 
 	if current == 0 { // 未获取到序列号时可能缓存丢失，尝试从db中获取key当前最大值初始化缓存
-		curr, err := new(store.Conversation).GetMaxSeq(ctx, key)
+		current, err = new(store.Conversation).GetMaxSeq(ctx, key)
 		if err != nil && !errors.Is(err, mongo.ErrNoDocuments) {
 			return err
 		}
-		current = int64(curr)
 	}
 
 	// 设置新的序列号范围
 	start := current + 1
 	end := start + s.bufferSize - 1
 
-	newCurrent, err := s.redisClient.IncrBy(ctx, cacheKey, s.bufferSize).Result()
+	newCurrent, err := s.redisClient.IncrBy(ctx, cacheKey, int64(s.bufferSize)).Uint64()
 	if err != nil {
 		return err
 	}
@@ -112,8 +111,8 @@ func (s *RedisSequence) fillBuffer(ctx context.Context, key string) error {
 
 	// 重置缓冲区
 	s.buffers[key] = make([]uint64, s.bufferSize)
-	for i := 0; i < int(s.bufferSize); i++ {
-		s.buffers[key][i] = uint64(start + int64(i))
+	for i := range s.bufferSize {
+		s.buffers[key][i] = start + i
 	}
 	s.nextIndex[key] = 0
 	return nil
