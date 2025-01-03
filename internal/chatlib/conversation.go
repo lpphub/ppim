@@ -12,7 +12,7 @@ const (
 )
 
 // GenConversationID 生成会话ID: 单聊：single|maxID@minID 群聊：group|groupID
-func GenConversationID(from, to, conversationType string) (string, error) {
+func GenConversationID(conversationType, from, to string) (string, error) {
 	switch conversationType {
 	case ConvSingle:
 		fromID, toID := DigitizeUID(from), DigitizeUID(to)
@@ -27,5 +27,5 @@ func GenConversationID(from, to, conversationType string) (string, error) {
 }
 
 func DigitizeUID(uid string) uint32 {
-	return util.CRC32(uid)
+	return util.Murmur32(uid)
 }

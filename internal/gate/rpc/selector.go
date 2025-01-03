@@ -22,7 +22,7 @@ func (s *customSelector) Select(_ context.Context, _, serviceMethod string, args
 	// 根据会话ID路由
 	if serviceMethod == methodSendMsg {
 		cid := args.(*chatlib.MessageReq).ConversationID
-		return ss[(int(util.CRC32(cid))%sl+sl)%sl]
+		return ss[(int(util.Murmur32(cid))%sl+sl)%sl]
 	}
 
 	// 随机选择一个

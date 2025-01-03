@@ -138,7 +138,7 @@ func (w *WsCodec) readWsMessages() (messages []wsutil.Message, err error) {
 		// 从 in 中读出 data，并将 data bytes 写入 msgBuf.cachedBuf
 		if dataLen > 0 {
 			if in.Len() < dataLen { //数据不完整
-				logger.Log().Error().Msgf("incomplete data")
+				logger.Log().Error().Msgf("incomplete data: dl=%d, rl=%d", dataLen, in.Len())
 				return
 			}
 

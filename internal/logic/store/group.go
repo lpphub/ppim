@@ -23,14 +23,18 @@ func (g *Group) ListMembers(ctx context.Context, groupId string) ([]string, erro
 	filter := bson.D{bson.E{Key: "group_id", Value: groupId}}
 	opts := options.Find().SetProjection(bson.D{bson.E{Key: "uid", Value: 1}})
 
-	cur, err := g.Collection().Find(ctx, filter, opts)
+	cursor, err := g.Collection().Find(ctx, filter, opts)
 	if err != nil {
 		return nil, err
 	}
-
-	var result []string
-	if err = cur.All(context.TODO(), &result); err != nil {
+	var members []Group
+	if err = cursor.All(ctx, &members); err != nil {
 		return nil, err
+	}
+
+	result := make([]string, 0, len(members))
+	for _, v := range members {
+		result = append(result, v.UID)
 	}
 	return result, nil
 }

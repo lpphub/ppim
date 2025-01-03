@@ -56,13 +56,11 @@ const (
 	CacheFieldConvReadMsgId   = "readMsgId"
 )
 
-func (c *ConversationSrv) IndexRecent(ctx context.Context, msg *types.MessageDTO, uidSlice []string) error {
+func (c *ConversationSrv) IndexRecent(ctx context.Context, msg *types.MessageDTO, receivers []string) error {
 	msgJson, _ := jsoniter.MarshalToString(msg)
 	global.Redis.Set(ctx, fmt.Sprintf(CacheConvRecentMsg, msg.ConversationID), msgJson, 30*24*time.Hour)
 
-	// 发送者 + 接收者
-	uidSlice = append(uidSlice, msg.FromUID)
-	for _, uid := range uidSlice {
+	for _, uid := range receivers {
 		_ = c.works.Submit(func() {
 			c.indexWithLock(ctx, msg, uid)
 		})

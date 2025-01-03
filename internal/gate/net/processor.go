@@ -126,7 +126,7 @@ func (p *Processor) ping(_c *Client, _ *protocol.PingPacket) error {
 func (p *Processor) send(_c *Client, message *protocol.SendPacket) error {
 	var (
 		ctx               = logger.WithCtx(context.Background())
-		conversationID, _ = chatlib.GenConversationID(_c.UID, message.ToID, message.ConversationType)
+		conversationID, _ = chatlib.GenConversationID(message.ConversationType, _c.UID, message.ToID)
 		msgId             = xid.New().String()
 	)
 

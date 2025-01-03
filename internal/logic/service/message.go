@@ -66,9 +66,9 @@ func (s *MessageSrv) HandleMsg(ctx context.Context, msg *types.MessageDTO) error
 		return ErrMsgStore
 	}
 
-	// 2.获取接收者
-	var receivers []string
-	if msg.ConversationType == chatlib.ConvSingle {
+	// 2.获取接收者（包含自身）
+	receivers := []string{msg.FromUID}
+	if msg.ConversationType == chatlib.ConvSingle && msg.ToID != msg.FromUID {
 		receivers = append(receivers, msg.ToID)
 	} else if msg.ConversationType == chatlib.ConvGroup {
 		members, serr := new(store.Group).ListMembers(ctx, msg.ToID)
@@ -77,10 +77,6 @@ func (s *MessageSrv) HandleMsg(ctx context.Context, msg *types.MessageDTO) error
 		} else {
 			receivers = append(receivers, members...)
 		}
-	}
-	if len(receivers) == 0 {
-		logger.Warn(ctx, "msg receivers is empty")
-		return nil
 	}
 
 	// 3.索引会话最新消息
@@ -97,7 +93,10 @@ func (s *MessageSrv) HandleMsg(ctx context.Context, msg *types.MessageDTO) error
 	for _, uid := range receivers {
 		online, _ := global.Redis.HGetAll(ctx, s.route.genRouteKey(uid)).Result()
 		if len(online) > 0 {
-			for _, topic := range online {
+			for did, topic := range online {
+				if did == msg.FromDID && uid == msg.FromUID { // 排除发送者同一设备
+					continue
+				}
 				onlineSlice = append(onlineSlice, fmt.Sprintf("%s#%s", uid, topic))
 			}
 		} else {
@@ -124,7 +123,7 @@ func (s *MessageSrv) HandleMsg(ctx context.Context, msg *types.MessageDTO) error
 
 	if len(offlineSlice) > 0 {
 		// todo 消息离线通知
-		logger.Warn(ctx, "offline push")
+		logger.Warnf(ctx, "offline push: %v", offlineSlice)
 	}
 	return nil
 }

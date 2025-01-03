@@ -18,6 +18,7 @@ require (
 	github.com/rs/xid v1.6.0
 	github.com/segmentio/kafka-go v0.4.47
 	github.com/smallnest/rpcx v1.8.36
+	github.com/spaolacci/murmur3 v1.1.0
 	github.com/spf13/cast v1.7.1
 	github.com/spf13/cobra v1.8.1
 	github.com/valyala/fastrand v1.1.0

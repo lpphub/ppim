@@ -163,12 +163,12 @@ func newRetryManager(svc *ServerContext, size int) *RetryManager {
 }
 
 func (r *RetryManager) Add(msg *RetryMsg) {
-	index := (int(util.CRC32(msg.MsgID))%r.size + r.size) % r.size
+	index := (int(util.Murmur32(msg.MsgID))%r.size + r.size) % r.size
 	r.buckets[index].Add(msg)
 }
 
 func (r *RetryManager) Remove(connFD int, msgId string) {
-	index := (int(util.CRC32(msgId))%r.size + r.size) % r.size
+	index := (int(util.Murmur32(msgId))%r.size + r.size) % r.size
 	r.buckets[index].Remove(connFD, msgId)
 }
 
