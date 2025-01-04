@@ -45,6 +45,10 @@ func (s *RouteSrv) Offline(ctx context.Context, ol *types.RouteDTO) error {
 	return err
 }
 
+func (s *RouteSrv) GetOnline(ctx context.Context, uid string) (map[string]string, error) {
+	return global.Redis.HGetAll(ctx, s.genRouteKey(uid)).Result()
+}
+
 func (s *RouteSrv) RouteDelivery(ctx context.Context, routeKeys []string, msg *types.MessageDTO) error {
 	topicReceivers := make(map[string][]string)
 	for _, key := range routeKeys {

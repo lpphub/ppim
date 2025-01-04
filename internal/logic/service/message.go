@@ -6,7 +6,6 @@ import (
 	"github.com/lpphub/golib/logger"
 	"github.com/pkg/errors"
 	"ppim/internal/chatlib"
-	"ppim/internal/logic/global"
 	"ppim/internal/logic/service/seq"
 	"ppim/internal/logic/store"
 	"ppim/internal/logic/types"
@@ -91,7 +90,7 @@ func (s *MessageSrv) HandleMsg(ctx context.Context, msg *types.MessageDTO) error
 		offlineSlice []string //离线用户UID
 	)
 	for _, uid := range receivers {
-		online, _ := global.Redis.HGetAll(ctx, s.route.genRouteKey(uid)).Result()
+		online, _ := s.route.GetOnline(ctx, uid)
 		if len(online) > 0 {
 			for did, topic := range online {
 				if did == msg.FromDID && uid == msg.FromUID { // 排除发送者同一设备，而不同设备时则接收消息
