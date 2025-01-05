@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/gin-gonic/gin"
+	"github.com/jinzhu/copier"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/lpphub/golib/gowork"
 	"github.com/lpphub/golib/logger"
@@ -131,7 +133,7 @@ func (c *ConversationSrv) cacheStoreRecent(ctx context.Context, uid string, msg 
 	return err
 }
 
-func (c *ConversationSrv) CacheQueryRecent(ctx context.Context, uid string) ([]*types.RecentConvVO, error) {
+func (c *ConversationSrv) cacheQueryRecent(ctx context.Context, uid string) ([]*types.ConvRecentDTO, error) {
 	cids, err := global.Redis.ZRevRange(ctx, fmt.Sprintf(CacheConvRecent, uid), 0, 200).Result()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get recent conversation IDs: %v", err)
@@ -150,55 +152,109 @@ func (c *ConversationSrv) CacheQueryRecent(ctx context.Context, uid string) ([]*
 		cmds[i].infoCmd = pipe.HMGet(ctx, c.getConvCacheKey(uid, cid), CacheFieldConvUnreadCount, CacheFieldConvPin, CacheFieldConvMute)
 	}
 	_, err = pipe.Exec(ctx)
-	if err != nil && !errors.Is(err, redis.Nil) { // 忽略 key 不存在的错误
+	if err != nil && !errors.Is(err, redis.Nil) {
 		return nil, fmt.Errorf("failed to execute pipeline: %v", err)
 	}
 
-	var list []*types.RecentConvVO
+	var list []*types.ConvRecentDTO
 	for i := range cids {
-		vo := &types.RecentConvVO{}
+		conv := new(types.ConvRecentDTO)
 
 		// 会话最近消息
 		recentMsg, _ := cmds[i].msgCmd.Result()
 		if recentMsg != "" {
 			var mt types.MessageDTO
 			_ = jsoniter.UnmarshalFromString(recentMsg, &mt)
-			vo.ConversationID = mt.ConversationID
-			vo.ConversationType = mt.ConversationType
-			vo.FromUID = mt.FromUID
-			vo.LastMsgID = mt.MsgID
-			vo.LastMsgSeq = mt.MsgSeq
-			vo.Version = mt.CreatedAt
-			vo.LastMsg = &mt
+
+			conv.ConversationID = mt.ConversationID
+			conv.ConversationType = mt.ConversationType
+			conv.LastMsg = &mt
+			conv.LastMsgID = mt.MsgID
+			conv.LastMsgSeq = mt.MsgSeq
+			conv.Version = mt.CreatedAt
 		}
 		// 会话详情信息
 		fields, _ := cmds[i].infoCmd.Result()
 		if len(fields) == 3 {
 			if fields[0] != nil {
-				vo.UnreadCount = cast.ToUint64(fields[0])
+				conv.UnreadCount = cast.ToUint64(fields[0])
 			}
 			if fields[1] != nil {
-				vo.Pin = fields[1].(bool)
+				conv.Pin = fields[1].(bool)
 			}
 			if fields[2] != nil {
-				vo.Mute = fields[2].(bool)
+				conv.Mute = fields[2].(bool)
 			}
 		}
-		list = append(list, vo)
+		list = append(list, conv)
 	}
 	return list, nil
 }
 
-func (c *ConversationSrv) CacheSetPin(ctx context.Context, uid, convID string, pin bool) error {
-	_, err := global.Redis.HSet(ctx, c.getConvCacheKey(uid, convID), CacheFieldConvPin, pin).Result()
-	return err
-}
-
-func (c *ConversationSrv) CacheSetMute(ctx context.Context, uid, convID string, mute bool) error {
-	_, err := global.Redis.HSet(ctx, c.getConvCacheKey(uid, convID), CacheFieldConvMute, mute).Result()
-	return err
-}
-
 func (c *ConversationSrv) getConvCacheKey(uid, convID string) string {
 	return fmt.Sprintf(CacheConvRecentInfo, uid, convID)
+}
+
+func (c *ConversationSrv) GetRecentByUID(ctx *gin.Context, uid string) ([]*types.ConvRecentDTO, error) {
+	if list, err := c.cacheQueryRecent(ctx, uid); err == nil {
+		return list, nil
+	} else {
+		logger.Err(ctx, err, fmt.Sprintf("conversation recent cache query: uid=%s", uid))
+	}
+
+	data, err := new(store.Conversation).ListRecent(ctx, uid)
+	if err != nil {
+		return nil, err
+	}
+
+	list := make([]*types.ConvRecentDTO, 0, len(data))
+	msgIds := make([]string, 0, len(data))
+	for _, d := range data {
+		list = append(list, &types.ConvRecentDTO{
+			ConversationID:   d.ConversationID,
+			ConversationType: d.ConversationType,
+			Mute:             d.Mute,
+			Pin:              d.Pin,
+			LastMsgID:        d.LastMsgId,
+			Version:          d.CreatedAt.UnixMilli(),
+		})
+		msgIds = append(msgIds, d.LastMsgId)
+	}
+
+	msgList, err := new(store.Message).ListByMsgIds(ctx, msgIds)
+	if err != nil {
+		return nil, err
+	}
+	msgMap := make(map[string]*types.MessageDTO, len(msgList))
+	for _, m := range msgList {
+		var md types.MessageDTO
+		_ = copier.Copy(&m, md)
+		md.CreatedAt = m.CreatedAt.UnixMilli()
+		md.SendTime = m.SendTime.UnixMilli()
+		msgMap[m.MsgID] = &md
+	}
+	for _, cv := range list {
+		if md, ok := msgMap[cv.LastMsgID]; ok {
+			cv.LastMsg = md
+			cv.LastMsgSeq = md.MsgSeq
+			cv.Version = md.CreatedAt
+		}
+	}
+	return list, nil
+}
+
+func (c *ConversationSrv) SetPin(ctx context.Context, uid, convID string, pin bool) error {
+	_, err := global.Redis.HSet(ctx, c.getConvCacheKey(uid, convID), CacheFieldConvPin, pin).Result()
+	if err != nil {
+		return err
+	}
+	return new(store.Conversation).UpdatePin(ctx, uid, convID, pin)
+}
+
+func (c *ConversationSrv) SetMute(ctx context.Context, uid, convID string, mute bool) error {
+	_, err := global.Redis.HSet(ctx, c.getConvCacheKey(uid, convID), CacheFieldConvMute, mute).Result()
+	if err != nil {
+		return err
+	}
+	return new(store.Conversation).UpdateMute(ctx, uid, convID, mute)
 }

@@ -30,7 +30,7 @@ func (h ChatHandler) ConvRecentList(ctx *gin.Context) {
 }
 
 func (h ChatHandler) ConvListMsg(ctx *gin.Context) {
-	var req types.ConvMsgDTO
+	var req types.ConvMessageDTO
 	if err := ctx.ShouldBind(&req); err != nil {
 		web.JsonWithError(ctx, errs.ErrInvalidParam)
 		return

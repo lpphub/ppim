@@ -13,7 +13,7 @@ func NewMsgSrv() *MsgSrv {
 	return &MsgSrv{}
 }
 
-func (s *MsgSrv) ListConvMsg(ctx *gin.Context, req types.ConvMsgDTO) ([]types.MessageDTO, error) {
+func (s *MsgSrv) ListConvMsg(ctx *gin.Context, req types.ConvMessageDTO) ([]types.MessageDTO, error) {
 	// limit 负数向前-10: 90~99, 正数向后10: 101~110
 	list, err := new(store.Message).ListByConvSeq(ctx, req.ConversationID, req.StartSeq, req.Limit)
 	if err != nil {
