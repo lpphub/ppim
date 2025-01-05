@@ -45,17 +45,30 @@ func (h ChatHandler) ConvListMsg(ctx *gin.Context) {
 }
 
 func (h ChatHandler) ConvPin(ctx *gin.Context) {
-	// todo
 	var req types.ConvOpDTO
 	if err := ctx.ShouldBind(&req); err != nil {
 		web.JsonWithError(ctx, errs.ErrInvalidParam)
+		return
+	}
+	if err := h.conv.SetPin(ctx, req); err != nil {
+		logx.Err(ctx, err, "")
+		web.JsonWithError(ctx, errs.ErrServerInternal)
 		return
 	}
 	web.JsonWithSuccess(ctx, "ok")
 }
 
 func (h ChatHandler) ConvMute(ctx *gin.Context) {
-	// todo
+	var req types.ConvOpDTO
+	if err := ctx.ShouldBind(&req); err != nil {
+		web.JsonWithError(ctx, errs.ErrInvalidParam)
+		return
+	}
+	if err := h.conv.SetMute(ctx, req); err != nil {
+		logx.Err(ctx, err, "")
+		web.JsonWithError(ctx, errs.ErrServerInternal)
+		return
+	}
 	web.JsonWithSuccess(ctx, "ok")
 }
 

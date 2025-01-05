@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/jinzhu/copier"
 	"github.com/lpphub/golib/logger"
+	"github.com/redis/go-redis/v9"
 	"github.com/segmentio/kafka-go"
 	"ppim/internal/chatlib"
 	"ppim/internal/logic/global"
@@ -45,8 +46,17 @@ func (s *RouteSrv) Offline(ctx context.Context, ol *types.RouteDTO) error {
 	return err
 }
 
-func (s *RouteSrv) GetOnline(ctx context.Context, uid string) (map[string]string, error) {
-	return global.Redis.HGetAll(ctx, s.genRouteKey(uid)).Result()
+func (s *RouteSrv) BatchGetOnline(ctx context.Context, uids []string) ([]*redis.MapStringStringCmd, error) {
+	pipe := global.Redis.Pipeline()
+	cmd := make([]*redis.MapStringStringCmd, len(uids))
+	for i, uid := range uids {
+		cmd[i] = pipe.HGetAll(ctx, s.genRouteKey(uid))
+	}
+	_, err := pipe.Exec(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return cmd, nil
 }
 
 func (s *RouteSrv) RouteDelivery(ctx context.Context, routeKeys []string, msg *types.MessageDTO) error {

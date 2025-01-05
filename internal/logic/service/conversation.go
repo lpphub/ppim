@@ -42,7 +42,7 @@ func newConversationSrv() *ConversationSrv {
  *
  * conv:recent:msg:{convID} -> string -> msg
  * conv:recent:{uid} -> sortedset -> convID,sendTime
- * conv:recent:{uid}:{convID} -> hash -> unreadCount,pin,mute,readMsgId
+ * conv:recent:{uid}:{convID} -> hash -> unreadCount,pin,mute,readMsgSeq
  */
 const (
 	CacheConvRecentMsg  = "conv:recent:msg:%s"
@@ -50,10 +50,10 @@ const (
 	CacheConvRecentInfo = "conv:recent:%s:%s"
 
 	CacheFieldConvUnreadCount = "unreadCount"
-	CacheFieldConvLastMsgId   = "lastMsgId"
 	CacheFieldConvPin         = "pin"
 	CacheFieldConvMute        = "mute"
-	CacheFieldConvReadMsgId   = "readMsgId"
+	CacheFieldConvLastMsgSeq  = "lastMsgSeq"
+	CacheFieldConvReadMsgSeq  = "readMsgSeq"
 )
 
 func (c *ConversationSrv) IndexRecent(ctx context.Context, msg *types.MessageDTO, receivers []string) error {
@@ -109,21 +109,18 @@ func (c *ConversationSrv) indexWithLock(ctx context.Context, msg *types.MessageD
 
 // 缓存用户最近会话
 func (c *ConversationSrv) cacheStoreRecent(ctx context.Context, uid string, msg *types.MessageDTO) error {
-	cacheKey := fmt.Sprintf(CacheConvRecent, uid)
-	cacheInfoKey := fmt.Sprintf(CacheConvRecentInfo, uid, msg.ConversationID)
-
+	cacheInfoKey := c.getConvCacheKey(uid, msg.ConversationID)
 	pipe := global.Redis.Pipeline()
-	// 用户最新会话
-	pipe.ZAdd(ctx, cacheKey, redis.Z{Score: float64(msg.SendTime), Member: msg.ConversationID})
-
 	// 会话最新消息
-	pipe.HSet(ctx, cacheInfoKey, CacheFieldConvLastMsgId, msg.MsgID)
-
+	pipe.HSet(ctx, cacheInfoKey, CacheFieldConvLastMsgSeq, msg.MsgSeq)
 	if uid != msg.FromUID {
 		// 未读消息数
 		pipe.HIncrBy(ctx, cacheInfoKey, CacheFieldConvUnreadCount, 1)
 	}
 
+	cacheKey := fmt.Sprintf(CacheConvRecent, uid)
+	// 用户最新会话
+	pipe.ZAdd(ctx, cacheKey, redis.Z{Score: float64(msg.SendTime), Member: msg.ConversationID})
 	// 会话数量超过100，删除最早一条
 	count, _ := pipe.ZCard(ctx, cacheKey).Result()
 	if count > 100 {
@@ -135,29 +132,37 @@ func (c *ConversationSrv) cacheStoreRecent(ctx context.Context, uid string, msg 
 }
 
 func (c *ConversationSrv) CacheQueryRecent(ctx context.Context, uid string) ([]*types.RecentConvVO, error) {
-	ids, err := global.Redis.ZRevRange(ctx, fmt.Sprintf(CacheConvRecent, uid), 0, 200).Result()
+	cids, err := global.Redis.ZRevRange(ctx, fmt.Sprintf(CacheConvRecent, uid), 0, 200).Result()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to get recent conversation IDs: %v", err)
 	}
-	logger.Infof(ctx, "recent conv ids=%v", ids)
+	logger.Infof(ctx, "recent conv ids=%v", cids)
+
+	pipe := global.Redis.Pipeline()
+	type cmdPair struct {
+		msgCmd  *redis.StringCmd
+		infoCmd *redis.SliceCmd
+	}
+	cmds := make([]cmdPair, len(cids))
+	// 批量添加命令到 Pipeline
+	for i, cid := range cids {
+		cmds[i].msgCmd = pipe.Get(ctx, fmt.Sprintf(CacheConvRecentMsg, cid))
+		cmds[i].infoCmd = pipe.HMGet(ctx, c.getConvCacheKey(uid, cid), CacheFieldConvUnreadCount, CacheFieldConvPin, CacheFieldConvMute)
+	}
+	_, err = pipe.Exec(ctx)
+	if err != nil && !errors.Is(err, redis.Nil) { // 忽略 key 不存在的错误
+		return nil, fmt.Errorf("failed to execute pipeline: %v", err)
+	}
 
 	var list []*types.RecentConvVO
-	for _, id := range ids {
-		pipe := global.Redis.Pipeline()
-		pipe.Get(ctx, fmt.Sprintf(CacheConvRecentMsg, id))
-		pipe.HMGet(ctx, fmt.Sprintf(CacheConvRecentInfo, uid, id), CacheFieldConvUnreadCount, CacheFieldConvPin, CacheFieldConvMute)
-		cmds, err := pipe.Exec(ctx)
-		if err != nil {
-			logger.Err(ctx, err, "conv: cache query recent")
-			continue
-		}
-
+	for i := range cids {
 		vo := &types.RecentConvVO{}
-		recentMsg, _ := cmds[0].(*redis.StringCmd).Result()
+
+		// 会话最近消息
+		recentMsg, _ := cmds[i].msgCmd.Result()
 		if recentMsg != "" {
 			var mt types.MessageDTO
 			_ = jsoniter.UnmarshalFromString(recentMsg, &mt)
-
 			vo.ConversationID = mt.ConversationID
 			vo.ConversationType = mt.ConversationType
 			vo.FromUID = mt.FromUID
@@ -166,9 +171,8 @@ func (c *ConversationSrv) CacheQueryRecent(ctx context.Context, uid string) ([]*
 			vo.Version = mt.CreatedAt
 			vo.LastMsg = &mt
 		}
-
-		fields, _ := cmds[1].(*redis.SliceCmd).Result()
-		logger.Infof(ctx, "conv: cache query recent fields=%v", fields)
+		// 会话详情信息
+		fields, _ := cmds[i].infoCmd.Result()
 		if len(fields) == 3 {
 			if fields[0] != nil {
 				vo.UnreadCount = cast.ToUint64(fields[0])
@@ -183,4 +187,18 @@ func (c *ConversationSrv) CacheQueryRecent(ctx context.Context, uid string) ([]*
 		list = append(list, vo)
 	}
 	return list, nil
+}
+
+func (c *ConversationSrv) CacheSetPin(ctx context.Context, uid, convID string, pin bool) error {
+	_, err := global.Redis.HSet(ctx, c.getConvCacheKey(uid, convID), CacheFieldConvPin, pin).Result()
+	return err
+}
+
+func (c *ConversationSrv) CacheSetMute(ctx context.Context, uid, convID string, mute bool) error {
+	_, err := global.Redis.HSet(ctx, c.getConvCacheKey(uid, convID), CacheFieldConvMute, mute).Result()
+	return err
+}
+
+func (c *ConversationSrv) getConvCacheKey(uid, convID string) string {
+	return fmt.Sprintf(CacheConvRecentInfo, uid, convID)
 }

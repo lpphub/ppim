@@ -60,3 +60,17 @@ func (srv *ConvSrv) RecentList(ctx *gin.Context, uid string) (list []*types.Rece
 	}
 	return
 }
+
+func (srv *ConvSrv) SetPin(ctx *gin.Context, req types.ConvOpDTO) error {
+	if err := service.Hints().Conv.CacheSetPin(ctx, req.UID, req.ConversationID, req.Pin); err != nil {
+		return err
+	}
+	return new(store.Conversation).UpdatePin(ctx, req.UID, req.ConversationID, req.Pin)
+}
+
+func (srv *ConvSrv) SetMute(ctx *gin.Context, req types.ConvOpDTO) error {
+	if err := service.Hints().Conv.CacheSetMute(ctx, req.UID, req.ConversationID, req.Mute); err != nil {
+		return err
+	}
+	return new(store.Conversation).UpdateMute(ctx, req.UID, req.ConversationID, req.Mute)
+}

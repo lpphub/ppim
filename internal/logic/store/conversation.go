@@ -39,14 +39,14 @@ func (c *Conversation) Insert(ctx context.Context) error {
 }
 
 func (c *Conversation) Update(ctx context.Context) error {
-	filter := bson.D{bson.E{Key: "conversation_id", Value: c.ConversationID}, bson.E{Key: "uid", Value: c.UID}}
+	filter := bson.D{{Key: "conversation_id", Value: c.ConversationID}, {Key: "uid", Value: c.UID}}
 	_, err := c.Collection().ReplaceOne(ctx, filter, c)
 	return err
 }
 
 func (c *Conversation) ListRecent(ctx context.Context, uid string) ([]Conversation, error) {
-	filter := bson.D{bson.E{Key: "uid", Value: uid}}
-	opts := options.Find().SetSort(bson.D{bson.E{Key: "updated_at", Value: -1}}).SetLimit(100)
+	filter := bson.D{{Key: "uid", Value: uid}}
+	opts := options.Find().SetSort(bson.D{{Key: "updated_at", Value: -1}}).SetLimit(100)
 
 	cursor, err := c.Collection().Find(ctx, filter, opts)
 	if err != nil {
@@ -61,12 +61,26 @@ func (c *Conversation) ListRecent(ctx context.Context, uid string) ([]Conversati
 }
 
 func (c *Conversation) GetMaxSeq(ctx context.Context, conversationID string) (uint64, error) {
-	filter := bson.D{bson.E{Key: "conversation_id", Value: conversationID}}
-	opts := options.FindOne().SetProjection(bson.M{"last_msg_seq": 1}).SetSort(bson.D{bson.E{Key: "last_msg_seq", Value: -1}})
+	filter := bson.D{{Key: "conversation_id", Value: conversationID}}
+	opts := options.FindOne().SetProjection(bson.M{"last_msg_seq": 1}).SetSort(bson.D{{Key: "last_msg_seq", Value: -1}})
 
 	err := c.Collection().FindOne(ctx, filter, opts).Decode(c)
 	if err != nil {
 		return 0, err
 	}
 	return c.LastMsgSeq, nil
+}
+
+func (c *Conversation) UpdatePin(ctx context.Context, uid, conversationID string, pin bool) error {
+	filter := bson.D{{Key: "conversation_id", Value: conversationID}, {Key: "uid", Value: uid}}
+	update := bson.D{{Key: "$set", Value: bson.D{{Key: "pin", Value: pin}}}}
+	_, err := c.Collection().UpdateOne(ctx, filter, update)
+	return err
+}
+
+func (c *Conversation) UpdateMute(ctx context.Context, uid, conversationID string, mute bool) error {
+	filter := bson.D{{Key: "conversation_id", Value: conversationID}, {Key: "uid", Value: uid}}
+	update := bson.D{{Key: "$set", Value: bson.D{{Key: "mute", Value: mute}}}}
+	_, err := c.Collection().UpdateOne(ctx, filter, update)
+	return err
 }

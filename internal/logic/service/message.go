@@ -89,17 +89,26 @@ func (s *MessageSrv) HandleMsg(ctx context.Context, msg *types.MessageDTO) error
 		onlineSlice  []string //在线用户路由
 		offlineSlice []string //离线用户UID
 	)
-	for _, uid := range receivers {
-		online, _ := s.route.GetOnline(ctx, uid)
-		if len(online) > 0 {
-			for did, topic := range online {
-				if did == msg.FromDID && uid == msg.FromUID { // 排除发送者同一设备，而不同设备时则接收消息
-					continue
+	receiverChunks := util.SplitSlice(receivers, 500)
+	for _, chunks := range receiverChunks {
+		cmds, berr := s.route.BatchGetOnline(ctx, chunks)
+		if berr != nil {
+			logger.Err(ctx, berr, fmt.Sprintf("batch get online error: %v", chunks))
+			continue
+		}
+
+		for i, uid := range chunks {
+			online, _ := cmds[i].Result()
+			if len(online) > 0 {
+				for did, topic := range online {
+					if did == msg.FromDID && uid == msg.FromUID { // 排除发送者同一设备，而不同设备时则接收消息
+						continue
+					}
+					onlineSlice = append(onlineSlice, fmt.Sprintf("%s#%s", uid, topic))
 				}
-				onlineSlice = append(onlineSlice, fmt.Sprintf("%s#%s", uid, topic))
+			} else {
+				offlineSlice = append(offlineSlice, uid)
 			}
-		} else {
-			offlineSlice = append(offlineSlice, uid)
 		}
 	}
 
