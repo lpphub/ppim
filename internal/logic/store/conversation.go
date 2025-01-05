@@ -44,9 +44,9 @@ func (c *Conversation) Update(ctx context.Context) error {
 	return err
 }
 
-func (c *Conversation) ListRecent(ctx context.Context, uid string) ([]Conversation, error) {
+func (c *Conversation) ListRecent(ctx context.Context, uid string, size int64) ([]Conversation, error) {
 	filter := bson.D{{Key: "uid", Value: uid}}
-	opts := options.Find().SetSort(bson.D{{Key: "updated_at", Value: -1}}).SetLimit(100)
+	opts := options.Find().SetSort(bson.D{{Key: "updated_at", Value: -1}}).SetLimit(size)
 
 	cursor, err := c.Collection().Find(ctx, filter, opts)
 	if err != nil {
@@ -73,14 +73,20 @@ func (c *Conversation) GetMaxSeq(ctx context.Context, conversationID string) (ui
 
 func (c *Conversation) UpdatePin(ctx context.Context, uid, conversationID string, pin bool) error {
 	filter := bson.D{{Key: "conversation_id", Value: conversationID}, {Key: "uid", Value: uid}}
-	update := bson.D{{Key: "$set", Value: bson.D{{Key: "pin", Value: pin}}}}
+	update := bson.D{{Key: "$set", Value: bson.D{
+		{Key: "pin", Value: pin},
+		{Key: "updated_at", Value: time.Now()},
+	}}}
 	_, err := c.Collection().UpdateOne(ctx, filter, update)
 	return err
 }
 
 func (c *Conversation) UpdateMute(ctx context.Context, uid, conversationID string, mute bool) error {
 	filter := bson.D{{Key: "conversation_id", Value: conversationID}, {Key: "uid", Value: uid}}
-	update := bson.D{{Key: "$set", Value: bson.D{{Key: "mute", Value: mute}}}}
+	update := bson.D{{Key: "$set", Value: bson.D{
+		{Key: "mute", Value: mute},
+		{Key: "updated_at", Value: time.Now()},
+	}}}
 	_, err := c.Collection().UpdateOne(ctx, filter, update)
 	return err
 }

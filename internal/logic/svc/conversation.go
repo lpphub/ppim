@@ -56,6 +56,8 @@ const (
 	CacheFieldConvMute        = "mute"
 	CacheFieldConvLastMsgSeq  = "lastMsgSeq"
 	CacheFieldConvReadMsgSeq  = "readMsgSeq"
+
+	recentConvSize = 500
 )
 
 func (c *ConversationSrv) IndexRecent(ctx context.Context, msg *types.MessageDTO, receivers []string) error {
@@ -123,9 +125,9 @@ func (c *ConversationSrv) cacheStoreRecent(ctx context.Context, uid string, msg 
 	cacheKey := fmt.Sprintf(CacheConvRecent, uid)
 	// 用户最新会话
 	pipe.ZAdd(ctx, cacheKey, redis.Z{Score: float64(msg.SendTime), Member: msg.ConversationID})
-	// 会话数量超过100，删除最早一条
+	// 会话数量超过限制，删除最早一条
 	count, _ := pipe.ZCard(ctx, cacheKey).Result()
-	if count > 100 {
+	if count > recentConvSize {
 		pipe.ZRemRangeByRank(ctx, cacheKey, 0, 0)
 		pipe.HDel(ctx, cacheInfoKey)
 	}
@@ -134,13 +136,13 @@ func (c *ConversationSrv) cacheStoreRecent(ctx context.Context, uid string, msg 
 }
 
 func (c *ConversationSrv) cacheQueryRecent(ctx context.Context, uid string) ([]*types.ConvRecentDTO, error) {
-	cids, err := global.Redis.ZRevRange(ctx, fmt.Sprintf(CacheConvRecent, uid), 0, 200).Result()
+	cids, err := global.Redis.ZRevRange(ctx, fmt.Sprintf(CacheConvRecent, uid), 0, recentConvSize).Result()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get recent conversation IDs: %v", err)
 	}
 	logger.Infof(ctx, "recent conv ids=%v", cids)
 	if len(cids) == 0 {
-		return nil, errors.New("no cache recent conversation")
+		return nil, redis.Nil
 	}
 
 	pipe := global.Redis.Pipeline()
@@ -206,7 +208,7 @@ func (c *ConversationSrv) GetRecentByUID(ctx *gin.Context, uid string) ([]*types
 	}
 
 	// todo 可以全用缓存，不查db
-	data, err := new(store.Conversation).ListRecent(ctx, uid)
+	data, err := new(store.Conversation).ListRecent(ctx, uid, recentConvSize)
 	if err != nil {
 		return nil, err
 	}
@@ -249,17 +251,15 @@ func (c *ConversationSrv) GetRecentByUID(ctx *gin.Context, uid string) ([]*types
 }
 
 func (c *ConversationSrv) SetPin(ctx context.Context, uid, convID string, pin bool) error {
-	_, err := global.Redis.HSet(ctx, c.getConvCacheKey(uid, convID), CacheFieldConvPin, pin).Result()
-	if err != nil {
-		return err
-	}
+	global.Redis.HSet(ctx, c.getConvCacheKey(uid, convID), CacheFieldConvPin, pin)
+	global.Redis.ZAdd(ctx, fmt.Sprintf(CacheConvRecent, uid), redis.Z{Score: float64(time.Now().UnixMilli()), Member: convID})
+
 	return new(store.Conversation).UpdatePin(ctx, uid, convID, pin)
 }
 
 func (c *ConversationSrv) SetMute(ctx context.Context, uid, convID string, mute bool) error {
-	_, err := global.Redis.HSet(ctx, c.getConvCacheKey(uid, convID), CacheFieldConvMute, mute).Result()
-	if err != nil {
-		return err
-	}
+	global.Redis.HSet(ctx, c.getConvCacheKey(uid, convID), CacheFieldConvMute, mute)
+	global.Redis.ZAdd(ctx, fmt.Sprintf(CacheConvRecent, uid), redis.Z{Score: float64(time.Now().UnixMilli()), Member: convID})
+
 	return new(store.Conversation).UpdateMute(ctx, uid, convID, mute)
 }
