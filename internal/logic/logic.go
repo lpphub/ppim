@@ -5,13 +5,13 @@ import (
 	"ppim/internal/logic/global"
 	"ppim/internal/logic/http"
 	"ppim/internal/logic/rpc"
-	"ppim/internal/logic/service"
+	"ppim/internal/logic/svc"
 )
 
 func Serve() {
 	global.InitCtx()
 
-	service.InitService()
+	svc.InitService()
 
 	go func() {
 		rpcsrv := rpc.NewRpcServer(global.Conf.Server.Rpc, global.Conf.Server.Etcd)

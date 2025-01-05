@@ -1,4 +1,4 @@
-package service
+package svc
 
 import (
 	"context"
@@ -6,8 +6,8 @@ import (
 	"github.com/lpphub/golib/logger"
 	"github.com/pkg/errors"
 	"ppim/internal/chatlib"
-	"ppim/internal/logic/service/seq"
 	"ppim/internal/logic/store"
+	"ppim/internal/logic/svc/seq"
 	"ppim/internal/logic/types"
 	"ppim/pkg/util"
 	"time"
@@ -80,7 +80,7 @@ func (s *MessageSrv) HandleMsg(ctx context.Context, msg *types.MessageDTO) error
 
 	// 3.索引会话最新消息
 	if err = s.conv.IndexRecent(ctx, msg, receivers); err != nil {
-		logger.Err(ctx, err, "")
+		logger.Err(ctx, err, "conv index recent")
 		return ErrConvIndex
 	}
 
@@ -89,7 +89,7 @@ func (s *MessageSrv) HandleMsg(ctx context.Context, msg *types.MessageDTO) error
 		onlineSlice  []string //在线用户路由
 		offlineSlice []string //离线用户UID
 	)
-	receiverChunks := util.SplitSlice(receivers, 500)
+	receiverChunks := util.SplitSlice(receivers, 300)
 	for _, chunks := range receiverChunks {
 		cmds, berr := s.route.BatchGetOnline(ctx, chunks)
 		if berr != nil {
@@ -115,7 +115,7 @@ func (s *MessageSrv) HandleMsg(ctx context.Context, msg *types.MessageDTO) error
 	if len(onlineSlice) > 0 {
 		err = s.route.RouteDelivery(ctx, util.RemoveDup(onlineSlice), msg)
 		if err != nil {
-			logger.Err(ctx, err, "")
+			logger.Err(ctx, err, "online delivery")
 			return ErrMsgRoute
 		}
 	}

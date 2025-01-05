@@ -1,10 +1,10 @@
-package service
+package svc
 
 import (
 	"github.com/lpphub/golib/logger"
 	"github.com/segmentio/kafka-go"
 	"ppim/internal/logic/global"
-	"ppim/internal/logic/service/seq"
+	"ppim/internal/logic/svc/seq"
 	"ppim/pkg/kafkago"
 	"time"
 )

@@ -47,6 +47,7 @@ func (m *Message) ListByMsgIds(ctx context.Context, msgIds []string) ([]Message,
 	return result, nil
 }
 
+// ListByConvSeq limit 负数时向前-10: 90~99, 正数时向后10: 101~110
 func (m *Message) ListByConvSeq(ctx context.Context, conversationID string, startSeq, limit int64) ([]Message, error) {
 	filter := bson.D{{Key: "conversation_id", Value: conversationID}}
 	opts := options.Find()

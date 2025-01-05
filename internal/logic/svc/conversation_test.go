@@ -1,4 +1,4 @@
-package service
+package svc
 
 import (
 	"context"
@@ -11,7 +11,7 @@ import (
 
 func TestConversationSrv_IndexConversation(t *testing.T) {
 	env.SetRootPath("../../..")
-	global.InitGlobalCtx()
+	global.InitCtx()
 
 	srv := ConversationSrv{
 		segmentLock: ext.NewSegmentLock(3),

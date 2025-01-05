@@ -4,8 +4,8 @@ import (
 	"context"
 	"github.com/jinzhu/copier"
 	"ppim/internal/chatlib"
-	"ppim/internal/logic/service"
 	"ppim/internal/logic/store"
+	"ppim/internal/logic/svc"
 	"ppim/internal/logic/types"
 )
 
@@ -23,20 +23,20 @@ func (s *logicService) Auth(ctx context.Context, req *chatlib.AuthReq, _ *chatli
 func (s *logicService) Register(ctx context.Context, req *chatlib.RouterReq, _ *chatlib.RouterResp) error {
 	var ol types.RouteDTO
 	_ = copier.Copy(&ol, req)
-	return service.Hints().Route.Online(ctx, &ol)
+	return svc.Hints().Route.Online(ctx, &ol)
 }
 
 func (s *logicService) UnRegister(ctx context.Context, req *chatlib.RouterReq, _ *chatlib.RouterResp) error {
 	var ol types.RouteDTO
 	_ = copier.Copy(&ol, req)
-	return service.Hints().Route.Offline(ctx, &ol)
+	return svc.Hints().Route.Offline(ctx, &ol)
 }
 
 func (s *logicService) SendMsg(ctx context.Context, req *chatlib.MessageReq, resp *chatlib.MessageResp) error {
 	var msg types.MessageDTO
 	_ = copier.Copy(&msg, req)
 
-	err := service.Hints().Msg.HandleMsg(ctx, &msg)
+	err := svc.Hints().Msg.HandleMsg(ctx, &msg)
 	if err != nil {
 		return err
 	}
