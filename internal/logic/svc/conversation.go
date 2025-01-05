@@ -263,3 +263,10 @@ func (c *ConversationSrv) SetMute(ctx context.Context, uid, convID string, mute 
 
 	return new(store.Conversation).UpdateMute(ctx, uid, convID, mute)
 }
+
+func (c *ConversationSrv) SetUnreadCount(ctx context.Context, uid, convID string, unreadCount uint64) error {
+	global.Redis.HSet(ctx, c.getConvCacheKey(uid, convID), CacheFieldConvUnreadCount, unreadCount)
+	global.Redis.ZAdd(ctx, fmt.Sprintf(CacheConvRecent, uid), redis.Z{Score: float64(time.Now().UnixMilli()), Member: convID})
+
+	return new(store.Conversation).UpdateUnreadCount(ctx, uid, convID, unreadCount)
+}

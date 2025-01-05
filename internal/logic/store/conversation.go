@@ -90,3 +90,13 @@ func (c *Conversation) UpdateMute(ctx context.Context, uid, conversationID strin
 	_, err := c.Collection().UpdateOne(ctx, filter, update)
 	return err
 }
+
+func (c *Conversation) UpdateUnreadCount(ctx context.Context, uid, conversationID string, unreadCount uint64) error {
+	filter := bson.D{{Key: "conversation_id", Value: conversationID}, {Key: "uid", Value: uid}}
+	update := bson.D{{Key: "$set", Value: bson.D{
+		{Key: "unread_count", Value: unreadCount},
+		{Key: "updated_at", Value: time.Now()},
+	}}}
+	_, err := c.Collection().UpdateOne(ctx, filter, update)
+	return err
+}

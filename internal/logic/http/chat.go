@@ -53,9 +53,9 @@ func (h ChatHandler) ConvPin(ctx *gin.Context) {
 	if err := h.conv.SetPin(ctx, req); err != nil {
 		logx.Err(ctx, err, "")
 		web.JsonWithError(ctx, errs.ErrServerInternal)
-		return
+	} else {
+		web.JsonWithSuccess(ctx, "ok")
 	}
-	web.JsonWithSuccess(ctx, "ok")
 }
 
 func (h ChatHandler) ConvMute(ctx *gin.Context) {
@@ -67,14 +67,23 @@ func (h ChatHandler) ConvMute(ctx *gin.Context) {
 	if err := h.conv.SetMute(ctx, req); err != nil {
 		logx.Err(ctx, err, "")
 		web.JsonWithError(ctx, errs.ErrServerInternal)
-		return
+	} else {
+		web.JsonWithSuccess(ctx, "ok")
 	}
-	web.JsonWithSuccess(ctx, "ok")
 }
 
 func (h ChatHandler) ConvSetUnread(ctx *gin.Context) {
-	// todo
-	web.JsonWithSuccess(ctx, "ok")
+	var req types.ConvOpVO
+	if err := ctx.ShouldBind(&req); err != nil {
+		web.JsonWithError(ctx, errs.ErrInvalidParam)
+		return
+	}
+	if err := h.conv.SetUnreadCount(ctx, req); err != nil {
+		logx.Err(ctx, err, "")
+		web.JsonWithError(ctx, errs.ErrServerInternal)
+	} else {
+		web.JsonWithSuccess(ctx, "ok")
+	}
 }
 
 func (h ChatHandler) ConvDel(ctx *gin.Context) {

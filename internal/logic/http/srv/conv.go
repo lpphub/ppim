@@ -33,3 +33,12 @@ func (srv *ConvSrv) SetMute(ctx *gin.Context, req types.ConvOpVO) error {
 	// todo 多端同步
 	return nil
 }
+
+func (srv *ConvSrv) SetUnreadCount(ctx *gin.Context, req types.ConvOpVO) error {
+	err := svc.Hints().Conv.SetUnreadCount(ctx, req.UID, req.ConversationID, req.UnreadCount)
+	if err != nil {
+		return err
+	}
+	// todo 多端同步
+	return nil
+}
