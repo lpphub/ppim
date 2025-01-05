@@ -139,6 +139,9 @@ func (c *ConversationSrv) cacheQueryRecent(ctx context.Context, uid string) ([]*
 		return nil, fmt.Errorf("failed to get recent conversation IDs: %v", err)
 	}
 	logger.Infof(ctx, "recent conv ids=%v", cids)
+	if len(cids) == 0 {
+		return nil, errors.New("no cache recent conversation")
+	}
 
 	pipe := global.Redis.Pipeline()
 	type cmdPair struct {
@@ -202,6 +205,7 @@ func (c *ConversationSrv) GetRecentByUID(ctx *gin.Context, uid string) ([]*types
 		logger.Err(ctx, err, fmt.Sprintf("conversation recent cache query: uid=%s", uid))
 	}
 
+	// todo 可以全用缓存，不查db
 	data, err := new(store.Conversation).ListRecent(ctx, uid)
 	if err != nil {
 		return nil, err
@@ -213,6 +217,7 @@ func (c *ConversationSrv) GetRecentByUID(ctx *gin.Context, uid string) ([]*types
 		list = append(list, &types.ConvRecentDTO{
 			ConversationID:   d.ConversationID,
 			ConversationType: d.ConversationType,
+			UnreadCount:      d.UnreadCount,
 			Mute:             d.Mute,
 			Pin:              d.Pin,
 			LastMsgID:        d.LastMsgId,
@@ -228,7 +233,7 @@ func (c *ConversationSrv) GetRecentByUID(ctx *gin.Context, uid string) ([]*types
 	msgMap := make(map[string]*types.MessageDTO, len(msgList))
 	for _, m := range msgList {
 		var md types.MessageDTO
-		_ = copier.Copy(&m, md)
+		_ = copier.Copy(&md, m)
 		md.CreatedAt = m.CreatedAt.UnixMilli()
 		md.SendTime = m.SendTime.UnixMilli()
 		msgMap[m.MsgID] = &md
