@@ -13,13 +13,13 @@ func NewUserSrv() *UserSrv {
 	return &UserSrv{}
 }
 
-func (srv *UserSrv) Get(ctx *gin.Context, uid string) (resp []*types.UserDTO, err error) {
+func (srv *UserSrv) Get(ctx *gin.Context, uid string) (resp []*types.UserVO, err error) {
 	users, err := new(store.User).List(ctx, uid)
 	if err != nil {
 		return
 	}
 	for _, user := range users {
-		u := &types.UserDTO{
+		u := &types.UserVO{
 			UID:    uid,
 			DID:    user.DID,
 			Name:   user.Name,
@@ -30,7 +30,7 @@ func (srv *UserSrv) Get(ctx *gin.Context, uid string) (resp []*types.UserDTO, er
 	return
 }
 
-func (srv *UserSrv) Register(ctx *gin.Context, req types.UserDTO) error {
+func (srv *UserSrv) Register(ctx *gin.Context, req types.UserVO) error {
 	doc := store.User{
 		UID:    req.UID,
 		DID:    req.DID,

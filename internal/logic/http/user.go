@@ -34,7 +34,7 @@ func (h UserHandler) Get(ctx *gin.Context) {
 }
 
 func (h UserHandler) Register(ctx *gin.Context) {
-	var req types.UserDTO
+	var req types.UserVO
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		logx.Error(ctx, err.Error())
 		web.JsonWithError(ctx, errs.ErrInvalidParam)

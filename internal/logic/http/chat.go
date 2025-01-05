@@ -30,7 +30,7 @@ func (h ChatHandler) ConvRecentList(ctx *gin.Context) {
 }
 
 func (h ChatHandler) ConvListMsg(ctx *gin.Context) {
-	var req types.ConvMessageDTO
+	var req types.ConvMessageVO
 	if err := ctx.ShouldBind(&req); err != nil {
 		web.JsonWithError(ctx, errs.ErrInvalidParam)
 		return
@@ -45,7 +45,7 @@ func (h ChatHandler) ConvListMsg(ctx *gin.Context) {
 }
 
 func (h ChatHandler) ConvPin(ctx *gin.Context) {
-	var req types.ConvOpDTO
+	var req types.ConvOpVO
 	if err := ctx.ShouldBind(&req); err != nil {
 		web.JsonWithError(ctx, errs.ErrInvalidParam)
 		return
@@ -59,7 +59,7 @@ func (h ChatHandler) ConvPin(ctx *gin.Context) {
 }
 
 func (h ChatHandler) ConvMute(ctx *gin.Context) {
-	var req types.ConvOpDTO
+	var req types.ConvOpVO
 	if err := ctx.ShouldBind(&req); err != nil {
 		web.JsonWithError(ctx, errs.ErrInvalidParam)
 		return
