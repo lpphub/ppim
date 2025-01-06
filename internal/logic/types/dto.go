@@ -33,3 +33,12 @@ type ConvRecentDTO struct {
 	LastMsg          *MessageDTO `json:"lastMsg"`
 	Version          int64       `json:"version"`
 }
+
+type ConvAttributeDTO struct {
+	UID            string
+	ConversationID string
+	Attribute      string
+	Pin            bool
+	Mute           bool
+	UnreadCount    uint64
+}

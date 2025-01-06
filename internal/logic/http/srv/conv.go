@@ -17,7 +17,13 @@ func (srv *ConvSrv) RecentList(ctx *gin.Context, uid string) ([]*types.ConvRecen
 }
 
 func (srv *ConvSrv) SetPin(ctx *gin.Context, req types.ConvOpVO) error {
-	err := svc.Hints().Conv.SetPin(ctx, req.UID, req.ConversationID, req.Pin)
+	attr := types.ConvAttributeDTO{
+		UID:            req.UID,
+		ConversationID: req.ConversationID,
+		Attribute:      svc.ConvFieldPin,
+		Pin:            req.Pin,
+	}
+	err := svc.Hints().Conv.SetAttribute(ctx, attr)
 	if err != nil {
 		return err
 	}
@@ -26,7 +32,13 @@ func (srv *ConvSrv) SetPin(ctx *gin.Context, req types.ConvOpVO) error {
 }
 
 func (srv *ConvSrv) SetMute(ctx *gin.Context, req types.ConvOpVO) error {
-	err := svc.Hints().Conv.SetMute(ctx, req.UID, req.ConversationID, req.Mute)
+	attr := types.ConvAttributeDTO{
+		UID:            req.UID,
+		ConversationID: req.ConversationID,
+		Attribute:      svc.ConvFieldMute,
+		Mute:           req.Mute,
+	}
+	err := svc.Hints().Conv.SetAttribute(ctx, attr)
 	if err != nil {
 		return err
 	}
@@ -35,7 +47,13 @@ func (srv *ConvSrv) SetMute(ctx *gin.Context, req types.ConvOpVO) error {
 }
 
 func (srv *ConvSrv) SetUnreadCount(ctx *gin.Context, req types.ConvOpVO) error {
-	err := svc.Hints().Conv.SetUnreadCount(ctx, req.UID, req.ConversationID, req.UnreadCount)
+	attr := types.ConvAttributeDTO{
+		UID:            req.UID,
+		ConversationID: req.ConversationID,
+		Attribute:      svc.ConvFieldUnreadCount,
+		UnreadCount:    req.UnreadCount,
+	}
+	err := svc.Hints().Conv.SetAttribute(ctx, attr)
 	if err != nil {
 		return err
 	}

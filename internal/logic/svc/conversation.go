@@ -51,11 +51,11 @@ const (
 	CacheConvRecent     = "conv:recent:%s"
 	CacheConvRecentInfo = "conv:recent:%s:%s"
 
-	CacheFieldConvUnreadCount = "unreadCount"
-	CacheFieldConvPin         = "pin"
-	CacheFieldConvMute        = "mute"
-	CacheFieldConvLastMsgSeq  = "lastMsgSeq"
-	CacheFieldConvReadMsgSeq  = "readMsgSeq"
+	ConvFieldUnreadCount = "unreadCount"
+	ConvFieldPin         = "pin"
+	ConvFieldMute        = "mute"
+	ConvFieldLastMsgSeq  = "lastMsgSeq"
+	ConvFieldReadMsgSeq  = "readMsgSeq"
 
 	recentConvSize = 500
 )
@@ -116,10 +116,10 @@ func (c *ConversationSrv) cacheStoreRecent(ctx context.Context, uid string, msg 
 	cacheInfoKey := c.getConvCacheKey(uid, msg.ConversationID)
 	pipe := global.Redis.Pipeline()
 	// 会话最新消息
-	pipe.HSet(ctx, cacheInfoKey, CacheFieldConvLastMsgSeq, msg.MsgSeq)
+	pipe.HSet(ctx, cacheInfoKey, ConvFieldLastMsgSeq, msg.MsgSeq)
 	if uid != msg.FromUID {
 		// 未读消息数
-		pipe.HIncrBy(ctx, cacheInfoKey, CacheFieldConvUnreadCount, 1)
+		pipe.HIncrBy(ctx, cacheInfoKey, ConvFieldUnreadCount, 1)
 	}
 
 	cacheKey := fmt.Sprintf(CacheConvRecent, uid)
@@ -154,7 +154,7 @@ func (c *ConversationSrv) cacheQueryRecent(ctx context.Context, uid string) ([]*
 	// 批量添加命令到 Pipeline
 	for i, cid := range cids {
 		cmds[i].msgCmd = pipe.Get(ctx, fmt.Sprintf(CacheConvRecentMsg, cid))
-		cmds[i].infoCmd = pipe.HMGet(ctx, c.getConvCacheKey(uid, cid), CacheFieldConvUnreadCount, CacheFieldConvPin, CacheFieldConvMute)
+		cmds[i].infoCmd = pipe.HMGet(ctx, c.getConvCacheKey(uid, cid), ConvFieldUnreadCount, ConvFieldPin, ConvFieldMute)
 	}
 	_, err = pipe.Exec(ctx)
 	if err != nil && !errors.Is(err, redis.Nil) {
@@ -250,23 +250,24 @@ func (c *ConversationSrv) GetRecentByUID(ctx *gin.Context, uid string) ([]*types
 	return list, nil
 }
 
-func (c *ConversationSrv) SetPin(ctx context.Context, uid, convID string, pin bool) error {
-	global.Redis.HSet(ctx, c.getConvCacheKey(uid, convID), CacheFieldConvPin, pin)
-	global.Redis.ZAdd(ctx, fmt.Sprintf(CacheConvRecent, uid), redis.Z{Score: float64(time.Now().UnixMilli()), Member: convID})
-
-	return new(store.Conversation).UpdatePin(ctx, uid, convID, pin)
-}
-
-func (c *ConversationSrv) SetMute(ctx context.Context, uid, convID string, mute bool) error {
-	global.Redis.HSet(ctx, c.getConvCacheKey(uid, convID), CacheFieldConvMute, mute)
-	global.Redis.ZAdd(ctx, fmt.Sprintf(CacheConvRecent, uid), redis.Z{Score: float64(time.Now().UnixMilli()), Member: convID})
-
-	return new(store.Conversation).UpdateMute(ctx, uid, convID, mute)
-}
-
-func (c *ConversationSrv) SetUnreadCount(ctx context.Context, uid, convID string, unreadCount uint64) error {
-	global.Redis.HSet(ctx, c.getConvCacheKey(uid, convID), CacheFieldConvUnreadCount, unreadCount)
-	global.Redis.ZAdd(ctx, fmt.Sprintf(CacheConvRecent, uid), redis.Z{Score: float64(time.Now().UnixMilli()), Member: convID})
-
-	return new(store.Conversation).UpdateUnreadCount(ctx, uid, convID, unreadCount)
+func (c *ConversationSrv) SetAttribute(ctx context.Context, attr types.ConvAttributeDTO) (err error) {
+	cacheKey := c.getConvCacheKey(attr.UID, attr.ConversationID)
+	switch attr.Attribute {
+	case ConvFieldPin:
+		global.Redis.HSet(ctx, cacheKey, ConvFieldPin, attr.Pin)
+		err = new(store.Conversation).UpdatePin(ctx, attr.UID, attr.ConversationID, attr.Pin)
+	case ConvFieldMute:
+		global.Redis.HSet(ctx, cacheKey, ConvFieldMute, attr.Mute)
+		err = new(store.Conversation).UpdateMute(ctx, attr.UID, attr.ConversationID, attr.Mute)
+	case ConvFieldUnreadCount:
+		global.Redis.HSet(ctx, cacheKey, ConvFieldUnreadCount, attr.UnreadCount)
+		err = new(store.Conversation).UpdateUnreadCount(ctx, attr.UID, attr.ConversationID, attr.UnreadCount)
+	default:
+		return errors.New("invalid op type")
+	}
+	if err != nil {
+		return err
+	}
+	global.Redis.ZAdd(ctx, fmt.Sprintf(CacheConvRecent, attr.UID), redis.Z{Score: float64(time.Now().UnixMilli()), Member: attr.ConversationID})
+	return
 }
