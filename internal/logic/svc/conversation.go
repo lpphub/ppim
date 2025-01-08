@@ -57,7 +57,7 @@ const (
 	ConvFieldLastMsgSeq  = "lastMsgSeq"
 	ConvFieldReadMsgSeq  = "readMsgSeq"
 
-	recentConvSize = 500
+	recentConvMaxSize = 500
 )
 
 func (c *ConversationSrv) IndexRecent(ctx context.Context, msg *types.MessageDTO, receivers []string) error {
@@ -113,11 +113,10 @@ func (c *ConversationSrv) indexWithLock(ctx context.Context, msg *types.MessageD
 
 // 缓存用户最近会话
 func (c *ConversationSrv) cacheStoreRecent(ctx context.Context, uid string, msg *types.MessageDTO) error {
-	rdb := global.Redis
-
 	cacheKey := fmt.Sprintf(CacheConvRecent, uid)
 	cacheInfoKey := c.getConvCacheKey(uid, msg.ConversationID)
 
+	rdb := global.Redis
 	pipe := rdb.Pipeline()
 	// 会话最新消息
 	pipe.HSet(ctx, cacheInfoKey, ConvFieldLastMsgSeq, msg.MsgSeq)
@@ -132,9 +131,9 @@ func (c *ConversationSrv) cacheStoreRecent(ctx context.Context, uid string, msg 
 		return err
 	}
 
-	// 获取会话数量，用于判断是否超过限制
+	// 获取会话数量，判断是否超过限制
 	count, _ := rdb.ZCard(ctx, cacheKey).Result()
-	if count > recentConvSize {
+	if count > recentConvMaxSize {
 		first, _ := rdb.ZRangeWithScores(ctx, cacheKey, 0, 0).Result()
 		if len(first) > 0 {
 			rdb.ZRem(ctx, cacheInfoKey, first[0].Member)
@@ -145,7 +144,7 @@ func (c *ConversationSrv) cacheStoreRecent(ctx context.Context, uid string, msg 
 }
 
 func (c *ConversationSrv) cacheQueryRecent(ctx context.Context, uid string) ([]*types.ConvRecentDTO, error) {
-	cids, err := global.Redis.ZRevRange(ctx, fmt.Sprintf(CacheConvRecent, uid), 0, recentConvSize).Result()
+	cids, err := global.Redis.ZRevRange(ctx, fmt.Sprintf(CacheConvRecent, uid), 0, recentConvMaxSize).Result()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get recent conversation IDs: %v", err)
 	}
@@ -217,7 +216,7 @@ func (c *ConversationSrv) GetRecentByUID(ctx *gin.Context, uid string) ([]*types
 	}
 
 	// todo 可以全用缓存，不查db
-	data, err := new(store.Conversation).ListRecent(ctx, uid, recentConvSize)
+	data, err := new(store.Conversation).ListRecent(ctx, uid, recentConvMaxSize)
 	if err != nil {
 		return nil, err
 	}

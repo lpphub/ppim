@@ -36,6 +36,7 @@ func newMessageSrv(conv *ConversationSrv, route *RouteSrv, seq seq.Sequence) *Me
 func (s *MessageSrv) HandleMsg(ctx context.Context, msg *types.MessageDTO) error {
 	ctx = logger.WithCtx(ctx)
 
+	// 同一会话的消息序列号是递增的
 	msgSeq, err := s.seq.Next(ctx, msg.ConversationID)
 	if err != nil {
 		logger.Err(ctx, err, "generate msg_seq err")
