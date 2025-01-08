@@ -113,26 +113,35 @@ func (c *ConversationSrv) indexWithLock(ctx context.Context, msg *types.MessageD
 
 // 缓存用户最近会话
 func (c *ConversationSrv) cacheStoreRecent(ctx context.Context, uid string, msg *types.MessageDTO) error {
+	rdb := global.Redis
+
+	cacheKey := fmt.Sprintf(CacheConvRecent, uid)
 	cacheInfoKey := c.getConvCacheKey(uid, msg.ConversationID)
-	pipe := global.Redis.Pipeline()
+
+	pipe := rdb.Pipeline()
 	// 会话最新消息
 	pipe.HSet(ctx, cacheInfoKey, ConvFieldLastMsgSeq, msg.MsgSeq)
 	if uid != msg.FromUID {
 		// 未读消息数
 		pipe.HIncrBy(ctx, cacheInfoKey, ConvFieldUnreadCount, 1)
 	}
-
-	cacheKey := fmt.Sprintf(CacheConvRecent, uid)
 	// 用户最新会话
 	pipe.ZAdd(ctx, cacheKey, redis.Z{Score: float64(msg.SendTime), Member: msg.ConversationID})
-	// 会话数量超过限制，删除最早一条
-	count, _ := pipe.ZCard(ctx, cacheKey).Result()
-	if count > recentConvSize {
-		pipe.ZRemRangeByRank(ctx, cacheKey, 0, 0)
-		pipe.HDel(ctx, cacheInfoKey)
-	}
 	_, err := pipe.Exec(ctx)
-	return err
+	if err != nil {
+		return err
+	}
+
+	// 获取会话数量，用于判断是否超过限制
+	count, _ := rdb.ZCard(ctx, cacheKey).Result()
+	if count > recentConvSize {
+		first, _ := rdb.ZRangeWithScores(ctx, cacheKey, 0, 0).Result()
+		if len(first) > 0 {
+			rdb.ZRem(ctx, cacheInfoKey, first[0].Member)
+			rdb.HDel(ctx, c.getConvCacheKey(uid, first[0].Member.(string)))
+		}
+	}
+	return nil
 }
 
 func (c *ConversationSrv) cacheQueryRecent(ctx context.Context, uid string) ([]*types.ConvRecentDTO, error) {
