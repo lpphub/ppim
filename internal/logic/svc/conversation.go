@@ -26,13 +26,13 @@ import (
  * 读扩散：一个会话对应一个timeline，消息到达后更新此会话最新timeline
  */
 type ConversationSrv struct {
-	works       *gowork.Pool
+	workers     *gowork.Pool
 	segmentLock *ext.SegmentRWLock
 }
 
 func newConversationSrv() *ConversationSrv {
 	return &ConversationSrv{
-		works:       gowork.NewPool(100),
+		workers:     gowork.NewPool(100),
 		segmentLock: ext.NewSegmentLock(20),
 	}
 }
@@ -65,7 +65,7 @@ func (c *ConversationSrv) IndexRecent(ctx context.Context, msg *types.MessageDTO
 	global.Redis.Set(ctx, fmt.Sprintf(CacheConvRecentMsg, msg.ConversationID), msgJson, 30*24*time.Hour)
 
 	for _, uid := range receivers {
-		_ = c.works.Submit(func() {
+		_ = c.workers.Submit(func() {
 			c.indexWithLock(ctx, msg, uid)
 		})
 	}

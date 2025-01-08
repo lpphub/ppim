@@ -2,6 +2,7 @@ package mq
 
 import (
 	"context"
+	"fmt"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/lpphub/golib/logger"
 	"github.com/segmentio/kafka-go"
@@ -17,14 +18,14 @@ type Subscriber struct {
 	svc *net.ServerContext
 }
 
-func RegisterSubscriber(svc *net.ServerContext) {
+func RegisterSubscriber(svc *net.ServerContext) error {
 	sub := &Subscriber{
 		svc: svc,
 	}
-	sub.register()
+	return sub.register()
 }
 
-func (s *Subscriber) register() {
+func (s *Subscriber) register() error {
 	kconf := global.Conf.Kafka
 
 	config := kafkago.ConsumerConfig{
@@ -34,11 +35,12 @@ func (s *Subscriber) register() {
 		MaxWait:     time.Second,
 		MaxAttempts: 3,
 	}
-	if c, err := kafkago.NewConsumer(s.handleDelivery, config); err != nil {
-		logger.Log().Err(err).Msg("MQ subscriber register fail")
-	} else {
-		c.Start()
+	c, err := kafkago.NewConsumer(s.handleDelivery, config)
+	if err != nil {
+		return fmt.Errorf("register kafka consumer error: %v", err)
 	}
+	c.Start()
+	return nil
 }
 
 func (s *Subscriber) handleDelivery(ctx context.Context, message kafka.Message) error {

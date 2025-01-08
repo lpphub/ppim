@@ -15,7 +15,7 @@ import (
 
 var (
 	ErrMsgStore  = errors.New("消息持久化失败")
-	ErrConvIndex = errors.New("消息索引更新失败")
+	ErrConvIndex = errors.New("消息会话索引失败")
 	ErrMsgRoute  = errors.New("消息路由失败")
 )
 

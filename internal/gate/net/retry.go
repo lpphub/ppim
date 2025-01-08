@@ -155,11 +155,15 @@ type RetryManager struct {
 }
 
 func newRetryManager(svc *ServerContext, size int) *RetryManager {
-	return &RetryManager{
+	rm := &RetryManager{
 		svc:     svc,
 		size:    size,
 		buckets: make([]*RetryDelivery, size),
 	}
+
+	// 启动
+	rm.Start()
+	return rm
 }
 
 func (r *RetryManager) Add(msg *RetryMsg) {

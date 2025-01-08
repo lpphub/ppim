@@ -2,6 +2,7 @@ package rpc
 
 import (
 	"context"
+	"fmt"
 	"github.com/lpphub/golib/logger"
 	etcdclient "github.com/rpcxio/rpcx-etcd/client"
 	"github.com/smallnest/rpcx/client"
@@ -34,7 +35,7 @@ func RegisterRpcClient(registryAddr string) (err error) {
 	once.Do(func() {
 		discovery, cerr := etcdclient.NewEtcdV3Discovery(basePath, serviceName, strings.Split(registryAddr, ","), true, nil)
 		if cerr != nil {
-			err = cerr
+			err = fmt.Errorf("register rpc discovery error: %v", cerr)
 			return
 		}
 		logic := client.NewXClient(serviceName, client.Failtry, client.SelectByUser, discovery, client.DefaultOption)
