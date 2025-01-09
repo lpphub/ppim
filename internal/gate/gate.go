@@ -35,6 +35,7 @@ func Serve() {
 		defer tcp.Stop()
 	}()
 
+	// 启动websocket服务
 	go func() {
 		ws := net.NewWsServer(svc, global.Conf.Server.Ws)
 		if err := ws.Start(); err != nil {
@@ -43,9 +44,8 @@ func Serve() {
 		defer ws.Stop()
 	}()
 
-	sign := make(chan os.Signal, 1)
-	signal.Notify(sign, syscall.SIGINT, syscall.SIGTERM)
-
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
 	// 等待信号
-	<-sign
+	<-sigChan
 }
