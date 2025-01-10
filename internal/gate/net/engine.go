@@ -34,9 +34,9 @@ type (
 	}
 
 	EventConnContext struct {
-		Codec   codec.Codec
 		Authed  bool
 		Network Network
+		Codec   codec.Codec[codec.Frame]
 		WsCodec *codec.WsCodec
 	}
 )
@@ -76,7 +76,7 @@ func (e *EventEngine) OnOpen(c gnet.Conn) (out []byte, action gnet.Action) {
 	ctx := &EventConnContext{
 		Network: e.opt.Network,
 		Authed:  false,
-		Codec:   new(codec.ProtobufCodec), // todo 优化codec设计
+		Codec:   new(codec.FrameCodec),
 		WsCodec: new(codec.WsCodec),
 	}
 	c.SetContext(ctx)
@@ -98,10 +98,10 @@ func (e *EventEngine) OnClose(c gnet.Conn, err error) (action gnet.Action) {
 func (e *EventEngine) OnTraffic(_c gnet.Conn) gnet.Action {
 	var (
 		connCtx  = _c.Context().(*EventConnContext)
-		messages []*protocol.Message
+		messages [][]byte
 	)
 	if connCtx.Network == _tcp {
-		buf, err := connCtx.Codec.Decode(_c)
+		frames, err := connCtx.Codec.Decode(_c)
 		if err != nil {
 			if errors.Is(err, codec.ErrIncompletePacket) {
 				return gnet.None
@@ -109,12 +109,11 @@ func (e *EventEngine) OnTraffic(_c gnet.Conn) gnet.Action {
 			logger.Log().Err(err).Msg("failed to decode")
 			return gnet.Close
 		}
-
-		msg, err := protocol.Unmarshal(buf)
-		if err != nil {
-			logger.Log().Err(err).Msg("failed to unmarshal proto")
-		} else {
-			messages = append(messages, msg)
+		if len(frames) == 0 {
+			return gnet.None
+		}
+		for _, frame := range frames {
+			messages = append(messages, frame.Body)
 		}
 	} else if connCtx.Network == _ws {
 		ws := connCtx.WsCodec
@@ -129,24 +128,26 @@ func (e *EventEngine) OnTraffic(_c gnet.Conn) gnet.Action {
 			return gnet.None
 		}
 
-		for i := range wsMessages {
-			if msg, perr := protocol.Unmarshal(wsMessages[i].Payload); perr != nil {
-				logger.Log().Err(perr).Msg("failed to unmarshal proto")
-			} else {
-				messages = append(messages, msg)
-			}
+		for _, wsm := range wsMessages {
+			messages = append(messages, wsm.Payload)
 		}
 	}
 
 	// process msg
-	for _, msg := range messages {
+	for _, msgBytes := range messages {
+		msg, err := protocol.Unmarshal(msgBytes)
+		if err != nil {
+			logger.Log().Err(err).Msg("failed to unmarshal proto")
+			continue
+		}
+
 		if !connCtx.Authed {
-			if err := e.svc.processor.Auth(_c, msg.GetConnectPacket()); err != nil {
+			if err = e.svc.processor.Auth(_c, msg.GetConnectPacket()); err != nil {
 				logger.Log().Err(err).Msg("failed to auth the connection")
 				return gnet.Close
 			}
 		} else {
-			if err := e.svc.processor.Process(_c, msg); err != nil {
+			if err = e.svc.processor.Process(_c, msg); err != nil {
 				logger.Log().Err(err).Msg("failed to process msg")
 			}
 		}

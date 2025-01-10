@@ -23,7 +23,7 @@ func main() {
 		return
 	}
 
-	codecInst := new(codec.ProtobufCodec)
+	codecInst := new(codec.FrameCodec)
 
 	go func() {
 		for {

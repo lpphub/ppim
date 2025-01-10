@@ -59,7 +59,7 @@ func TestClient_1(t *testing.T) {
 	}()
 
 	// 1. 连接授权
-	codecInst := new(codec.ProtobufCodec)
+	codecInst := new(codec.FrameCodec)
 
 	msg1, _ := protocol.PacketConnect(&protocol.ConnectPacket{
 		Uid:   "123",
