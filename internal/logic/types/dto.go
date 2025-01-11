@@ -28,6 +28,7 @@ type ConvRecentDTO struct {
 	UnreadCount      uint64      `json:"unreadCount"`
 	Pin              bool        `json:"pin"`
 	Mute             bool        `json:"mute"`
+	Deleted          bool        `json:"deleted"`
 	LastMsgID        string      `json:"lastMsgID"`
 	LastMsgSeq       uint64      `json:"lastMsgSeq"`
 	LastMsg          *MessageDTO `json:"lastMsg"`

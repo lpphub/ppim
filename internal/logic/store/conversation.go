@@ -19,6 +19,7 @@ type Conversation struct {
 	LastMsgId        string    `bson:"last_msg_id"`
 	LastMsgSeq       uint64    `bson:"last_msg_seq"`
 	FromUID          string    `bson:"from_uid"`
+	Deleted          bool      `bson:"deleted"`
 	CreatedAt        time.Time `bson:"created_at"`
 	UpdatedAt        time.Time `bson:"updated_at"`
 }

@@ -114,7 +114,7 @@ func (s *MessageSrv) HandleMsg(ctx context.Context, msg *types.MessageDTO) error
 	}
 
 	if len(onlineSlice) > 0 {
-		err = s.route.RouteDelivery(ctx, util.RemoveDup(onlineSlice), msg)
+		err = s.route.RouteChat(ctx, util.RemoveDup(onlineSlice), msg)
 		if err != nil {
 			logger.Err(ctx, err, "online delivery")
 			return ErrMsgRoute

@@ -59,7 +59,7 @@ func (s *RouteSrv) BatchGetOnline(ctx context.Context, uids []string) ([]*redis.
 	return cmd, nil
 }
 
-func (s *RouteSrv) RouteDelivery(ctx context.Context, routeKeys []string, msg *types.MessageDTO) error {
+func (s *RouteSrv) RouteChat(ctx context.Context, routeKeys []string, msg *types.MessageDTO) error {
 	topicReceivers := make(map[string][]string)
 	for _, key := range routeKeys {
 		route := strings.Split(key, "#") // key = uid#topic

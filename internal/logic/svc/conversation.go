@@ -163,7 +163,7 @@ func (c *ConversationSrv) cacheQueryRecent(ctx context.Context, uid string) ([]*
 	// 批量添加命令到 Pipeline
 	for i, cid := range cids {
 		cmds[i].msgCmd = pipe.Get(ctx, fmt.Sprintf(CacheConvRecentMsg, cid))
-		cmds[i].infoCmd = pipe.HMGet(ctx, c.getConvCacheKey(uid, cid), ConvFieldUnreadCount, ConvFieldPin, ConvFieldMute)
+		cmds[i].infoCmd = pipe.HMGet(ctx, c.getConvCacheKey(uid, cid), ConvFieldUnreadCount, ConvFieldPin, ConvFieldMute, ConvFieldDeleted)
 	}
 	_, err = pipe.Exec(ctx)
 	if err != nil && !errors.Is(err, redis.Nil) {
@@ -189,7 +189,7 @@ func (c *ConversationSrv) cacheQueryRecent(ctx context.Context, uid string) ([]*
 		}
 		// 会话详情信息
 		fields, _ := cmds[i].infoCmd.Result()
-		if len(fields) == 3 {
+		if len(fields) == 4 {
 			if fields[0] != nil {
 				conv.UnreadCount = cast.ToUint64(fields[0])
 			}
@@ -198,6 +198,9 @@ func (c *ConversationSrv) cacheQueryRecent(ctx context.Context, uid string) ([]*
 			}
 			if fields[2] != nil {
 				conv.Mute = fields[2].(bool)
+			}
+			if fields[3] != nil {
+				conv.Deleted = fields[3].(bool)
 			}
 		}
 		list = append(list, conv)
@@ -231,6 +234,7 @@ func (c *ConversationSrv) GetRecentByUID(ctx *gin.Context, uid string) ([]*types
 			UnreadCount:      d.UnreadCount,
 			Mute:             d.Mute,
 			Pin:              d.Pin,
+			Deleted:          d.Deleted,
 			LastMsgID:        d.LastMsgId,
 			Version:          d.CreatedAt.UnixMilli(),
 		})

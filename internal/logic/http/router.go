@@ -39,7 +39,7 @@ func setupRoutes(r *gin.Engine) {
 		c.POST("/pin", chat.ConvPin)              // 会话置顶
 		c.POST("/mute", chat.ConvMute)            // 会话免打扰
 		c.POST("/set_unread", chat.ConvSetUnread) // 设置会话未读数
-		c.DELETE("/del", chat.ConvDel)            // 删除会话
+		c.DELETE("/del", chat.ConvDel)            // 会话删除
 	}
 
 	m := r.Group("/message")
