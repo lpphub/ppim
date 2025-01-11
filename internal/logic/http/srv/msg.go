@@ -25,6 +25,7 @@ func (s *MsgSrv) ListConvMsg(ctx *gin.Context, req types.ConvMessageVO) ([]types
 		_ = copier.Copy(&vo, v)
 		vo.SendTime = v.SendTime.UnixMilli()
 		vo.CreatedAt = v.CreatedAt.UnixMilli()
+		vo.UpdatedAt = v.UpdatedAt.UnixMilli()
 		voList = append(voList, vo)
 	}
 	return voList, nil

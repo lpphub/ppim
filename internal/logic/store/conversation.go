@@ -45,9 +45,12 @@ func (c *Conversation) Update(ctx context.Context) error {
 	return err
 }
 
-func (c *Conversation) ListRecent(ctx context.Context, uid string, size int64) ([]Conversation, error) {
+func (c *Conversation) ListByTime(ctx context.Context, uid string, startTime, limit int64) ([]Conversation, error) {
 	filter := bson.D{{Key: "uid", Value: uid}}
-	opts := options.Find().SetSort(bson.D{{Key: "updated_at", Value: -1}}).SetLimit(size)
+	if startTime > 0 {
+		filter = append(filter, bson.E{Key: "updated_at", Value: bson.M{"$gte": time.UnixMilli(startTime)}})
+	}
+	opts := options.Find().SetSort(bson.D{{Key: "updated_at", Value: 1}}).SetLimit(limit)
 
 	cursor, err := c.Collection().Find(ctx, filter, opts)
 	if err != nil {

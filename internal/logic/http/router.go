@@ -34,11 +34,11 @@ func setupRoutes(r *gin.Engine) {
 
 	c := r.Group("/conversation")
 	{
-		c.GET("/recent", chat.ConvRecentList)     // 最近会话列表
+		c.GET("/list", chat.ConvList)             // 会话列表
 		c.GET("/message", chat.ConvListMsg)       // 会话历史消息
 		c.POST("/pin", chat.ConvPin)              // 会话置顶
 		c.POST("/mute", chat.ConvMute)            // 会话免打扰
-		c.POST("/set_unread", chat.ConvSetUnread) // 设置会话未读数
+		c.POST("/set_unread", chat.ConvSetUnread) // 会话未读数
 		c.DELETE("/del", chat.ConvDel)            // 会话删除
 	}
 

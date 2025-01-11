@@ -43,6 +43,7 @@ func (s *MessageSrv) HandleMsg(ctx context.Context, msg *types.MessageDTO) error
 		return err
 	}
 	msg.MsgSeq = msgSeq
+	msg.UpdatedAt = time.Now().UnixMilli()
 
 	// todo 优化：异步处理
 

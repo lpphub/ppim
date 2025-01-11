@@ -14,14 +14,14 @@ type ChatHandler struct {
 	msg  *srv.MsgSrv
 }
 
-func (h ChatHandler) ConvRecentList(ctx *gin.Context) {
-	uid := ctx.Query("uid")
-	if uid == "" {
+func (h ChatHandler) ConvList(ctx *gin.Context) {
+	var req types.ConvQueryVO
+	if err := ctx.ShouldBind(&req); err != nil {
 		web.JsonWithError(ctx, errs.ErrInvalidParam)
 		return
 	}
 
-	if list, err := h.conv.RecentList(ctx, uid); err != nil {
+	if list, err := h.conv.List(ctx, req); err != nil {
 		logx.Err(ctx, err, "")
 		web.JsonWithError(ctx, errs.ErrRecordNotFound)
 	} else {

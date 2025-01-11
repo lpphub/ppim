@@ -2,6 +2,7 @@ package srv
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/spf13/cast"
 	"ppim/internal/logic/svc"
 	"ppim/internal/logic/types"
 )
@@ -12,8 +13,30 @@ func NewConvSrv() *ConvSrv {
 	return &ConvSrv{}
 }
 
-func (srv *ConvSrv) RecentList(ctx *gin.Context, uid string) ([]*types.ConvRecentDTO, error) {
-	return svc.Hints().Conv.GetRecentByUID(ctx, uid)
+func (srv *ConvSrv) List(ctx *gin.Context, query types.ConvQueryVO) (*types.ConvListVO, error) {
+	var (
+		limit     = query.Limit + 1 // 多查一条用于判断是否有下一页
+		startTime = cast.ToInt64(query.NextKey)
+	)
+	list, err := svc.Hints().Conv.ListByUID(ctx, query.UID, startTime, int64(limit))
+	if err != nil {
+		return nil, err
+	}
+	listLen := len(list)
+	if listLen == 0 {
+		return nil, nil
+	}
+
+	nextKey := ""
+	if listLen >= limit {
+		nextKey = cast.ToString(list[listLen-1].Version) // version = last_time
+		list = list[:listLen-1]
+	}
+	result := &types.ConvListVO{
+		List:    list,
+		NextKey: nextKey,
+	}
+	return result, nil
 }
 
 func (srv *ConvSrv) SetPin(ctx *gin.Context, req types.ConvOpVO) error {

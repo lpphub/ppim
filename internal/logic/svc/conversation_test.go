@@ -2,10 +2,9 @@ package svc
 
 import (
 	"context"
+	jsoniter "github.com/json-iterator/go"
 	"github.com/lpphub/golib/env"
 	"ppim/internal/logic/global"
-	"ppim/internal/logic/types"
-	"ppim/pkg/ext"
 	"testing"
 )
 
@@ -13,20 +12,13 @@ func TestConversationSrv_IndexConversation(t *testing.T) {
 	env.SetRootPath("../../..")
 	global.InitCtx()
 
-	srv := ConversationSrv{
-		segmentLock: ext.NewSegmentLock(3),
-	}
+	srv := ConversationSrv{}
 
-	msg := &types.MessageDTO{
-		MsgID:            "1235",
-		MsgSeq:           2,
-		MsgNo:            "cli02",
-		MsgType:          1,
-		Content:          "hello2",
-		ConversationID:   "single|123@456",
-		ConversationType: "single",
-		FromUID:          "456",
-		ToID:             "123",
+	d, err := srv.ListByUID(context.TODO(), "456", 1736524291451, 1)
+	if err != nil {
+		t.Error(err)
+		return
 	}
-	srv.indexWithLock(context.TODO(), msg, "456")
+	ds, _ := jsoniter.MarshalToString(d)
+	t.Logf("%s", ds)
 }

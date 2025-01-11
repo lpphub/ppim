@@ -13,6 +13,7 @@ type MessageDTO struct {
 	FromDID          string `json:"fromDID"`          // 发送者DID
 	SendTime         int64  `json:"sendTime"`         // 发送时间
 	CreatedAt        int64  `json:"createdAt"`        // 创建时间
+	UpdatedAt        int64  `json:"updatedAt"`        // 更新时间
 }
 
 type RouteDTO struct {
@@ -22,7 +23,8 @@ type RouteDTO struct {
 	Ip    string
 }
 
-type ConvRecentDTO struct {
+type ConvDetailDTO struct {
+	UID              string      `json:"uid"`
 	ConversationID   string      `json:"conversationID"`
 	ConversationType string      `json:"conversationType"`
 	UnreadCount      uint64      `json:"unreadCount"`
@@ -32,6 +34,7 @@ type ConvRecentDTO struct {
 	LastMsgID        string      `json:"lastMsgID"`
 	LastMsgSeq       uint64      `json:"lastMsgSeq"`
 	LastMsg          *MessageDTO `json:"lastMsg"`
+	CreatedAt        int64       `json:"createdAt"`
 	Version          int64       `json:"version"`
 }
 
