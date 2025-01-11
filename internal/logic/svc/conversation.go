@@ -56,6 +56,7 @@ const (
 	ConvFieldMute        = "mute"
 	ConvFieldLastMsgSeq  = "lastMsgSeq"
 	ConvFieldReadMsgSeq  = "readMsgSeq"
+	ConvFieldDeleted     = "deleted"
 
 	recentConvMaxSize = 500
 )
@@ -125,7 +126,7 @@ func (c *ConversationSrv) cacheStoreRecent(ctx context.Context, uid string, msg 
 		pipe.HIncrBy(ctx, cacheInfoKey, ConvFieldUnreadCount, 1)
 	}
 	// 用户最新会话
-	pipe.ZAdd(ctx, cacheKey, redis.Z{Score: float64(msg.SendTime), Member: msg.ConversationID})
+	pipe.ZAdd(ctx, cacheKey, redis.Z{Score: float64(msg.CreatedAt), Member: msg.ConversationID})
 	_, err := pipe.Exec(ctx)
 	if err != nil {
 		return err
@@ -270,6 +271,9 @@ func (c *ConversationSrv) SetAttribute(ctx context.Context, attr types.ConvAttri
 	case ConvFieldUnreadCount:
 		global.Redis.HSet(ctx, cacheKey, ConvFieldUnreadCount, attr.UnreadCount)
 		err = new(store.Conversation).UpdateUnreadCount(ctx, attr.UID, attr.ConversationID, attr.UnreadCount)
+	case ConvFieldDeleted:
+		global.Redis.HSet(ctx, cacheKey, ConvFieldDeleted, attr.Deleted)
+		err = new(store.Conversation).UpdateDeleted(ctx, attr.UID, attr.ConversationID, attr.Deleted)
 	default:
 		return errors.New("invalid op type")
 	}

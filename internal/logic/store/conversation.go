@@ -72,29 +72,25 @@ func (c *Conversation) GetMaxSeq(ctx context.Context, conversationID string) (ui
 }
 
 func (c *Conversation) UpdatePin(ctx context.Context, uid, conversationID string, pin bool) error {
-	filter := bson.D{{Key: "conversation_id", Value: conversationID}, {Key: "uid", Value: uid}}
-	update := bson.D{{Key: "$set", Value: bson.D{
-		{Key: "pin", Value: pin},
-		{Key: "updated_at", Value: time.Now()},
-	}}}
-	_, err := c.Collection().UpdateOne(ctx, filter, update)
-	return err
+	return c.UpdateField(ctx, uid, conversationID, "pin", pin)
 }
 
 func (c *Conversation) UpdateMute(ctx context.Context, uid, conversationID string, mute bool) error {
-	filter := bson.D{{Key: "conversation_id", Value: conversationID}, {Key: "uid", Value: uid}}
-	update := bson.D{{Key: "$set", Value: bson.D{
-		{Key: "mute", Value: mute},
-		{Key: "updated_at", Value: time.Now()},
-	}}}
-	_, err := c.Collection().UpdateOne(ctx, filter, update)
-	return err
+	return c.UpdateField(ctx, uid, conversationID, "mute", mute)
 }
 
 func (c *Conversation) UpdateUnreadCount(ctx context.Context, uid, conversationID string, unreadCount uint64) error {
+	return c.UpdateField(ctx, uid, conversationID, "unread_count", unreadCount)
+}
+
+func (c *Conversation) UpdateDeleted(ctx context.Context, uid, conversationID string, deleted bool) error {
+	return c.UpdateField(ctx, uid, conversationID, "deleted", deleted)
+}
+
+func (c *Conversation) UpdateField(ctx context.Context, uid, conversationID string, field string, value interface{}) error {
 	filter := bson.D{{Key: "conversation_id", Value: conversationID}, {Key: "uid", Value: uid}}
 	update := bson.D{{Key: "$set", Value: bson.D{
-		{Key: "unread_count", Value: unreadCount},
+		{Key: field, Value: value},
 		{Key: "updated_at", Value: time.Now()},
 	}}}
 	_, err := c.Collection().UpdateOne(ctx, filter, update)

@@ -60,3 +60,18 @@ func (srv *ConvSrv) SetUnreadCount(ctx *gin.Context, req types.ConvOpVO) error {
 	// todo 多端同步
 	return nil
 }
+
+func (srv *ConvSrv) SetDel(ctx *gin.Context, req types.ConvOpVO) error {
+	attr := types.ConvAttributeDTO{
+		UID:            req.UID,
+		ConversationID: req.ConversationID,
+		Attribute:      svc.ConvFieldDeleted,
+		Deleted:        req.Deleted,
+	}
+	err := svc.Hints().Conv.SetAttribute(ctx, attr)
+	if err != nil {
+		return err
+	}
+	// todo 多端同步
+	return nil
+}

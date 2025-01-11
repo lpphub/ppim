@@ -14,6 +14,7 @@ type ConvOpVO struct {
 	Pin            bool   `json:"pin" form:"pin"`
 	Mute           bool   `json:"mute" form:"mute"`
 	UnreadCount    uint64 `json:"unreadCount" form:"unreadCount"`
+	Deleted        bool   `json:"deleted" form:"deleted"`
 }
 
 type ConvMessageVO struct {

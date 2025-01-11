@@ -41,4 +41,5 @@ type ConvAttributeDTO struct {
 	Pin            bool
 	Mute           bool
 	UnreadCount    uint64
+	Deleted        bool
 }

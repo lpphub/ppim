@@ -87,8 +87,17 @@ func (h ChatHandler) ConvSetUnread(ctx *gin.Context) {
 }
 
 func (h ChatHandler) ConvDel(ctx *gin.Context) {
-	// todo
-	web.JsonWithSuccess(ctx, "ok")
+	var req types.ConvOpVO
+	if err := ctx.ShouldBind(&req); err != nil {
+		web.JsonWithError(ctx, errs.ErrInvalidParam)
+		return
+	}
+	if err := h.conv.SetDel(ctx, req); err != nil {
+		logx.Err(ctx, err, "")
+		web.JsonWithError(ctx, errs.ErrServerInternal)
+	} else {
+		web.JsonWithSuccess(ctx, "ok")
+	}
 }
 
 func (h ChatHandler) MsgDel(ctx *gin.Context) {
