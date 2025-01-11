@@ -29,21 +29,6 @@ func (h ChatHandler) ConvList(ctx *gin.Context) {
 	}
 }
 
-func (h ChatHandler) ConvListMsg(ctx *gin.Context) {
-	var req types.ConvMessageVO
-	if err := ctx.ShouldBind(&req); err != nil {
-		web.JsonWithError(ctx, errs.ErrInvalidParam)
-		return
-	}
-
-	if list, err := h.msg.ListConvMsg(ctx, req); err != nil {
-		logx.Err(ctx, err, "")
-		web.JsonWithError(ctx, errs.ErrRecordNotFound)
-	} else {
-		web.JsonWithSuccess(ctx, list)
-	}
-}
-
 func (h ChatHandler) ConvPin(ctx *gin.Context) {
 	var req types.ConvOpVO
 	if err := ctx.ShouldBind(&req); err != nil {
@@ -97,6 +82,20 @@ func (h ChatHandler) ConvDel(ctx *gin.Context) {
 		web.JsonWithError(ctx, errs.ErrServerInternal)
 	} else {
 		web.JsonWithSuccess(ctx, "ok")
+	}
+}
+
+func (h ChatHandler) MsgList(ctx *gin.Context) {
+	var req types.MessageQueryVO
+	if err := ctx.ShouldBind(&req); err != nil {
+		web.JsonWithError(ctx, errs.ErrInvalidParam)
+		return
+	}
+	if list, err := h.msg.ListConvMsg(ctx, req); err != nil {
+		logx.Err(ctx, err, "")
+		web.JsonWithError(ctx, errs.ErrRecordNotFound)
+	} else {
+		web.JsonWithSuccess(ctx, list)
 	}
 }
 

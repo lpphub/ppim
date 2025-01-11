@@ -13,7 +13,7 @@ func NewMsgSrv() *MsgSrv {
 	return &MsgSrv{}
 }
 
-func (s *MsgSrv) ListConvMsg(ctx *gin.Context, req types.ConvMessageVO) ([]types.MessageDTO, error) {
+func (s *MsgSrv) ListConvMsg(ctx *gin.Context, req types.MessageQueryVO) ([]types.MessageDTO, error) {
 	list, err := new(store.Message).ListByConvSeq(ctx, req.ConversationID, req.StartSeq, req.Limit)
 	if err != nil {
 		return nil, err

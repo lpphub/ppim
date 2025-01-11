@@ -19,12 +19,6 @@ type ConvListVO struct {
 	List    []*ConvDetailDTO `json:"list"`
 }
 
-type ConvMessageVO struct {
-	ConversationID string `json:"conversationID" form:"conversationID"`
-	StartSeq       int64  `json:"startSeq" form:"startSeq"`
-	Limit          int64  `json:"limit" form:"limit"`
-}
-
 type ConvOpVO struct {
 	UID            string `json:"uid" form:"uid"`
 	ConversationID string `json:"conversationID" form:"conversationID"`
@@ -32,4 +26,10 @@ type ConvOpVO struct {
 	Mute           bool   `json:"mute" form:"mute"`
 	UnreadCount    uint64 `json:"unreadCount" form:"unreadCount"`
 	Deleted        bool   `json:"deleted" form:"deleted"`
+}
+
+type MessageQueryVO struct {
+	ConversationID string `json:"conversationID" form:"conversationID"`
+	StartSeq       int64  `json:"startSeq" form:"startSeq"`
+	Limit          int64  `json:"limit" form:"limit"`
 }
