@@ -32,5 +32,9 @@ func (sl *SegmentRWLock) RUnlock(index int) {
 }
 
 func (sl *SegmentRWLock) getSegmentLock(index int) *sync.RWMutex {
-	return &sl.segments[index%sl.size]
+	index = index % sl.size
+	if index < 0 {
+		index += sl.size
+	}
+	return &sl.segments[index]
 }

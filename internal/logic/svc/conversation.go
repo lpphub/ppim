@@ -12,11 +12,11 @@ import (
 	"github.com/redis/go-redis/v9"
 	"github.com/spf13/cast"
 	"go.mongodb.org/mongo-driver/mongo"
-	"ppim/internal/chatlib"
 	"ppim/internal/logic/global"
 	"ppim/internal/logic/store"
 	"ppim/internal/logic/types"
 	"ppim/pkg/ext"
+	"ppim/pkg/util"
 	"time"
 )
 
@@ -66,15 +66,15 @@ func (c *ConversationSrv) IndexRecent(ctx context.Context, msg *types.MessageDTO
 
 	for _, uid := range receivers {
 		_ = c.workers.Submit(func() {
-			c.indexWithLock(ctx, msg, uid)
+			c.indexWithLock(ctx, uid, msg)
 		})
 	}
 	return nil
 }
 
-func (c *ConversationSrv) indexWithLock(ctx context.Context, msg *types.MessageDTO, uid string) {
+func (c *ConversationSrv) indexWithLock(ctx context.Context, uid string, msg *types.MessageDTO) {
 	// todo 集群模式下，分布式锁
-	index := cast.ToInt(chatlib.DigitizeUID(uid))
+	index := cast.ToInt(util.Murmur32(fmt.Sprintf("%s-%s", uid, msg.ConversationID)))
 	c.segmentLock.Lock(index)
 	defer c.segmentLock.Unlock(index)
 
