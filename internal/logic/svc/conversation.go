@@ -209,16 +209,16 @@ func (c *ConversationSrv) cacheQueryDetail(ctx context.Context, uid string, conv
 		fields, _ := cmds[i].infoCmd.Result()
 		if len(fields) == 5 {
 			if fields[0] != nil {
-				conv.UnreadCount = cast.ToUint64(fields[0])
+				conv.UnreadCount = fields[0].(uint64)
 			}
 			if fields[1] != nil {
-				conv.Pin = fields[1].(bool)
+				conv.Pin = fields[1].(int8)
 			}
 			if fields[2] != nil {
-				conv.Mute = fields[2].(bool)
+				conv.Mute = fields[2].(int8)
 			}
 			if fields[3] != nil {
-				conv.Deleted = fields[3].(bool)
+				conv.Deleted = fields[3].(int8)
 			}
 			if fields[4] != nil {
 				conv.CreatedAt = fields[4].(int64)

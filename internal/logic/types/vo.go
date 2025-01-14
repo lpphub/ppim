@@ -22,10 +22,10 @@ type ConvListVO struct {
 type ConvOpVO struct {
 	UID            string `json:"uid" form:"uid"`
 	ConversationID string `json:"conversationID" form:"conversationID"`
-	Pin            bool   `json:"pin" form:"pin"`
-	Mute           bool   `json:"mute" form:"mute"`
+	Pin            int8   `json:"pin" form:"pin"`
+	Mute           int8   `json:"mute" form:"mute"`
 	UnreadCount    uint64 `json:"unreadCount" form:"unreadCount"`
-	Deleted        bool   `json:"deleted" form:"deleted"`
+	Deleted        int8   `json:"deleted" form:"deleted"`
 }
 
 type MessageQueryVO struct {

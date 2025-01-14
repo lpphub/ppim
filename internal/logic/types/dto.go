@@ -28,9 +28,9 @@ type ConvDetailDTO struct {
 	ConversationID   string      `json:"conversationID"`
 	ConversationType string      `json:"conversationType"`
 	UnreadCount      uint64      `json:"unreadCount"`
-	Pin              bool        `json:"pin"`
-	Mute             bool        `json:"mute"`
-	Deleted          bool        `json:"deleted"`
+	Pin              int8        `json:"pin"`
+	Mute             int8        `json:"mute"`
+	Deleted          int8        `json:"deleted"`
 	LastMsgID        string      `json:"lastMsgID"`
 	LastMsgSeq       uint64      `json:"lastMsgSeq"`
 	LastMsg          *MessageDTO `json:"lastMsg"`
@@ -42,8 +42,8 @@ type ConvAttributeDTO struct {
 	UID            string
 	ConversationID string
 	Attribute      string
-	Pin            bool
-	Mute           bool
 	UnreadCount    uint64
-	Deleted        bool
+	Pin            int8
+	Mute           int8
+	Deleted        int8
 }

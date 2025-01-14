@@ -13,13 +13,13 @@ type Conversation struct {
 	ConversationID   string    `bson:"conversation_id"`
 	ConversationType string    `bson:"conversation_type"`
 	UID              string    `bson:"uid"`
-	Pin              bool      `bson:"pin"`          // 置顶
-	Mute             bool      `bson:"mute"`         // 免打扰
+	Pin              int8      `bson:"pin"`          // 置顶
+	Mute             int8      `bson:"mute"`         // 免打扰
 	UnreadCount      uint64    `bson:"unread_count"` // 未读消息数
 	LastMsgId        string    `bson:"last_msg_id"`
 	LastMsgSeq       uint64    `bson:"last_msg_seq"`
 	FromUID          string    `bson:"from_uid"`
-	Deleted          bool      `bson:"deleted"`
+	Deleted          int8      `bson:"deleted"`
 	CreatedAt        time.Time `bson:"created_at"`
 	UpdatedAt        time.Time `bson:"updated_at"`
 }
@@ -75,11 +75,11 @@ func (c *Conversation) GetMaxSeq(ctx context.Context, conversationID string) (ui
 	return c.LastMsgSeq, nil
 }
 
-func (c *Conversation) UpdatePin(ctx context.Context, uid, conversationID string, pin bool) error {
+func (c *Conversation) UpdatePin(ctx context.Context, uid, conversationID string, pin int8) error {
 	return c.UpdateField(ctx, uid, conversationID, "pin", pin)
 }
 
-func (c *Conversation) UpdateMute(ctx context.Context, uid, conversationID string, mute bool) error {
+func (c *Conversation) UpdateMute(ctx context.Context, uid, conversationID string, mute int8) error {
 	return c.UpdateField(ctx, uid, conversationID, "mute", mute)
 }
 
@@ -87,7 +87,7 @@ func (c *Conversation) UpdateUnreadCount(ctx context.Context, uid, conversationI
 	return c.UpdateField(ctx, uid, conversationID, "unread_count", unreadCount)
 }
 
-func (c *Conversation) UpdateDeleted(ctx context.Context, uid, conversationID string, deleted bool) error {
+func (c *Conversation) UpdateDeleted(ctx context.Context, uid, conversationID string, deleted int8) error {
 	return c.UpdateField(ctx, uid, conversationID, "deleted", deleted)
 }
 
