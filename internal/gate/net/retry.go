@@ -48,6 +48,11 @@ func (r *RetryDelivery) Add(el *RetryMsg) {
 	r.mtx.Lock()
 	defer r.mtx.Unlock()
 
+	if len(r.queue) >= cap(r.queue) {
+		logger.Log().Warn().Msg("重试队列已满，消息将被丢弃")
+		return
+	}
+
 	r.queue = append(r.queue, el)
 	r.hash[r.getUk(el.ConnFD, el.MsgID)] = el
 }
@@ -86,6 +91,8 @@ func (r *RetryDelivery) Take(num int) []*RetryMsg {
 func (r *RetryDelivery) start() {
 	go func() {
 		ticker := time.NewTicker(5 * time.Second)
+		defer ticker.Stop()
+
 		for {
 			select {
 			case <-r.ctx.Done():

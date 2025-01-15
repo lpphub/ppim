@@ -10,6 +10,9 @@ import (
 	"github.com/lpphub/golib/logger"
 	"github.com/redis/go-redis/v9"
 	"github.com/spf13/cast"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 	"ppim/internal/logic/global"
 	"ppim/internal/logic/store"
 	"ppim/internal/logic/types"
@@ -26,16 +29,23 @@ import (
 type ConversationSrv struct {
 	workers     *gowork.Pool
 	segmentLock *ext.SegmentRWLock
+	batchStore  *ext.BatchProcessor[*convStoreData]
+}
 
-	batch *ConvBatchStore
+type convStoreData struct {
+	UID     string
+	LastMsg *types.MessageDTO
 }
 
 func newConversationSrv() *ConversationSrv {
-	return &ConversationSrv{
+	conv := &ConversationSrv{
 		workers:     gowork.NewPool(100),
 		segmentLock: ext.NewSegmentLock(20),
-		batch:       newConvBatchStore(10, 60*time.Second),
+		batchStore:  ext.NewBatchProcessor(context.Background(), 1, 100, 5*time.Second, batchStoreConv),
 	}
+	// 启动批量异步存储处理器，因消息顺序性只能workerCount=1 todo 优雅关闭
+	conv.batchStore.Start()
+	return conv
 }
 
 /**
@@ -86,10 +96,7 @@ func (c *ConversationSrv) indexWithLock(ctx context.Context, uid string, msg *ty
 		return
 	}
 
-	_ = c.batch.Submit(&ConvBatchData{
-		UID:     uid,
-		LastMsg: msg,
-	})
+	_ = c.batchStore.Submit(&convStoreData{UID: uid, LastMsg: msg})
 
 	// 优化：异步周期性从redis持久化至存储层，减少数据存储操作
 	//conv, err := new(store.Conversation).GetOne(ctx, uid, msg.ConversationID)
@@ -315,4 +322,64 @@ func (c *ConversationSrv) SetAttribute(ctx context.Context, attr types.ConvAttri
 	}
 	global.Redis.ZAdd(ctx, fmt.Sprintf(CacheConvList, attr.UID), redis.Z{Score: float64(time.Now().UnixMilli()), Member: attr.ConversationID})
 	return
+}
+
+func batchStoreConv(dataList []*convStoreData) error {
+	uniqMap := make(map[string]*convStoreData)
+	for _, data := range dataList {
+		key := fmt.Sprintf("%s:%s", data.UID, data.LastMsg.ConversationID)
+		if ed, exists := uniqMap[key]; exists {
+			if data.LastMsg.MsgSeq > ed.LastMsg.MsgSeq {
+				uniqMap[key] = data
+			}
+		} else {
+			uniqMap[key] = data
+		}
+	}
+
+	var bulkWrites []mongo.WriteModel
+	ctx := context.Background()
+
+	for _, data := range uniqMap {
+		unReadCount := 1
+		if data.LastMsg.FromUID == data.UID {
+			unReadCount = 0
+		}
+
+		// 构造查询条件
+		filter := bson.M{
+			"uid":             data.UID,
+			"conversation_id": data.LastMsg.ConversationID,
+		}
+		// 构造更新操作
+		update := bson.M{
+			"$setOnInsert": bson.M{ // 仅在插入时设置的字段
+				"conversation_id":   data.LastMsg.ConversationID,
+				"conversation_type": data.LastMsg.ConversationType,
+				"uid":               data.UID,
+				"created_at":        time.Now(),
+			},
+			"$set": bson.M{ // 更新字段
+				"last_msg_id":  data.LastMsg.MsgID,
+				"last_msg_seq": data.LastMsg.MsgSeq,
+				"from_uid":     data.LastMsg.FromUID,
+				"updated_at":   time.UnixMilli(data.LastMsg.CreatedAt),
+			},
+			"$inc": bson.M{ // 未读计数
+				"unread_count": unReadCount,
+			},
+		}
+		// 使用 Upsert 操作（如果存在则更新，否则插入）
+		bulkWrite := mongo.NewUpdateOneModel().SetFilter(filter).SetUpdate(update).SetUpsert(true)
+		bulkWrites = append(bulkWrites, bulkWrite)
+	}
+
+	// 执行批量操作
+	if len(bulkWrites) > 0 {
+		_, err := new(store.Conversation).Collection().BulkWrite(ctx, bulkWrites, options.BulkWrite())
+		if err != nil {
+			return fmt.Errorf("bulk write failed: %v", err)
+		}
+	}
+	return nil
 }
