@@ -60,7 +60,7 @@ const (
 	ConvFieldDeleted     = "deleted"
 	ConvFieldReadMsgSeq  = "readMsgSeq"
 
-	recentConvMaxSize = 5000
+	recentConvMaxSize = 1000
 )
 
 func (c *ConversationSrv) IndexRecent(ctx context.Context, msg *types.MessageDTO, receivers []string) error {

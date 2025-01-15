@@ -15,8 +15,8 @@ const (
 type BatchFunc[T any] func(t []T) error
 
 type BatchProcessor[T any] struct {
-	queue         chan T             // 用于接收消息的队列
-	batch         []T                // 当前批次的消息
+	queue         chan T             // 用于接收数据的队列
+	batch         []T                // 当前批次的数据
 	flushSignal   chan struct{}      // 用于触发批量处理的信号
 	mu            sync.Mutex         // 用于保护批次的互斥锁
 	wg            sync.WaitGroup     // 用于等待所有 goroutine 完成
