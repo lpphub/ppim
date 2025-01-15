@@ -41,8 +41,8 @@ services:
       - "9080:8080"
     environment:
       DYNAMIC_CONFIG_ENABLED: 'true'
-    volumes:
-      - ${DATA_DIR}/kafka-ui/config.yaml:/etc/kafkaui/dynamic_config.yaml
+#    volumes:
+#      - ${DATA_DIR}/kafka-ui/config.yaml:/etc/kafkaui/dynamic_config.yaml
     depends_on:
       - kafka
 

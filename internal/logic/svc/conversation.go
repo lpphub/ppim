@@ -10,7 +10,6 @@ import (
 	"github.com/lpphub/golib/logger"
 	"github.com/redis/go-redis/v9"
 	"github.com/spf13/cast"
-	"go.mongodb.org/mongo-driver/mongo"
 	"ppim/internal/logic/global"
 	"ppim/internal/logic/store"
 	"ppim/internal/logic/types"
@@ -27,12 +26,15 @@ import (
 type ConversationSrv struct {
 	workers     *gowork.Pool
 	segmentLock *ext.SegmentRWLock
+
+	batch *ConvBatchStore
 }
 
 func newConversationSrv() *ConversationSrv {
 	return &ConversationSrv{
 		workers:     gowork.NewPool(100),
 		segmentLock: ext.NewSegmentLock(20),
+		batch:       newConvBatchStore(10, 60*time.Second),
 	}
 }
 
@@ -55,8 +57,8 @@ const (
 	ConvFieldPin         = "pin"
 	ConvFieldMute        = "mute"
 	ConvFieldLastMsgSeq  = "lastMsgSeq"
-	ConvFieldReadMsgSeq  = "readMsgSeq"
 	ConvFieldDeleted     = "deleted"
+	ConvFieldReadMsgSeq  = "readMsgSeq"
 
 	recentConvMaxSize = 5000
 )
@@ -84,32 +86,37 @@ func (c *ConversationSrv) indexWithLock(ctx context.Context, uid string, msg *ty
 		return
 	}
 
-	// todo 优化：异步周期性从redis持久化至存储层，减少数据存储操作
-	conv, err := new(store.Conversation).GetOne(ctx, uid, msg.ConversationID)
-	if err != nil && errors.Is(err, mongo.ErrNoDocuments) {
-		conv = &store.Conversation{
-			ConversationID:   msg.ConversationID,
-			ConversationType: msg.ConversationType,
-			UID:              uid,
-			UnreadCount:      1,
-			LastMsgId:        msg.MsgID,
-			LastMsgSeq:       msg.MsgSeq,
-			CreatedAt:        time.Now(),
-			UpdatedAt:        time.Now(),
-		}
-		_ = conv.Insert(ctx)
-	} else {
-		if msg.FromUID != uid {
-			conv.UnreadCount++
-		}
-		if conv.LastMsgSeq < msg.MsgSeq {
-			conv.LastMsgId = msg.MsgID
-			conv.LastMsgSeq = msg.MsgSeq
-			conv.FromUID = msg.FromUID
-		}
-		conv.UpdatedAt = time.UnixMilli(msg.CreatedAt)
-		_ = conv.Update(ctx)
-	}
+	_ = c.batch.Submit(&ConvBatchData{
+		UID:     uid,
+		LastMsg: msg,
+	})
+
+	// 优化：异步周期性从redis持久化至存储层，减少数据存储操作
+	//conv, err := new(store.Conversation).GetOne(ctx, uid, msg.ConversationID)
+	//if err != nil && errors.Is(err, mongo.ErrNoDocuments) {
+	//	conv = &store.Conversation{
+	//		ConversationID:   msg.ConversationID,
+	//		ConversationType: msg.ConversationType,
+	//		UID:              uid,
+	//		UnreadCount:      1,
+	//		LastMsgId:        msg.MsgID,
+	//		LastMsgSeq:       msg.MsgSeq,
+	//		CreatedAt:        time.Now(),
+	//		UpdatedAt:        time.Now(),
+	//	}
+	//	_ = conv.Insert(ctx)
+	//} else {
+	//	if msg.FromUID != uid {
+	//		conv.UnreadCount++
+	//	}
+	//	if conv.LastMsgSeq < msg.MsgSeq {
+	//		conv.LastMsgId = msg.MsgID
+	//		conv.LastMsgSeq = msg.MsgSeq
+	//		conv.FromUID = msg.FromUID
+	//	}
+	//	conv.UpdatedAt = time.UnixMilli(msg.CreatedAt)
+	//	_ = conv.Update(ctx)
+	//}
 }
 
 func (c *ConversationSrv) getConvCacheKey(uid, convID string) string {
