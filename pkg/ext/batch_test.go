@@ -13,7 +13,7 @@ func TestNewBatchProcessor(t *testing.T) {
 		Content string
 	}
 
-	bp := NewBatchProcessor[Message](context.Background(), 100, 20*time.Second, func(m []Message) error {
+	bp := NewBatchProcessor[Message](context.Background(), 200, 20*time.Second, func(m []Message) error {
 		// 处理消息的逻辑
 		t.Logf("Processing %d messages\n", len(m))
 		return nil
@@ -22,12 +22,12 @@ func TestNewBatchProcessor(t *testing.T) {
 
 	// 模拟消息生产
 	go func() {
-		for i := 1; i <= 250; i++ {
+		for i := 1; i <= 550; i++ {
 			msg := Message{
 				ID:      i,
 				Content: fmt.Sprintf("Message %d", i),
 			}
-			if err := bp.Add(msg); err != nil {
+			if err := bp.Submit(msg); err != nil {
 				t.Logf("Failed to add message: %v\n", err)
 				break
 			}

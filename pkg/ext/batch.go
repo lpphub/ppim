@@ -3,7 +3,6 @@ package ext
 import (
 	"context"
 	"fmt"
-	"log"
 	"sync"
 	"time"
 )
@@ -54,7 +53,6 @@ func (b *BatchProcessor[T]) Stop() {
 	b.cancel() // 取消上下文
 	close(b.queue)
 	b.wg.Wait()
-	log.Println("Batch processor stopped.")
 }
 
 func (b *BatchProcessor[T]) run() {
@@ -70,27 +68,12 @@ func (b *BatchProcessor[T]) run() {
 				b.flush()
 			}
 			b.mu.Unlock()
-
 		case <-ticker.C:
-			b.mu.Lock()
-			if len(b.batch) > 0 {
-				b.flush()
-			}
-			b.mu.Unlock()
-
+			b.flushWithLock()
 		case <-b.flushSignal:
-			b.mu.Lock()
-			if len(b.batch) > 0 {
-				b.flush()
-			}
-			b.mu.Unlock()
-
+			b.flushWithLock()
 		case <-b.ctx.Done():
-			b.mu.Lock()
-			if len(b.batch) > 0 {
-				b.flush()
-			}
-			b.mu.Unlock()
+			b.flushWithLock()
 			return
 		}
 	}
@@ -98,14 +81,23 @@ func (b *BatchProcessor[T]) run() {
 
 func (b *BatchProcessor[T]) flush() {
 	if err := b.fn(b.batch); err != nil {
-		log.Println("Batch processor flush error:", err)
+		fmt.Printf("Batch processor flush error:%v \n", err)
 		// todo 重试
 		return
 	}
 	b.batch = b.batch[:0] // 清空批次
 }
 
-func (b *BatchProcessor[T]) Add(t T) error {
+func (b *BatchProcessor[T]) flushWithLock() {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+
+	if len(b.batch) > 0 {
+		b.flush()
+	}
+}
+
+func (b *BatchProcessor[T]) Submit(t T) error {
 	select {
 	case b.queue <- t:
 		return nil
