@@ -13,9 +13,8 @@ func RemoveDup[T comparable](s []T) []T {
 	return result
 }
 
-func SplitSlice[T any](slice []T, chunkSize int) [][]T {
-	// 如果分块大小小于等于 0，直接返回原切片
-	if chunkSize <= 0 {
+func Partition[T any](slice []T, chunkSize int) [][]T {
+	if chunkSize <= 0 || chunkSize >= len(slice) {
 		return [][]T{slice}
 	}
 

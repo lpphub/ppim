@@ -91,7 +91,7 @@ func (s *MessageSrv) HandleMsg(ctx context.Context, msg *types.MessageDTO) error
 		onlineSlice  []string //在线用户路由
 		offlineSlice []string //离线用户UID
 	)
-	receiverChunks := util.SplitSlice(receivers, 300)
+	receiverChunks := util.Partition(receivers, 300)
 	for _, chunks := range receiverChunks {
 		cmds, berr := s.route.BatchGetOnline(ctx, chunks)
 		if berr != nil {

@@ -90,8 +90,8 @@ func (c *ConversationSrv) getConvCacheKey(uid, convID string) string {
 	return fmt.Sprintf(CacheConvInfo, uid, convID)
 }
 
-func (c *ConversationSrv) cacheBatchStore(ctx context.Context, uids []string, msg *types.MessageDTO) error {
-	for _, partition := range util.SplitSlice(uids, 500) {
+func (c *ConversationSrv) cacheBatchStore(ctx context.Context, uidSlice []string, msg *types.MessageDTO) error {
+	for _, partition := range util.Partition(uidSlice, 500) {
 		pipe := c.cacheStore.Pipeline()
 		for _, uid := range partition {
 			cacheInfoKey := c.getConvCacheKey(uid, msg.ConversationID)
