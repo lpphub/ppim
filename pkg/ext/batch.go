@@ -7,10 +7,8 @@ import (
 	"time"
 )
 
-// BatchFunc 定义批量处理函数类型
 type BatchFunc[T any] func(t []T) error
 
-// BatchProcessor 定义批量处理器
 type BatchProcessor[T any] struct {
 	queue         chan T             // 用于接收数据的队列
 	flushSignal   chan struct{}      // 用于触发批量处理的信号
@@ -38,7 +36,6 @@ func NewBatchProcessor[T any](ctx context.Context, workerCount, maxBatchSize int
 	}
 }
 
-// Start 启动批量处理器
 func (p *BatchProcessor[T]) Start() {
 	for i := 0; i < p.workerCount; i++ {
 		p.wg.Add(1)

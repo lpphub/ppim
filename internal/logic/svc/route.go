@@ -16,7 +16,8 @@ import (
 )
 
 type RouteSrv struct {
-	mq *kafkago.Producer
+	mq         *kafkago.Producer
+	cacheStore *redis.Client
 }
 
 const (
@@ -26,12 +27,13 @@ const (
 
 func newRouterSrv(mq *kafkago.Producer) *RouteSrv {
 	return &RouteSrv{
-		mq: mq,
+		mq:         mq,
+		cacheStore: global.Redis,
 	}
 }
 
 func (s *RouteSrv) Online(ctx context.Context, ol *types.RouteDTO) error {
-	err := global.Redis.HSet(ctx, s.genRouteKey(ol.Uid), ol.Did, ol.Topic).Err()
+	err := s.cacheStore.HSet(ctx, s.genRouteKey(ol.Uid), ol.Did, ol.Topic).Err()
 	if err != nil {
 		logger.Err(ctx, err, "route online error")
 	}
@@ -39,7 +41,7 @@ func (s *RouteSrv) Online(ctx context.Context, ol *types.RouteDTO) error {
 }
 
 func (s *RouteSrv) Offline(ctx context.Context, ol *types.RouteDTO) error {
-	err := global.Redis.HDel(ctx, s.genRouteKey(ol.Uid), ol.Did).Err()
+	err := s.cacheStore.HDel(ctx, s.genRouteKey(ol.Uid), ol.Did).Err()
 	if err != nil {
 		logger.Err(ctx, err, "route offline error")
 	}
@@ -47,7 +49,7 @@ func (s *RouteSrv) Offline(ctx context.Context, ol *types.RouteDTO) error {
 }
 
 func (s *RouteSrv) BatchGetOnline(ctx context.Context, uids []string) ([]*redis.MapStringStringCmd, error) {
-	pipe := global.Redis.Pipeline()
+	pipe := s.cacheStore.Pipeline()
 	cmd := make([]*redis.MapStringStringCmd, len(uids))
 	for i, uid := range uids {
 		cmd[i] = pipe.HGetAll(ctx, s.genRouteKey(uid))
