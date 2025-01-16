@@ -33,6 +33,7 @@ type ConversationSrv struct {
 type convStoreData struct {
 	UID     string
 	LastMsg *types.MessageDTO
+	Count   int
 }
 
 func newConversationSrv() *ConversationSrv {
@@ -280,9 +281,15 @@ func (c *ConversationSrv) SetAttribute(ctx context.Context, attr types.ConvAttri
 func batchStoreConv(dataList []*convStoreData) error {
 	uniqMap := make(map[string]*convStoreData)
 	for _, data := range dataList {
+		data.Count = 1
+		if data.LastMsg.FromUID == data.UID {
+			data.Count = 0
+		}
+		// 同一会话的连续数据，只保留最新的一条
 		key := fmt.Sprintf("%s:%s", data.UID, data.LastMsg.ConversationID)
 		if ed, exists := uniqMap[key]; exists {
 			if data.LastMsg.MsgSeq > ed.LastMsg.MsgSeq {
+				data.Count += ed.Count
 				uniqMap[key] = data
 			}
 		} else {
@@ -291,14 +298,7 @@ func batchStoreConv(dataList []*convStoreData) error {
 	}
 
 	var bulkWrites []mongo.WriteModel
-	ctx := context.Background()
-
 	for _, data := range uniqMap {
-		unReadCount := 1
-		if data.LastMsg.FromUID == data.UID {
-			unReadCount = 0
-		}
-
 		// 构造查询条件
 		filter := bson.M{
 			"uid":             data.UID,
@@ -319,7 +319,7 @@ func batchStoreConv(dataList []*convStoreData) error {
 				"updated_at":   time.UnixMilli(data.LastMsg.CreatedAt),
 			},
 			"$inc": bson.M{ // 未读计数
-				"unread_count": unReadCount,
+				"unread_count": data.Count,
 			},
 		}
 		// 使用 Upsert 操作（如果存在则更新，否则插入）
@@ -329,7 +329,7 @@ func batchStoreConv(dataList []*convStoreData) error {
 
 	// 执行批量操作
 	if len(bulkWrites) > 0 {
-		_, err := new(store.Conversation).Collection().BulkWrite(ctx, bulkWrites, options.BulkWrite())
+		_, err := new(store.Conversation).Collection().BulkWrite(context.Background(), bulkWrites, options.BulkWrite())
 		if err != nil {
 			return fmt.Errorf("bulk write failed: %v", err)
 		}
