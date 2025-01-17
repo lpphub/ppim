@@ -16,7 +16,6 @@ type BatchProcessor[T any] struct {
 	workerCount   int                // 协程数量
 	flushInterval time.Duration      // 刷新间隔
 	process       BatchFunc[T]       // 批量处理函数
-	mu            sync.Mutex         // 用于保护批次的互斥锁
 	wg            sync.WaitGroup     // 用于等待所有 goroutine 完成
 	ctx           context.Context    // 上下文
 	cancel        context.CancelFunc // 取消函数
