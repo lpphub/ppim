@@ -39,7 +39,7 @@ type convStoreData struct {
 func newConversationSrv() *ConversationSrv {
 	conv := &ConversationSrv{
 		cacheStore: global.Redis,
-		batchStore: ext.NewBatchProcessor(context.Background(), 1, 100, 3*time.Second, batchStoreConv),
+		batchStore: ext.NewBatchProcessor(100, 1, 3*time.Second, batchStoreConv),
 	}
 	// 启动批量异步存储处理器，因消息顺序性只能workerCount=1 todo 优雅关闭
 	conv.batchStore.Start()

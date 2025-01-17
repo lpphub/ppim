@@ -10,29 +10,29 @@ import (
 
 type BatchFunc[T any] func(t []T) error
 
-// BatchProcessor
-// 同一批次的数据顺序处理时，workerCount 应设置为 1；
-// 同一批次允许并发处理时，要确保 fn 是线程安全的。
 type BatchProcessor[T any] struct {
 	queue         chan T             // 用于接收数据的队列
 	batchSize     int                // 批次大小
-	flushInterval time.Duration      // 刷新间隔
 	workerCount   int                // 协程数量
-	fn            BatchFunc[T]       // 批量处理函数
+	flushInterval time.Duration      // 刷新间隔
+	process       BatchFunc[T]       // 批量处理函数
 	mu            sync.Mutex         // 用于保护批次的互斥锁
 	wg            sync.WaitGroup     // 用于等待所有 goroutine 完成
 	ctx           context.Context    // 上下文
 	cancel        context.CancelFunc // 取消函数
 }
 
-func NewBatchProcessor[T any](ctx context.Context, workerCount, batchSize int, flushInterval time.Duration, batchFn BatchFunc[T]) *BatchProcessor[T] {
-	ctx, cancel := context.WithCancel(ctx)
+// NewBatchProcessor
+// 同一批次顺序处理时，workerCount 应为 1；
+// 同一批次并发处理时，要确保 batchFn 是线程安全的。
+func NewBatchProcessor[T any](batchSize, workerCount int, interval time.Duration, batchFn BatchFunc[T]) *BatchProcessor[T] {
+	ctx, cancel := context.WithCancel(context.Background())
 	return &BatchProcessor[T]{
 		queue:         make(chan T, batchSize),
 		batchSize:     batchSize,
-		flushInterval: flushInterval,
 		workerCount:   workerCount,
-		fn:            batchFn,
+		flushInterval: interval,
+		process:       batchFn,
 		ctx:           ctx,
 		cancel:        cancel,
 	}
@@ -88,7 +88,7 @@ func (p *BatchProcessor[T]) run(_ int) {
 }
 
 func (p *BatchProcessor[T]) flush(batch []T) {
-	if err := p.fn(batch); err != nil {
+	if err := p.process(batch); err != nil {
 		fmt.Printf("Batch processor flush error: %v\n", err)
 		// 可以在这里添加重试逻辑
 	}

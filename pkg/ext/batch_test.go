@@ -1,7 +1,6 @@
 package ext
 
 import (
-	"context"
 	"fmt"
 	"testing"
 	"time"
@@ -13,7 +12,7 @@ func TestNewBatchProcessor(t *testing.T) {
 		Content string
 	}
 
-	bp := NewBatchProcessor[Message](context.Background(), 2, 10, 3*time.Second, func(ms []Message) error {
+	bp := NewBatchProcessor[Message](10, 2, 3*time.Second, func(ms []Message) error {
 		// 处理消息的逻辑
 		//t.Logf("Processing %d messages\n", len(m))
 		for _, m := range ms {
