@@ -14,7 +14,7 @@ func TestConversationSrv_IndexConversation(t *testing.T) {
 
 	srv := ConversationSrv{}
 
-	d, err := srv.ListByUID(context.TODO(), "456", 1736524291451, 1)
+	d, err := srv.IncrQuery(context.TODO(), "456", 1736524291451, 1)
 	if err != nil {
 		t.Error(err)
 		return

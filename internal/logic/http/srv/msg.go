@@ -2,8 +2,7 @@ package srv
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/jinzhu/copier"
-	"ppim/internal/logic/store"
+	"ppim/internal/logic/svc"
 	"ppim/internal/logic/types"
 )
 
@@ -14,19 +13,13 @@ func NewMsgSrv() *MsgSrv {
 }
 
 func (s *MsgSrv) ListConvMsg(ctx *gin.Context, req types.MessageQueryVO) ([]types.MessageDTO, error) {
-	list, err := new(store.Message).ListByConvSeq(ctx, req.ConversationID, req.StartSeq, req.Limit)
-	if err != nil {
-		return nil, err
-	}
+	return svc.Hints().Msg.PullUpOrDown(ctx, req.ConversationID, req.StartSeq, req.Limit)
+}
 
-	voList := make([]types.MessageDTO, 0, len(list))
-	for _, v := range list {
-		var vo types.MessageDTO
-		_ = copier.Copy(&vo, v)
-		vo.SendTime = v.SendTime.UnixMilli()
-		vo.CreatedAt = v.CreatedAt.UnixMilli()
-		vo.UpdatedAt = v.UpdatedAt.UnixMilli()
-		voList = append(voList, vo)
-	}
-	return voList, nil
+func (s *MsgSrv) Revoke(ctx *gin.Context, req types.MsgOpVO) error {
+	return svc.Hints().Msg.Revoke(ctx, req.MsgID, req.ConversationID)
+}
+
+func (s *MsgSrv) Delete(ctx *gin.Context, req types.MsgOpVO) error {
+	return svc.Hints().Msg.Delete(ctx, req.MsgID, req.ConversationID)
 }

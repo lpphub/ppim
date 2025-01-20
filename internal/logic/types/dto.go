@@ -11,6 +11,8 @@ type MessageDTO struct {
 	ToID             string `json:"toID"`             // 接收者UID
 	FromUID          string `json:"fromUID"`          // 发送者UID
 	FromDID          string `json:"fromDID"`          // 发送者DID
+	Revoked          int8   `json:"revoked"`          // 撤回
+	Deleted          int8   `json:"deleted"`          // 删除
 	SendTime         int64  `json:"sendTime"`         // 发送时间
 	CreatedAt        int64  `json:"createdAt"`        // 创建时间
 	UpdatedAt        int64  `json:"updatedAt"`        // 更新时间

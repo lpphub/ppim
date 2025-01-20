@@ -21,7 +21,7 @@ type ConvListVO struct {
 
 type ConvOpVO struct {
 	UID            string `json:"uid" form:"uid"`
-	ConversationID string `json:"conversationID" form:"conversationID"`
+	ConversationID string `json:"conversationID" form:"conversationID" binding:"required"`
 	Pin            int8   `json:"pin" form:"pin"`
 	Mute           int8   `json:"mute" form:"mute"`
 	UnreadCount    uint64 `json:"unreadCount" form:"unreadCount"`
@@ -29,7 +29,12 @@ type ConvOpVO struct {
 }
 
 type MessageQueryVO struct {
-	ConversationID string `json:"conversationID" form:"conversationID"`
+	ConversationID string `json:"conversationID" form:"conversationID" binding:"required"`
 	StartSeq       int64  `json:"startSeq" form:"startSeq"`
 	Limit          int64  `json:"limit" form:"limit"`
+}
+
+type MsgOpVO struct {
+	ConversationID string `json:"conversationID" form:"conversationID" binding:"required"`
+	MsgID          string `json:"msgID" form:"msgID" binding:"required"`
 }

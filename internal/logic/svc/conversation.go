@@ -26,7 +26,7 @@ import (
  * 读扩散：一个会话对应一个timeline，消息到达后更新此会话最新timeline
  */
 type ConversationSrv struct {
-	cacheStore *redis.Client
+	cache      *redis.Client
 	batchStore *ext.BatchProcessor[*convStoreData]
 }
 
@@ -38,7 +38,7 @@ type convStoreData struct {
 
 func newConversationSrv() *ConversationSrv {
 	conv := &ConversationSrv{
-		cacheStore: global.Redis,
+		cache:      global.Redis,
 		batchStore: ext.NewBatchProcessor(100, 1, 3*time.Second, batchStoreConv),
 	}
 	// 启动批量异步存储处理器，因消息顺序性只能workerCount=1 todo 优雅关闭
@@ -69,30 +69,40 @@ const (
 	ConvFieldReadMsgSeq  = "readMsgSeq"
 )
 
-func (c *ConversationSrv) IndexRecent(ctx context.Context, msg *types.MessageDTO, receivers []string) error {
-	msgJson, _ := jsoniter.MarshalToString(msg)
-	c.cacheStore.Set(ctx, fmt.Sprintf(CacheConvLastMsg, msg.ConversationID), msgJson, 30*24*time.Hour)
+func (c *ConversationSrv) IndexUpdate(ctx context.Context, msg *types.MessageDTO, receivers []string) error {
+	// 缓存会话最新消息
+	c.cacheStoreLastMsg(ctx, msg)
 
-	// 批量存储会话信息
+	// 批量缓存用户会话
 	err := c.cacheBatchStore(ctx, receivers, msg)
 	if err != nil {
 		logger.Err(ctx, err, "conv batch store cache")
 		return err
 	}
-
+	// 异步存储用户会话数据
 	for _, uid := range receivers {
 		_ = c.batchStore.Submit(&convStoreData{UID: uid, LastMsg: msg})
 	}
 	return nil
 }
+func (c *ConversationSrv) cacheStoreLastMsg(ctx context.Context, msg *types.MessageDTO) {
+	msgJson, _ := jsoniter.MarshalToString(msg)
+	c.cache.Set(ctx, fmt.Sprintf(CacheConvLastMsg, msg.ConversationID), msgJson, 30*24*time.Hour)
+}
 
-func (c *ConversationSrv) getConvCacheKey(uid, convID string) string {
-	return fmt.Sprintf(CacheConvInfo, uid, convID)
+func (c *ConversationSrv) cacheQueryLastMsg(ctx context.Context, convID string) (*types.MessageDTO, error) {
+	msg, err := c.cache.Get(ctx, fmt.Sprintf(CacheConvLastMsg, convID)).Result()
+	if err != nil {
+		return nil, err
+	}
+	var mt types.MessageDTO
+	_ = jsoniter.UnmarshalFromString(msg, &mt)
+	return &mt, nil
 }
 
 func (c *ConversationSrv) cacheBatchStore(ctx context.Context, uidSlice []string, msg *types.MessageDTO) error {
 	for _, partition := range util.Partition(uidSlice, 500) {
-		pipe := c.cacheStore.Pipeline()
+		pipe := c.cache.Pipeline()
 		for _, uid := range partition {
 			cacheInfoKey := c.getConvCacheKey(uid, msg.ConversationID)
 			// 未读消息数
@@ -128,7 +138,7 @@ func (c *ConversationSrv) cacheQueryRange(ctx context.Context, uid string, start
 	if startScore > 0 {
 		opt.Min = cast.ToString(startScore)
 	}
-	convIds, err := c.cacheStore.ZRangeByScore(ctx, fmt.Sprintf(CacheConvList, uid), opt).Result()
+	convIds, err := c.cache.ZRangeByScore(ctx, fmt.Sprintf(CacheConvList, uid), opt).Result()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get conversation: %v", err)
 	}
@@ -140,7 +150,7 @@ func (c *ConversationSrv) cacheQueryRange(ctx context.Context, uid string, start
 }
 
 func (c *ConversationSrv) cacheQueryDetail(ctx context.Context, uid string, convIds []string) ([]*types.ConvDetailDTO, error) {
-	pipe := c.cacheStore.Pipeline()
+	pipe := c.cache.Pipeline()
 	type cmdPair struct {
 		msgCmd  *redis.StringCmd
 		infoCmd *redis.SliceCmd
@@ -197,7 +207,11 @@ func (c *ConversationSrv) cacheQueryDetail(ctx context.Context, uid string, conv
 	return list, nil
 }
 
-func (c *ConversationSrv) ListByUID(ctx context.Context, uid string, startTime, limit int64) ([]*types.ConvDetailDTO, error) {
+func (c *ConversationSrv) getConvCacheKey(uid, convID string) string {
+	return fmt.Sprintf(CacheConvInfo, uid, convID)
+}
+
+func (c *ConversationSrv) IncrQuery(ctx context.Context, uid string, startTime, limit int64) ([]*types.ConvDetailDTO, error) {
 	if list, err := c.cacheQueryRange(ctx, uid, startTime, limit); err == nil {
 		return list, nil
 	} else {
@@ -257,16 +271,16 @@ func (c *ConversationSrv) SetAttribute(ctx context.Context, attr types.ConvAttri
 	cacheKey := c.getConvCacheKey(attr.UID, attr.ConversationID)
 	switch attr.Attribute {
 	case ConvFieldPin:
-		c.cacheStore.HSet(ctx, cacheKey, ConvFieldPin, attr.Pin)
+		c.cache.HSet(ctx, cacheKey, ConvFieldPin, attr.Pin)
 		err = new(store.Conversation).UpdatePin(ctx, attr.UID, attr.ConversationID, attr.Pin)
 	case ConvFieldMute:
-		c.cacheStore.HSet(ctx, cacheKey, ConvFieldMute, attr.Mute)
+		c.cache.HSet(ctx, cacheKey, ConvFieldMute, attr.Mute)
 		err = new(store.Conversation).UpdateMute(ctx, attr.UID, attr.ConversationID, attr.Mute)
 	case ConvFieldUnreadCount:
-		c.cacheStore.HSet(ctx, cacheKey, ConvFieldUnreadCount, attr.UnreadCount)
+		c.cache.HSet(ctx, cacheKey, ConvFieldUnreadCount, attr.UnreadCount)
 		err = new(store.Conversation).UpdateUnreadCount(ctx, attr.UID, attr.ConversationID, attr.UnreadCount)
 	case ConvFieldDeleted:
-		c.cacheStore.HSet(ctx, cacheKey, ConvFieldDeleted, attr.Deleted)
+		c.cache.HSet(ctx, cacheKey, ConvFieldDeleted, attr.Deleted)
 		err = new(store.Conversation).UpdateDeleted(ctx, attr.UID, attr.ConversationID, attr.Deleted)
 	default:
 		return errors.New("invalid op type")
@@ -274,7 +288,7 @@ func (c *ConversationSrv) SetAttribute(ctx context.Context, attr types.ConvAttri
 	if err != nil {
 		return err
 	}
-	c.cacheStore.ZAdd(ctx, fmt.Sprintf(CacheConvList, attr.UID), redis.Z{Score: float64(time.Now().UnixMilli()), Member: attr.ConversationID})
+	c.cache.ZAdd(ctx, fmt.Sprintf(CacheConvList, attr.UID), redis.Z{Score: float64(time.Now().UnixMilli()), Member: attr.ConversationID})
 	return
 }
 

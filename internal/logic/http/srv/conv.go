@@ -18,7 +18,7 @@ func (srv *ConvSrv) List(ctx *gin.Context, query types.ConvQueryVO) (*types.Conv
 		limit     = query.Limit + 1 // 多查一条用于判断是否有下一页
 		startTime = cast.ToInt64(query.NextKey)
 	)
-	list, err := svc.Hints().Conv.ListByUID(ctx, query.UID, startTime, int64(limit))
+	list, err := svc.Hints().Conv.IncrQuery(ctx, query.UID, startTime, int64(limit))
 	if err != nil {
 		return nil, err
 	}

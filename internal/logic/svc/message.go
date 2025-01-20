@@ -3,8 +3,10 @@ package svc
 import (
 	"context"
 	"fmt"
+	"github.com/jinzhu/copier"
 	"github.com/lpphub/golib/logger"
 	"github.com/pkg/errors"
+	"github.com/redis/go-redis/v9"
 	"ppim/internal/chatlib"
 	"ppim/internal/logic/store"
 	"ppim/internal/logic/svc/seq"
@@ -72,7 +74,7 @@ func (s *MessageSrv) HandleMsg(ctx context.Context, msg *types.MessageDTO) error
 	if msg.ConversationType == chatlib.ConvSingle && msg.ToID != msg.FromUID {
 		receivers = append(receivers, msg.ToID)
 	} else if msg.ConversationType == chatlib.ConvGroup {
-		members, serr := new(store.Group).ListMembers(ctx, msg.ToID)
+		members, serr := new(store.Group).ListMembers(ctx, msg.ToID) // todo 加缓存
 		if serr != nil {
 			logger.Err(ctx, serr, "")
 		} else {
@@ -81,7 +83,7 @@ func (s *MessageSrv) HandleMsg(ctx context.Context, msg *types.MessageDTO) error
 	}
 
 	// 3.索引会话最新消息
-	if err = s.conv.IndexRecent(ctx, msg, receivers); err != nil {
+	if err = s.conv.IndexUpdate(ctx, msg, receivers); err != nil {
 		logger.Err(ctx, err, "conv index recent")
 		return ErrConvIndex
 	}
@@ -126,5 +128,65 @@ func (s *MessageSrv) HandleMsg(ctx context.Context, msg *types.MessageDTO) error
 		// todo 消息离线通知
 		logger.Warnf(ctx, "offline push: %v", offlineSlice)
 	}
+	return nil
+}
+
+func (s *MessageSrv) PullUpOrDown(ctx context.Context, conversationID string, startSeq, limit int64) ([]types.MessageDTO, error) {
+	list, err := new(store.Message).PullUpOrDown(ctx, conversationID, startSeq, limit)
+	if err != nil {
+		return nil, err
+	}
+
+	voList := make([]types.MessageDTO, 0, len(list))
+	for _, v := range list {
+		var vo types.MessageDTO
+		_ = copier.Copy(&vo, v)
+		vo.SendTime = v.SendTime.UnixMilli()
+		vo.CreatedAt = v.CreatedAt.UnixMilli()
+		vo.UpdatedAt = v.UpdatedAt.UnixMilli()
+		voList = append(voList, vo)
+	}
+	return voList, nil
+}
+
+func (s *MessageSrv) Revoke(ctx context.Context, msgID, conversationID string) error {
+	if err := new(store.Message).Revoke(ctx, msgID); err != nil {
+		return err
+	}
+	// 如果撤回的消息是会话最新消息，则更新会话最新消息
+	msg, err := s.conv.cacheQueryLastMsg(ctx, conversationID)
+	if err != nil {
+		if errors.Is(err, redis.Nil) {
+			return nil
+		}
+		return err
+	}
+	if msg.MsgID == msgID {
+		msg.Revoked = 1
+		msg.UpdatedAt = time.Now().UnixMilli()
+		s.conv.cacheStoreLastMsg(ctx, msg)
+	}
+	// todo 同步事件，会话未读数、最新时间是否要变？
+	return nil
+}
+
+func (s *MessageSrv) Delete(ctx context.Context, msgID, conversationID string) error {
+	if err := new(store.Message).Delete(ctx, msgID); err != nil {
+		return err
+	}
+	// 如果删除的消息是会话最新消息，则更新会话最新消息
+	msg, err := s.conv.cacheQueryLastMsg(ctx, conversationID)
+	if err != nil {
+		if errors.Is(err, redis.Nil) {
+			return nil
+		}
+		return err
+	}
+	if msg.MsgID == msgID {
+		msg.Deleted = 1
+		msg.UpdatedAt = time.Now().UnixMilli()
+		s.conv.cacheStoreLastMsg(ctx, msg)
+	}
+	// todo 同步事件，会话未读数、最新时间是否要变？
 	return nil
 }

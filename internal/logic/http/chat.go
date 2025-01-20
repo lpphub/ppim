@@ -100,13 +100,31 @@ func (h ChatHandler) MsgList(ctx *gin.Context) {
 }
 
 func (h ChatHandler) MsgDel(ctx *gin.Context) {
-	// todo
-	web.JsonWithSuccess(ctx, "ok")
+	var req types.MsgOpVO
+	if err := ctx.ShouldBind(&req); err != nil {
+		web.JsonWithError(ctx, errs.ErrInvalidParam)
+		return
+	}
+	if err := h.msg.Delete(ctx, req); err != nil {
+		logx.Err(ctx, err, "")
+		web.JsonWithError(ctx, errs.ErrServerInternal)
+	} else {
+		web.JsonWithSuccess(ctx, "ok")
+	}
 }
 
 func (h ChatHandler) MsgRevoke(ctx *gin.Context) {
-	// todo
-	web.JsonWithSuccess(ctx, "ok")
+	var req types.MsgOpVO
+	if err := ctx.ShouldBind(&req); err != nil {
+		web.JsonWithError(ctx, errs.ErrInvalidParam)
+		return
+	}
+	if err := h.msg.Revoke(ctx, req); err != nil {
+		logx.Err(ctx, err, "")
+		web.JsonWithError(ctx, errs.ErrServerInternal)
+	} else {
+		web.JsonWithSuccess(ctx, "ok")
+	}
 }
 
 func (h ChatHandler) MsgRead(ctx *gin.Context) {
