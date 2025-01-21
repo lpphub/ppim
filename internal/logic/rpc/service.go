@@ -36,7 +36,7 @@ func (s *logicService) SendMsg(ctx context.Context, req *chatlib.MessageReq, res
 	var msg types.MessageDTO
 	_ = copier.Copy(&msg, req)
 
-	err := svc.Hints().Msg.HandleMsg(ctx, &msg)
+	err := svc.Hints().Msg.HandleMessage(ctx, &msg)
 	if err != nil {
 		return err
 	}

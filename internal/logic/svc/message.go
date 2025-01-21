@@ -2,7 +2,6 @@ package svc
 
 import (
 	"context"
-	"fmt"
 	"github.com/jinzhu/copier"
 	"github.com/lpphub/golib/logger"
 	"github.com/pkg/errors"
@@ -11,7 +10,6 @@ import (
 	"ppim/internal/logic/store"
 	"ppim/internal/logic/svc/seq"
 	"ppim/internal/logic/types"
-	"ppim/pkg/util"
 	"time"
 )
 
@@ -35,7 +33,7 @@ func newMessageSrv(conv *ConversationSrv, route *RouteSrv, seq seq.Sequence) *Me
 	}
 }
 
-func (s *MessageSrv) HandleMsg(ctx context.Context, msg *types.MessageDTO) error {
+func (s *MessageSrv) HandleMessage(ctx context.Context, msg *types.MessageDTO) error {
 	ctx = logger.WithCtx(ctx)
 
 	// 同一会话的消息序列号是递增的
@@ -69,7 +67,7 @@ func (s *MessageSrv) HandleMsg(ctx context.Context, msg *types.MessageDTO) error
 		return ErrMsgStore
 	}
 
-	// 2.获取接收者（包含自身）
+	// 2.获取接收者（包含自身多端）
 	receivers := []string{msg.FromUID}
 	if msg.ConversationType == chatlib.ConvSingle && msg.ToID != msg.FromUID {
 		receivers = append(receivers, msg.ToID)
@@ -88,45 +86,10 @@ func (s *MessageSrv) HandleMsg(ctx context.Context, msg *types.MessageDTO) error
 		return ErrConvIndex
 	}
 
-	// 4.在线投递
-	var (
-		onlineSlice  []string //在线用户路由
-		offlineSlice []string //离线用户UID
-	)
-	receiverChunks := util.Partition(receivers, 300)
-	for _, chunks := range receiverChunks {
-		cmds, berr := s.route.BatchGetOnline(ctx, chunks)
-		if berr != nil {
-			logger.Err(ctx, berr, fmt.Sprintf("batch get online error: %v", chunks))
-			continue
-		}
-
-		for i, uid := range chunks {
-			online, _ := cmds[i].Result()
-			if len(online) > 0 {
-				for did, topic := range online {
-					if did == msg.FromDID && uid == msg.FromUID { // 排除发送者同一设备，而不同设备时则接收消息
-						continue
-					}
-					onlineSlice = append(onlineSlice, fmt.Sprintf("%s#%s", uid, topic))
-				}
-			} else {
-				offlineSlice = append(offlineSlice, uid)
-			}
-		}
-	}
-
-	if len(onlineSlice) > 0 {
-		err = s.route.RouteChat(ctx, util.RemoveDup(onlineSlice), msg)
-		if err != nil {
-			logger.Err(ctx, err, "online delivery")
-			return ErrMsgRoute
-		}
-	}
-
-	if len(offlineSlice) > 0 {
-		// todo 消息离线通知
-		logger.Warnf(ctx, "offline push: %v", offlineSlice)
+	// 4.消息投递
+	if err = s.route.RouteChat(ctx, msg, receivers); err != nil {
+		logger.Err(ctx, err, "route chat delivery")
+		return ErrMsgRoute
 	}
 	return nil
 }
