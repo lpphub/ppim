@@ -18,9 +18,7 @@ func Partition[T any](slice []T, chunkSize int) [][]T {
 		return [][]T{slice}
 	}
 
-	chunkCount := (len(slice) + chunkSize - 1) / chunkSize
-	chunks := make([][]T, 0, chunkCount)
-
+	chunks := make([][]T, 0, (len(slice)+chunkSize-1)/chunkSize)
 	for i := 0; i < len(slice); i += chunkSize {
 		end := i + chunkSize
 		if end > len(slice) {

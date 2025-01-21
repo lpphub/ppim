@@ -57,7 +57,7 @@ func (p *BatchProcessor[T]) run(_ int) {
 	ticker := time.NewTicker(p.flushInterval)
 	defer ticker.Stop()
 
-	var batch []T
+	batch := make([]T, 0, p.batchSize) // 预分配容量
 	for {
 		select {
 		case t, ok := <-p.queue:
@@ -70,12 +70,12 @@ func (p *BatchProcessor[T]) run(_ int) {
 			batch = append(batch, t)
 			if len(batch) >= p.batchSize {
 				p.flush(batch)
-				batch = nil
+				batch = batch[:0]
 			}
 		case <-ticker.C:
 			if len(batch) > 0 {
 				p.flush(batch)
-				batch = nil
+				batch = batch[:0]
 			}
 		case <-p.ctx.Done():
 			if len(batch) > 0 {
@@ -94,11 +94,14 @@ func (p *BatchProcessor[T]) flush(batch []T) {
 }
 
 func (p *BatchProcessor[T]) Submit(t T) error {
+	ctx, cancel := context.WithTimeout(p.ctx, 5*time.Second) // 设置超时
+	defer cancel()
+
 	select {
 	case p.queue <- t:
 		return nil
-	case <-p.ctx.Done():
-		return fmt.Errorf("batch processor is stopped")
+	case <-ctx.Done():
+		return fmt.Errorf("submit timeout or batch processor is stopped")
 	}
 }
 

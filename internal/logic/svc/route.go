@@ -59,10 +59,8 @@ func (s *RouteSrv) batchGetOnline(ctx context.Context, uids []string) ([]*redis.
 }
 
 func (s *RouteSrv) RouteChat(ctx context.Context, msg *types.MessageDTO, receivers []string) error {
-	var (
-		onlineSet   map[string]struct{} // 在线用户设备路由
-		offlineList []string            // 离线用户UID
-	)
+	onlineSet := make(map[string]struct{}) // 在线用户设备路由
+	offlineList := make([]string, 0)       // 离线用户UID
 	for _, chunk := range util.Partition(receivers, 300) {
 		cmds, err := s.batchGetOnline(ctx, chunk)
 		if err != nil {

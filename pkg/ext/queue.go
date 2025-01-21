@@ -1,12 +1,12 @@
-package util
+package ext
 
 import (
 	"errors"
 )
 
 type node[T any] struct {
-	Val  T
-	Next *node[T]
+	val  T
+	next *node[T]
 }
 type LinkedQueue[T any] struct {
 	head *node[T]
@@ -16,13 +16,13 @@ type LinkedQueue[T any] struct {
 
 // Enqueue 入队
 func (q *LinkedQueue[T]) Enqueue(value T) {
-	newNode := &node[T]{Val: value}
-	if q.tail != nil {
-		q.tail.Next = newNode
-	}
-	q.tail = newNode
+	newNode := &node[T]{val: value}
 	if q.head == nil {
-		q.head = q.tail
+		q.head = newNode
+		q.tail = newNode
+	} else {
+		q.tail.next = newNode
+		q.tail = newNode
 	}
 	q.size++
 }
@@ -33,8 +33,8 @@ func (q *LinkedQueue[T]) Dequeue() (T, error) {
 		var zero T
 		return zero, errors.New("queue is empty")
 	}
-	value := q.head.Val
-	q.head = q.head.Next
+	value := q.head.val
+	q.head = q.head.next
 	if q.head == nil {
 		q.tail = nil
 	}
@@ -47,7 +47,7 @@ func (q *LinkedQueue[T]) Peek() (T, error) {
 		var zero T
 		return zero, errors.New("queue is empty")
 	}
-	return q.head.Val, nil
+	return q.head.val, nil
 }
 
 func (q *LinkedQueue[T]) Take(num int) ([]T, error) {
@@ -58,10 +58,10 @@ func (q *LinkedQueue[T]) Take(num int) ([]T, error) {
 		return nil, errors.New("queue is empty")
 	}
 
-	var result []T
+	result := make([]T, 0, num)
 	for i := 0; i < num && q.head != nil; i++ {
-		value := q.head.Val
-		q.head = q.head.Next
+		value := q.head.val
+		q.head = q.head.next
 		result = append(result, value)
 		q.size--
 	}

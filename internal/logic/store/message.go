@@ -10,22 +10,22 @@ import (
 )
 
 type Message struct {
-	MsgID            string    `bson:"msg_id"`            //消息id
-	MsgSeq           uint64    `bson:"msg_seq"`           //消息序号(server)
-	MsgNo            string    `bson:"msg_no"`            //消息编号(client)
-	MsgType          int8      `bson:"msg_type"`          //消息类型
-	Content          string    `bson:"content"`           //消息内容
-	ConversationID   string    `bson:"conversation_id"`   //会话id
-	ConversationType string    `bson:"conversation_type"` //会话类型
-	FromUID          string    `bson:"from_uid"`          //发送者
-	ToID             string    `bson:"to_id"`             //接收者
-	Revoked          int8      `bson:"revoked"`           //撤回
-	Deleted          int8      `bson:"deleted"`           //删除
-	RevokedTime      time.Time `bson:"revoked_time"`      //撤回时间
-	DeletedTime      time.Time `bson:"deleted_time"`      //删除时间
-	SendTime         time.Time `bson:"send_time"`         //发送时间
-	CreatedAt        time.Time `bson:"created_at"`
-	UpdatedAt        time.Time `bson:"updated_at"`
+	MsgID            string     `bson:"msg_id"`            //消息id
+	MsgSeq           uint64     `bson:"msg_seq"`           //消息序号(server)
+	MsgNo            string     `bson:"msg_no"`            //消息编号(client)
+	MsgType          int8       `bson:"msg_type"`          //消息类型
+	Content          string     `bson:"content"`           //消息内容
+	ConversationID   string     `bson:"conversation_id"`   //会话id
+	ConversationType string     `bson:"conversation_type"` //会话类型
+	FromUID          string     `bson:"from_uid"`          //发送者
+	ToID             string     `bson:"to_id"`             //接收者
+	Revoked          int8       `bson:"revoked"`           //撤回
+	Deleted          int8       `bson:"deleted"`           //删除
+	RevokedTime      *time.Time `bson:"revoked_time"`      //撤回时间
+	DeletedTime      *time.Time `bson:"deleted_time"`      //删除时间
+	SendTime         time.Time  `bson:"send_time"`         //发送时间
+	CreatedAt        time.Time  `bson:"created_at"`
+	UpdatedAt        time.Time  `bson:"updated_at"`
 }
 
 func (*Message) Collection() *mongo.Collection {
