@@ -14,9 +14,9 @@ import (
 )
 
 var (
-	ErrMsgStore  = errors.New("消息持久化失败")
-	ErrConvIndex = errors.New("消息会话索引失败")
-	ErrMsgRoute  = errors.New("消息路由失败")
+	ErrMsgStore      = errors.New("消息持久化失败")
+	ErrConvIndex     = errors.New("消息会话索引失败")
+	ErrRouteDelivery = errors.New("消息路由投递失败")
 )
 
 type MessageSrv struct {
@@ -89,7 +89,7 @@ func (s *MessageSrv) HandleMessage(ctx context.Context, msg *types.MessageDTO) e
 	// 4.消息投递
 	if err = s.route.RouteChat(ctx, msg, receivers); err != nil {
 		logger.Err(ctx, err, "route chat delivery")
-		return ErrMsgRoute
+		return ErrRouteDelivery
 	}
 	return nil
 }
