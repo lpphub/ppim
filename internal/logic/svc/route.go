@@ -59,8 +59,10 @@ func (s *RouteSrv) batchGetOnline(ctx context.Context, uids []string) ([]*redis.
 }
 
 func (s *RouteSrv) RouteChat(ctx context.Context, msg *types.MessageDTO, receivers []string) error {
-	// 在线用户设备路由, 离线用户UID
-	var onlineSlice, offlineSlice []string
+	var (
+		onlineSet   map[string]struct{} // 在线用户设备路由
+		offlineList []string            // 离线用户UID
+	)
 	for _, chunk := range util.Partition(receivers, 300) {
 		cmds, err := s.batchGetOnline(ctx, chunk)
 		if err != nil {
@@ -70,21 +72,20 @@ func (s *RouteSrv) RouteChat(ctx context.Context, msg *types.MessageDTO, receive
 		for i, uid := range chunk {
 			if online, _ := cmds[i].Result(); len(online) > 0 {
 				for did, topic := range online {
-					if did != msg.FromDID || uid != msg.FromUID { // 排除发送者同一设备，而不同设备时则接收消息
-						onlineSlice = append(onlineSlice, fmt.Sprintf("%s#%s", uid, topic))
+					if uid != msg.FromUID || did != msg.FromDID { // 排除发送者同一设备，而不同设备时则接收消息
+						onlineSet[fmt.Sprintf("%s#%s", uid, topic)] = struct{}{}
 					}
 				}
 			} else {
-				offlineSlice = append(offlineSlice, uid)
+				offlineList = append(offlineList, uid)
 			}
 		}
 	}
 
-	// 在线投递(去重合并同一消息同一topic)
-	if len(onlineSlice) > 0 {
-		onlineSlice = util.RemoveDup(onlineSlice)
+	// 在线投递(合并同一消息同一topic)
+	if len(onlineSet) > 0 {
 		topicReceivers := make(map[string][]string)
-		for _, key := range onlineSlice {
+		for key := range onlineSet {
 			route := strings.Split(key, "#")
 			topicReceivers[route[1]] = append(topicReceivers[route[1]], route[0])
 		}
@@ -108,9 +109,9 @@ func (s *RouteSrv) RouteChat(ctx context.Context, msg *types.MessageDTO, receive
 		}
 	}
 
-	if len(offlineSlice) > 0 {
+	if len(offlineList) > 0 {
 		// todo 消息离线通知
-		logger.Warnf(ctx, "offline push: %v", offlineSlice)
+		logger.Warnf(ctx, "offline push: %v", offlineList)
 	}
 	return nil
 }

@@ -2,11 +2,11 @@ package util
 
 // RemoveDup 移除重复元素
 func RemoveDup[T comparable](s []T) []T {
-	seen := make(map[T]bool)
+	seen := make(map[T]struct{})
 	var result []T
 	for _, v := range s {
-		if !seen[v] {
-			seen[v] = true
+		if _, ok := seen[v]; !ok {
+			seen[v] = struct{}{}
 			result = append(result, v)
 		}
 	}
