@@ -4,7 +4,6 @@ import (
 	"github.com/lpphub/golib/logger"
 	"github.com/segmentio/kafka-go"
 	"ppim/internal/logic/global"
-	"ppim/internal/logic/svc/seq"
 	"ppim/pkg/kafkago"
 	"time"
 )
@@ -33,7 +32,7 @@ func InitService() {
 
 	route := newRouterSrv(producer)
 	conv := newConversationSrv()
-	msg := newMessageSrv(conv, route, seq.NewRedisSequence(global.Redis, 100))
+	msg := newMessageSrv(conv, route)
 
 	svc = &ServiceContext{
 		Route: route,

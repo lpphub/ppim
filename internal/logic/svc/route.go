@@ -49,8 +49,8 @@ func (s *RouteSrv) Offline(ctx context.Context, ol *types.RouteDTO) error {
 }
 
 func (s *RouteSrv) batchGetOnline(ctx context.Context, uids []string) ([]*redis.MapStringStringCmd, error) {
-	pipe := s.cache.Pipeline()
 	cmds := make([]*redis.MapStringStringCmd, len(uids))
+	pipe := s.cache.Pipeline()
 	for i, uid := range uids {
 		cmds[i] = pipe.HGetAll(ctx, s.genRouteKey(uid))
 	}
@@ -61,7 +61,7 @@ func (s *RouteSrv) batchGetOnline(ctx context.Context, uids []string) ([]*redis.
 func (s *RouteSrv) RouteChat(ctx context.Context, msg *types.MessageDTO, receivers []string) error {
 	onlineSet := make(map[string]struct{}) // 在线用户设备路由
 	offlineList := make([]string, 0)       // 离线用户UID
-	for _, chunk := range util.Partition(receivers, 300) {
+	for _, chunk := range util.Partition(receivers, 500) {
 		cmds, err := s.batchGetOnline(ctx, chunk)
 		if err != nil {
 			logger.Err(ctx, err, fmt.Sprintf("batch get online error: %v", chunk))

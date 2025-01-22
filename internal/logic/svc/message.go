@@ -7,6 +7,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/redis/go-redis/v9"
 	"ppim/internal/chatlib"
+	"ppim/internal/logic/global"
 	"ppim/internal/logic/store"
 	"ppim/internal/logic/svc/seq"
 	"ppim/internal/logic/types"
@@ -25,11 +26,11 @@ type MessageSrv struct {
 	seq   seq.Sequence
 }
 
-func newMessageSrv(conv *ConversationSrv, route *RouteSrv, seq seq.Sequence) *MessageSrv {
+func newMessageSrv(conv *ConversationSrv, route *RouteSrv) *MessageSrv {
 	return &MessageSrv{
 		conv:  conv,
 		route: route,
-		seq:   seq,
+		seq:   seq.NewRedisSequence(global.Redis, 100),
 	}
 }
 
