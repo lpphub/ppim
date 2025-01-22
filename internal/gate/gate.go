@@ -26,23 +26,9 @@ func Serve() {
 		panic(err.Error())
 	}
 
-	// 启动tcp服务
-	go func() {
-		tcp := net.NewTCPServer(svc, global.Conf.Server.Tcp)
-		if err := tcp.Start(); err != nil {
-			panic(err.Error())
-		}
-		defer tcp.Stop()
-	}()
-
-	// 启动websocket服务
-	go func() {
-		ws := net.NewWsServer(svc, global.Conf.Server.Ws)
-		if err := ws.Start(); err != nil {
-			panic(err.Error())
-		}
-		defer ws.Stop()
-	}()
+	server := net.NewServer(svc, global.Conf.Server.Tcp, global.Conf.Server.Ws)
+	server.Start()
+	defer server.Stop()
 
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
