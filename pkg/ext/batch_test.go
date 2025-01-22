@@ -41,3 +41,30 @@ func TestNewBatchProcessor(t *testing.T) {
 	time.Sleep(10 * time.Second)
 	bp.Stop()
 }
+
+func TestNewGroupedBatchProcessor(t *testing.T) {
+	fn := func(str []string) error {
+		fmt.Printf("print: %v \n", str)
+		return nil
+	}
+
+	batchList := []*BatchProcessor[string]{
+		NewBatchProcessor[string](2, 2, 3*time.Second, fn),
+		NewBatchProcessor[string](3, 1, 3*time.Second, fn),
+	}
+
+	group := NewGroupedBatchProcessor(batchList)
+	group.Start()
+	defer group.Stop()
+
+	go func() {
+		for i := 1; i <= 100; i++ {
+			msg := fmt.Sprintf("test-%d", i)
+			_ = group.Submit(msg, msg)
+
+			time.Sleep(10 * time.Millisecond)
+		}
+	}()
+
+	time.Sleep(10 * time.Second)
+}

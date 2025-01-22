@@ -36,16 +36,6 @@ type convStoreData struct {
 	Count   int
 }
 
-func newConversationSrv() *ConversationSrv {
-	conv := &ConversationSrv{
-		cache:      global.Redis,
-		batchStore: ext.NewBatchProcessor(100, 1, 3*time.Second, batchStoreConv),
-	}
-	// 启动批量异步存储处理器，因消息顺序性只能workerCount=1 todo 优雅关闭
-	conv.batchStore.Start()
-	return conv
-}
-
 /**
  * 1.会话最新消息
  * 2.用户会话列表：可按时间或数量限制
@@ -68,6 +58,16 @@ const (
 	ConvFieldDeleted     = "deleted"
 	ConvFieldReadMsgSeq  = "readMsgSeq"
 )
+
+func newConversationSrv() *ConversationSrv {
+	conv := &ConversationSrv{
+		cache:      global.Redis,
+		batchStore: ext.NewBatchProcessor(100, 1, 3*time.Second, batchStoreConv),
+	}
+	// 启动批量异步存储处理，因消息顺序性要求workerCount=1 todo 优雅关闭
+	conv.batchStore.Start()
+	return conv
+}
 
 func (c *ConversationSrv) IndexUpdate(ctx context.Context, msg *types.MessageDTO, receivers []string) error {
 	// 缓存会话最新消息
