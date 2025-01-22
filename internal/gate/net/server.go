@@ -37,6 +37,10 @@ func (s *Server) Start() {
 }
 
 func (s *Server) Stop() {
-	s.tcpServer.Stop()
-	s.wsServer.Stop()
+	if s.tcpServer != nil {
+		s.tcpServer.Stop()
+	}
+	if s.wsServer != nil {
+		s.wsServer.Stop()
+	}
 }

@@ -15,18 +15,17 @@ type RetryMsg struct {
 	ConnFD   int    // 连接ID
 	MsgID    string // 消息ID
 	UID      string // 用户ID
-	retry    int    // 重试次数
-	deleted  bool   // 是否删除
+	Retries  int    // 重试次数
 }
 
 type RetryDelivery struct {
 	queue []*RetryMsg
-	hash  map[string]*RetryMsg
+	index map[string]int
 
 	svc        *ServerContext
 	maxRetries int
 
-	working atomic.Bool
+	running atomic.Bool
 	mtx     sync.Mutex
 	ctx     context.Context
 	cancel  context.CancelFunc
@@ -40,7 +39,7 @@ func newRetryDelivery(svc *ServerContext, maxRetries int) *RetryDelivery {
 		ctx:        ctx,
 		cancel:     cancel,
 		queue:      make([]*RetryMsg, 0, 2048),
-		hash:       make(map[string]*RetryMsg),
+		index:      make(map[string]int),
 	}
 }
 
@@ -54,21 +53,31 @@ func (r *RetryDelivery) Add(el *RetryMsg) {
 	}
 
 	r.queue = append(r.queue, el)
-	r.hash[r.getUk(el.ConnFD, el.MsgID)] = el
+	r.index[r.genUK(el.ConnFD, el.MsgID)] = len(r.queue) - 1
 }
 
 func (r *RetryDelivery) Remove(connFD int, msgId string) {
 	r.mtx.Lock()
 	defer r.mtx.Unlock()
 
-	key := r.getUk(connFD, msgId)
-	if el, ok := r.hash[key]; ok {
-		el.deleted = true
-		delete(r.hash, key)
+	key := r.genUK(connFD, msgId)
+	idx, ok := r.index[key]
+	if !ok {
+		return
 	}
+
+	// 将要删除的元素与最后一个元素交换
+	lastIdx := len(r.queue) - 1
+	lastEle := r.queue[lastIdx]
+	r.queue[idx] = lastEle
+	r.index[r.genUK(lastEle.ConnFD, lastEle.MsgID)] = idx
+
+	// 删除最后一个元素
+	r.queue = r.queue[:lastIdx]
+	delete(r.index, key)
 }
 
-func (r *RetryDelivery) getUk(connFD int, msgId string) string {
+func (r *RetryDelivery) genUK(connFD int, msgId string) string {
 	return fmt.Sprintf("%d:%s", connFD, msgId)
 }
 
@@ -90,7 +99,7 @@ func (r *RetryDelivery) Take(num int) []*RetryMsg {
 
 func (r *RetryDelivery) start() {
 	go func() {
-		ticker := time.NewTicker(5 * time.Second)
+		ticker := time.NewTicker(3 * time.Second)
 		defer ticker.Stop()
 
 		for {
@@ -98,9 +107,11 @@ func (r *RetryDelivery) start() {
 			case <-r.ctx.Done():
 				return
 			case <-ticker.C:
-				logger.Log().Debug().Msgf("重试消息 size: %d", len(r.queue))
+				if !r.running.Load() {
+					logger.Log().Debug().Msgf("重试消息 size: %d", len(r.queue))
 
-				go util.WithRecover(r.work)
+					r.run()
+				}
 			}
 		}
 	}()
@@ -110,35 +121,22 @@ func (r *RetryDelivery) stop() {
 	r.cancel()
 }
 
-func (r *RetryDelivery) work() {
-	if r.working.Load() {
+func (r *RetryDelivery) run() {
+	r.running.Store(true)
+	defer r.running.Store(false)
+
+	ms := r.Take(1000)
+	if len(ms) == 0 {
 		return
 	}
-	r.working.Store(true)
-	defer r.working.Store(false)
-
-	for {
-		select {
-		case <-r.ctx.Done():
-			return
-		default:
-			ms := r.Take(100)
-			if len(ms) == 0 {
-				return
-			}
-			for _, m := range ms {
-				r.runRetry(m)
-			}
-		}
+	for _, m := range ms {
+		r.runRetry(m)
 	}
 }
 
 func (r *RetryDelivery) runRetry(msg *RetryMsg) {
-	if msg.deleted {
-		return
-	}
-	msg.retry++
-	logger.Log().Info().Msgf("重试消息发送：uid=%s, msgID=%s, retryCount=%d", msg.UID, msg.MsgID, msg.retry)
+	msg.Retries++
+	logger.Log().Info().Msgf("重试消息发送：uid=%s, msgID=%s, retryCount=%d", msg.UID, msg.MsgID, msg.Retries)
 
 	client := r.svc.ConnManager.GetWithFD(msg.ConnFD)
 	if client == nil {
@@ -147,7 +145,7 @@ func (r *RetryDelivery) runRetry(msg *RetryMsg) {
 
 	_, _ = client.Write(msg.MsgBytes)
 
-	if msg.retry >= r.maxRetries {
+	if msg.Retries >= r.maxRetries {
 		r.Remove(msg.ConnFD, msg.MsgID)
 	} else {
 		r.Add(msg)

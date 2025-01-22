@@ -2,6 +2,7 @@ package ext
 
 import (
 	"errors"
+	"sync"
 )
 
 type node[T any] struct {
@@ -74,4 +75,55 @@ func (q *LinkedQueue[T]) Take(num int) ([]T, error) {
 
 func (q *LinkedQueue[T]) Size() int {
 	return q.size
+}
+
+type RingQueue[T any] struct {
+	data []T
+	head int
+	tail int
+	cap  int
+	size int
+	mtx  sync.Mutex
+}
+
+func NewRingQueue[T any](cap int) *RingQueue[T] {
+	return &RingQueue[T]{
+		data: make([]T, cap),
+		cap:  cap,
+	}
+}
+
+func (rq *RingQueue[T]) Enqueue(item T) error {
+	rq.mtx.Lock()
+	defer rq.mtx.Unlock()
+
+	if rq.size == rq.cap {
+		return errors.New("queue is full")
+	}
+
+	rq.data[rq.tail] = item
+	rq.tail = (rq.tail + 1) % rq.cap
+	rq.size++
+	return nil
+}
+
+func (rq *RingQueue[T]) Dequeue() (T, error) {
+	rq.mtx.Lock()
+	defer rq.mtx.Unlock()
+
+	if rq.size == 0 {
+		var zero T
+		return zero, errors.New("queue is empty")
+	}
+
+	item := rq.data[rq.head]
+	rq.head = (rq.head + 1) % rq.cap
+	rq.size--
+	return item, nil
+}
+
+func (rq *RingQueue[T]) Size() int {
+	rq.mtx.Lock()
+	defer rq.mtx.Unlock()
+	return rq.size
 }

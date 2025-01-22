@@ -31,13 +31,12 @@ func (c ConsumerConfig) Validate() error {
 type MessageHandler func(context.Context, kafka.Message) error
 
 type Consumer struct {
-	config   *ConsumerConfig
-	reader   *kafka.Reader
-	handler  MessageHandler
-	ctx      context.Context
-	cancel   context.CancelFunc
-	wg       sync.WaitGroup
-	stopOnce sync.Once
+	config  *ConsumerConfig
+	reader  *kafka.Reader
+	handler MessageHandler
+	ctx     context.Context
+	cancel  context.CancelFunc
+	wg      sync.WaitGroup
 }
 
 func NewConsumer(handler MessageHandler, config ConsumerConfig) (*Consumer, error) {
@@ -125,8 +124,6 @@ func (c *Consumer) consume() {
 }
 
 func (c *Consumer) Stop() {
-	c.stopOnce.Do(func() {
-		c.cancel()
-		c.wg.Wait()
-	})
+	c.cancel()
+	c.wg.Wait()
 }
