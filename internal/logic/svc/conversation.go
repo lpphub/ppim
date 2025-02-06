@@ -269,19 +269,20 @@ func (c *ConversationSrv) IncrQuery(ctx context.Context, uid string, startTime, 
 
 func (c *ConversationSrv) SetAttribute(ctx context.Context, attr types.ConvAttributeDTO) (err error) {
 	cacheKey := c.getConvCacheKey(attr.UID, attr.ConversationID)
+	dbStore := new(store.Conversation)
 	switch attr.Attribute {
 	case ConvFieldPin:
 		c.cache.HSet(ctx, cacheKey, ConvFieldPin, attr.Pin)
-		err = new(store.Conversation).UpdatePin(ctx, attr.UID, attr.ConversationID, attr.Pin)
+		err = dbStore.UpdatePin(ctx, attr.UID, attr.ConversationID, attr.Pin)
 	case ConvFieldMute:
 		c.cache.HSet(ctx, cacheKey, ConvFieldMute, attr.Mute)
-		err = new(store.Conversation).UpdateMute(ctx, attr.UID, attr.ConversationID, attr.Mute)
+		err = dbStore.UpdateMute(ctx, attr.UID, attr.ConversationID, attr.Mute)
 	case ConvFieldUnreadCount:
 		c.cache.HSet(ctx, cacheKey, ConvFieldUnreadCount, attr.UnreadCount)
-		err = new(store.Conversation).UpdateUnreadCount(ctx, attr.UID, attr.ConversationID, attr.UnreadCount)
+		err = dbStore.UpdateUnreadCount(ctx, attr.UID, attr.ConversationID, attr.UnreadCount)
 	case ConvFieldDeleted:
 		c.cache.HSet(ctx, cacheKey, ConvFieldDeleted, attr.Deleted)
-		err = new(store.Conversation).UpdateDeleted(ctx, attr.UID, attr.ConversationID, attr.Deleted)
+		err = dbStore.UpdateDeleted(ctx, attr.UID, attr.ConversationID, attr.Deleted)
 	default:
 		return errors.New("invalid op type")
 	}

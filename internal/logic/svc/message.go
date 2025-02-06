@@ -2,6 +2,7 @@ package svc
 
 import (
 	"context"
+	"fmt"
 	"github.com/jinzhu/copier"
 	"github.com/lpphub/golib/logger"
 	"github.com/pkg/errors"
@@ -18,6 +19,10 @@ var (
 	ErrMsgStore      = errors.New("消息持久化失败")
 	ErrConvIndex     = errors.New("消息会话索引失败")
 	ErrRouteDelivery = errors.New("消息路由投递失败")
+)
+
+const (
+	CacheGroupMembers = "group:member:%s"
 )
 
 type MessageSrv struct {
@@ -73,9 +78,9 @@ func (s *MessageSrv) HandleMessage(ctx context.Context, msg *types.MessageDTO) e
 	if msg.ConversationType == chatlib.ConvSingle && msg.ToID != msg.FromUID {
 		receivers = append(receivers, msg.ToID)
 	} else if msg.ConversationType == chatlib.ConvGroup {
-		members, serr := new(store.Group).ListMembers(ctx, msg.ToID) // todo 加缓存
-		if serr != nil {
-			logger.Err(ctx, serr, "")
+		members, gerr := s.getGroupMembers(ctx, msg.ToID)
+		if gerr != nil {
+			logger.Err(ctx, gerr, "")
 		} else {
 			receivers = append(receivers, members...)
 		}
@@ -93,6 +98,14 @@ func (s *MessageSrv) HandleMessage(ctx context.Context, msg *types.MessageDTO) e
 		return ErrRouteDelivery
 	}
 	return nil
+}
+
+func (s *MessageSrv) getGroupMembers(ctx context.Context, groupID string) ([]string, error) {
+	members := global.Redis.SMembers(ctx, fmt.Sprintf(CacheGroupMembers, groupID)).Val()
+	if len(members) > 0 {
+		return members, nil
+	}
+	return new(store.Group).ListMembers(ctx, groupID)
 }
 
 func (s *MessageSrv) PullUpOrDown(ctx context.Context, conversationID string, startSeq, limit int64) ([]types.MessageDTO, error) {
