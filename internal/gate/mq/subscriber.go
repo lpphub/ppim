@@ -53,49 +53,60 @@ func (s *Subscriber) handleDelivery(ctx context.Context, message kafka.Message) 
 
 	switch msg.CMD {
 	case chatlib.DeliveryChat:
-		chat := msg.Chat
-		bytes, _ := protocol.PacketReceive(&protocol.ReceivePacket{
-			ConversationType: chat.ConversationType,
-			ConversationID:   chat.ConversationID,
-			FromUID:          chat.FromUID,
-			Payload: &protocol.Payload{
-				MsgNo:   chat.MsgNo,
-				MsgId:   chat.MsgID,
-				MsgSeq:  chat.MsgSeq,
-				MsgType: int32(chat.MsgType),
-				Content: chat.Content,
-			},
-		})
-
-		for _, receiver := range msg.Receivers {
-			clients := s.svc.ConnManager.GetWithUID(receiver)
-			if len(clients) == 0 {
-				continue
-			}
-			for _, client := range clients {
-				if client.DID != chat.FromDID { // 避免自己收到消息
-					_, err := client.Write(bytes)
-					if err != nil {
-						logger.Err(ctx, err, "write to client error")
-					}
-
-					// 放入重试队列
-					s.svc.RetryManager.Add(&net.RetryMsg{
-						MsgBytes: bytes,
-						ConnFD:   client.Conn.Fd(),
-						MsgID:    chat.MsgID,
-						UID:      receiver,
-					})
-				}
-			}
-		}
-
+		s.deliveryChat(ctx, &msg)
 	case chatlib.DeliveryEvent:
-		// TODO: handle event
+		s.deliveryEvent(ctx, &msg)
 	case chatlib.DeliveryNotify:
-		// TODO: handle notify
+		s.deliveryNotify(ctx, &msg)
 	default:
 		logger.Warnf(ctx, "unknown cmd: %s", msg.CMD)
 	}
 	return nil
+}
+
+func (s *Subscriber) deliveryChat(ctx context.Context, msg *chatlib.DeliveryMsg) {
+	chat := msg.Chat
+	bytes, _ := protocol.PacketReceive(&protocol.ReceivePacket{
+		ConversationType: chat.ConversationType,
+		ConversationID:   chat.ConversationID,
+		FromUID:          chat.FromUID,
+		Payload: &protocol.Payload{
+			MsgNo:   chat.MsgNo,
+			MsgId:   chat.MsgID,
+			MsgSeq:  chat.MsgSeq,
+			MsgType: int32(chat.MsgType),
+			Content: chat.Content,
+		},
+	})
+
+	for _, receiver := range msg.Receivers {
+		clients := s.svc.ConnManager.GetWithUID(receiver)
+		if len(clients) == 0 {
+			continue
+		}
+		for _, client := range clients {
+			if client.DID != chat.FromDID { // 避免自己收到消息
+				_, err := client.Write(bytes)
+				if err != nil {
+					logger.Err(ctx, err, "write to client error")
+				}
+
+				// 放入重试队列
+				s.svc.RetryManager.Add(&net.RetryMsg{
+					MsgBytes: bytes,
+					ConnFD:   client.Conn.Fd(),
+					MsgID:    chat.MsgID,
+					UID:      receiver,
+				})
+			}
+		}
+	}
+}
+
+func (s *Subscriber) deliveryEvent(ctx context.Context, msg *chatlib.DeliveryMsg) {
+	// TODO: handle event
+}
+
+func (s *Subscriber) deliveryNotify(ctx context.Context, msg *chatlib.DeliveryMsg) {
+	// TODO: handle notify
 }
