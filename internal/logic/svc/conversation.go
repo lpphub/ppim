@@ -62,9 +62,9 @@ const (
 func newConversationSrv() *ConversationSrv {
 	conv := &ConversationSrv{
 		cache:      global.Redis,
-		batchStore: ext.NewBatchProcessor(100, 1, 3*time.Second, batchStoreConv),
+		batchStore: ext.NewBatchProcessor(1, 100, 3*time.Second, batchStoreConv),
 	}
-	// 启动批量异步存储处理，因消息顺序性要求workerCount=1 todo 优雅关闭
+	// 启动批量异步存储处理，因消息顺序性要求workers=1 todo 优雅关闭
 	conv.batchStore.Start()
 	return conv
 }

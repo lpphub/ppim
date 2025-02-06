@@ -12,7 +12,7 @@ func TestNewBatchProcessor(t *testing.T) {
 		Content string
 	}
 
-	bp := NewBatchProcessor[Message](10, 2, 3*time.Second, func(ms []Message) error {
+	bp := NewBatchProcessor[Message](2, 10, 3*time.Second, func(ms []Message) error {
 		// 处理消息的逻辑
 		//t.Logf("Processing %d messages\n", len(m))
 		for _, m := range ms {
@@ -50,7 +50,7 @@ func TestNewGroupedBatchProcessor(t *testing.T) {
 
 	batchList := []*BatchProcessor[string]{
 		NewBatchProcessor[string](2, 2, 3*time.Second, fn),
-		NewBatchProcessor[string](3, 1, 3*time.Second, fn),
+		NewBatchProcessor[string](1, 3, 3*time.Second, fn),
 	}
 
 	group := NewGroupedBatchProcessor(batchList)
