@@ -1,4 +1,4 @@
-package mq
+package sub
 
 import (
 	"context"
@@ -18,50 +18,50 @@ type Subscriber struct {
 	svc *net.ServerContext
 }
 
-func RegisterSubscriber(svc *net.ServerContext) error {
-	sub := &Subscriber{
+func SubscribeDelivery(svc *net.ServerContext) error {
+	s := &Subscriber{
 		svc: svc,
 	}
-	return sub.register()
+	return s.registerKafka()
 }
 
-func (s *Subscriber) register() error {
-	kconf := global.Conf.Kafka
+func (s *Subscriber) registerKafka() error {
+	fn := func(ctx context.Context, message kafka.Message) error {
+		logger.Log().Info().Msgf("mq receive message: %s", string(message.Value))
 
-	config := kafkago.ConsumerConfig{
-		Brokers:     kconf.Brokers,
-		Topic:       kconf.Topic,
-		GroupID:     kconf.GroupId,
+		var msg chatlib.DeliveryMsg
+		if err := jsoniter.Unmarshal(message.Value, &msg); err != nil {
+			return err
+		}
+		s.delivery(ctx, &msg)
+		return nil
+	}
+
+	kc, err := kafkago.NewConsumer(fn, kafkago.ConsumerConfig{
+		Brokers:     global.Conf.Kafka.Brokers,
+		Topic:       global.Conf.Kafka.Topic,
+		GroupID:     global.Conf.Kafka.GroupId,
 		MaxWait:     time.Second,
 		MaxAttempts: 3,
-	}
-	c, err := kafkago.NewConsumer(s.handleDelivery, config)
+	})
 	if err != nil {
 		return fmt.Errorf("register kafka consumer error: %v", err)
 	}
-	c.Start()
+	kc.Start()
 	return nil
 }
 
-func (s *Subscriber) handleDelivery(ctx context.Context, message kafka.Message) error {
-	logger.Log().Info().Msgf("mq receive message: %s", string(message.Value))
-
-	var msg chatlib.DeliveryMsg
-	if err := jsoniter.Unmarshal(message.Value, &msg); err != nil {
-		return err
-	}
-
+func (s *Subscriber) delivery(ctx context.Context, msg *chatlib.DeliveryMsg) {
 	switch msg.CMD {
 	case chatlib.DeliveryChat:
-		s.deliveryChat(ctx, &msg)
+		s.deliveryChat(ctx, msg)
 	case chatlib.DeliveryEvent:
-		s.deliveryEvent(ctx, &msg)
+		s.deliveryEvent(ctx, msg)
 	case chatlib.DeliveryNotify:
-		s.deliveryNotify(ctx, &msg)
+		s.deliveryNotify(ctx, msg)
 	default:
 		logger.Warnf(ctx, "unknown cmd: %s", msg.CMD)
 	}
-	return nil
 }
 
 func (s *Subscriber) deliveryChat(ctx context.Context, msg *chatlib.DeliveryMsg) {

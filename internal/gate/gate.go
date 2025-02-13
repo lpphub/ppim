@@ -4,9 +4,9 @@ import (
 	"os"
 	"os/signal"
 	"ppim/internal/gate/global"
-	"ppim/internal/gate/mq"
 	"ppim/internal/gate/net"
 	"ppim/internal/gate/rpc"
+	"ppim/internal/gate/sub"
 	"syscall"
 )
 
@@ -22,7 +22,7 @@ func Serve() {
 	svc := net.InitServerContext()
 
 	// 订阅消息
-	if err := mq.RegisterSubscriber(svc); err != nil {
+	if err := sub.SubscribeDelivery(svc); err != nil {
 		panic(err.Error())
 	}
 
