@@ -1,7 +1,7 @@
 package util
 
-// RemoveDup 移除重复元素
-func RemoveDup[T comparable](s []T) []T {
+// Dedupe 去重
+func Dedupe[T comparable](s []T) []T {
 	seen := make(map[T]struct{})
 	var result []T
 	for _, v := range s {

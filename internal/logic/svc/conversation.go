@@ -20,11 +20,6 @@ import (
 	"time"
 )
 
-// ConversationSrv
-/**
- * 写扩散：每个用户对应一个timeline, 消息到达后每个接收者更新自身timeline
- * 读扩散：一个会话对应一个timeline，消息到达后更新此会话最新timeline
- */
 type ConversationSrv struct {
 	cache      *redis.Client
 	batchStore *ext.BatchProcessor[*convStoreData]
