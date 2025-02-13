@@ -289,26 +289,26 @@ func (c *ConversationSrv) SetAttribute(ctx context.Context, attr types.ConvAttri
 }
 
 func batchStoreConv(dataList []*convStoreData) error {
-	uniqMap := make(map[string]*convStoreData)
+	// rebase 同一会话的连续数据，只保留最新的一条
+	rebaseData := make(map[string]*convStoreData)
 	for _, data := range dataList {
 		data.Count = 1
 		if data.LastMsg.FromUID == data.UID {
 			data.Count = 0
 		}
-		// 同一会话的连续数据，只保留最新的一条
 		key := fmt.Sprintf("%s:%s", data.UID, data.LastMsg.ConversationID)
-		if ed, exists := uniqMap[key]; exists {
+		if ed, exists := rebaseData[key]; exists {
 			if data.LastMsg.MsgSeq > ed.LastMsg.MsgSeq {
 				data.Count += ed.Count
-				uniqMap[key] = data
+				rebaseData[key] = data
 			}
 		} else {
-			uniqMap[key] = data
+			rebaseData[key] = data
 		}
 	}
 
 	var bulkWrites []mongo.WriteModel
-	for _, data := range uniqMap {
+	for _, data := range rebaseData {
 		// 构造查询条件
 		filter := bson.M{
 			"uid":             data.UID,
