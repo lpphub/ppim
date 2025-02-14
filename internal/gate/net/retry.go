@@ -66,11 +66,20 @@ func (r *RetryDelivery) Remove(connFD int, msgId string) {
 		return
 	}
 
-	// 将要删除的元素与最后一个元素交换
-	lastIdx := len(r.queue) - 1
-	lastEle := r.queue[lastIdx]
-	r.queue[idx] = lastEle
-	r.index[r.genUK(lastEle.ConnFD, lastEle.MsgID)] = idx
+	queueSize := len(r.queue)
+	if queueSize == 0 {
+		return
+	}
+	if idx < 0 || idx >= queueSize {
+		logger.Log().Error().Msgf("Invalid index: %d", idx)
+		return
+	}
+	lastIdx := queueSize - 1
+	if idx != lastIdx { // 将要删除的元素与最后一个元素交换
+		lastEl := r.queue[lastIdx]
+		r.queue[idx] = lastEl
+		r.index[r.genUK(lastEl.ConnFD, lastEl.MsgID)] = idx
+	}
 
 	// 删除最后一个元素
 	r.queue = r.queue[:lastIdx]

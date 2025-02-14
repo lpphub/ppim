@@ -35,7 +35,7 @@ func newMessageSrv(conv *ConversationSrv, route *RouteSrv) *MessageSrv {
 	return &MessageSrv{
 		conv:  conv,
 		route: route,
-		seq:   seq.NewRedisSequence(global.Redis, 100),
+		seq:   seq.NewStepSequence(global.Redis, 100),
 	}
 }
 
@@ -92,7 +92,7 @@ func (s *MessageSrv) HandleMessage(ctx context.Context, msg *types.MessageDTO) e
 		return ErrConvIndex
 	}
 
-	// 4.消息投递
+	// 4.消息投递（在线、离线）
 	if err = s.route.RouteChat(ctx, msg, receivers); err != nil {
 		logger.Err(ctx, err, "route chat delivery")
 		return ErrRouteDelivery

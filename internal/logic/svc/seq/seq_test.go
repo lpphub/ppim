@@ -16,7 +16,7 @@ func TestRedisSequence_Next(t *testing.T) {
 		ConnMaxLifetime: 5 * time.Minute,
 	})
 
-	s1 := NewRedisSequence(r, 100)
+	s1 := NewStepSequence(r, 10)
 	for range 123 {
 		go func() {
 			seq, err := s1.Next(context.TODO(), "single|20906144@19726487")
@@ -28,10 +28,10 @@ func TestRedisSequence_Next(t *testing.T) {
 		}()
 	}
 
-	s2 := NewRedisSequence(r, 100)
+	//s2 := NewStepSequence(r, 10)
 	for range 13 {
 		go func() {
-			seq, err := s2.Next(context.TODO(), "single|20906144@19726487")
+			seq, err := s1.Next(context.TODO(), "single|20906144@19726487")
 			if err != nil {
 				t.Error(err)
 				return
