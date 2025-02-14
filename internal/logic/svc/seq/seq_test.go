@@ -3,6 +3,7 @@ package seq
 import (
 	"context"
 	"github.com/redis/go-redis/v9"
+	"ppim/internal/logic/store"
 	"testing"
 	"time"
 )
@@ -16,7 +17,7 @@ func TestRedisSequence_Next(t *testing.T) {
 		ConnMaxLifetime: 5 * time.Minute,
 	})
 
-	s1 := NewStepSequence(r, 10)
+	s1 := NewStepSequence(10, WithDefaultSeqStorage(r, new(store.Conversation)))
 	for range 123 {
 		go func() {
 			seq, err := s1.Next(context.TODO(), "single|20906144@19726487")

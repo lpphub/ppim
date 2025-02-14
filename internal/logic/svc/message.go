@@ -35,7 +35,7 @@ func newMessageSrv(conv *ConversationSrv, route *RouteSrv) *MessageSrv {
 	return &MessageSrv{
 		conv:  conv,
 		route: route,
-		seq:   seq.NewStepSequence(global.Redis, 100),
+		seq:   seq.NewStepSequence(100, seq.WithDefaultSeqStorage(global.Redis, new(store.Conversation))),
 	}
 }
 
