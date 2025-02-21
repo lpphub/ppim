@@ -21,8 +21,10 @@ import (
 )
 
 type ConversationSrv struct {
-	cache      *redis.Client
-	batchStore *ext.BatchProcessor[*convStoreData]
+	cache          *redis.Client
+	storage        *store.Conversation
+	msgStore       *store.Message
+	batchProcessor *ext.BatchProcessor[*convStoreData]
 }
 
 type convStoreData struct {
@@ -56,11 +58,13 @@ const (
 
 func newConversationSrv() *ConversationSrv {
 	conv := &ConversationSrv{
-		cache:      global.Redis,
-		batchStore: ext.NewBatchProcessor(1, 100, 3*time.Second, batchStoreConv),
+		cache:          global.Redis,
+		storage:        new(store.Conversation),
+		msgStore:       new(store.Message),
+		batchProcessor: ext.NewBatchProcessor(1, 100, 3*time.Second, batchStoreConv),
 	}
 	// 启动批量异步存储处理，因消息顺序性要求workers=1 todo 优雅关闭
-	conv.batchStore.Start()
+	conv.batchProcessor.Start()
 	return conv
 }
 
@@ -76,7 +80,7 @@ func (c *ConversationSrv) IndexUpdate(ctx context.Context, msg *types.MessageDTO
 	}
 	// 异步存储用户会话数据
 	for _, uid := range receivers {
-		_ = c.batchStore.Submit(&convStoreData{UID: uid, LastMsg: msg})
+		_ = c.batchProcessor.Submit(&convStoreData{UID: uid, LastMsg: msg})
 	}
 	return nil
 }
@@ -214,7 +218,7 @@ func (c *ConversationSrv) IncrQuery(ctx context.Context, uid string, startTime, 
 	}
 
 	// todo 可以全用缓存，不查db
-	data, err := new(store.Conversation).ListByTime(ctx, uid, startTime, limit)
+	data, err := c.storage.ListByTime(ctx, uid, startTime, limit)
 	if err != nil {
 		return nil, err
 	}
@@ -240,7 +244,7 @@ func (c *ConversationSrv) IncrQuery(ctx context.Context, uid string, startTime, 
 	if len(msgIds) == 0 {
 		return list, nil
 	}
-	msgList, err := new(store.Message).ListByMsgIds(ctx, msgIds)
+	msgList, err := c.msgStore.ListByMsgIds(ctx, msgIds)
 	if err != nil {
 		return nil, err
 	}
@@ -264,20 +268,19 @@ func (c *ConversationSrv) IncrQuery(ctx context.Context, uid string, startTime, 
 
 func (c *ConversationSrv) SetAttribute(ctx context.Context, attr types.ConvAttributeDTO) (err error) {
 	cacheKey := c.getConvCacheKey(attr.UID, attr.ConversationID)
-	dbStore := new(store.Conversation)
 	switch attr.Attribute {
 	case ConvFieldPin:
 		c.cache.HSet(ctx, cacheKey, ConvFieldPin, attr.Pin)
-		err = dbStore.UpdatePin(ctx, attr.UID, attr.ConversationID, attr.Pin)
+		err = c.storage.UpdatePin(ctx, attr.UID, attr.ConversationID, attr.Pin)
 	case ConvFieldMute:
 		c.cache.HSet(ctx, cacheKey, ConvFieldMute, attr.Mute)
-		err = dbStore.UpdateMute(ctx, attr.UID, attr.ConversationID, attr.Mute)
+		err = c.storage.UpdateMute(ctx, attr.UID, attr.ConversationID, attr.Mute)
 	case ConvFieldUnreadCount:
 		c.cache.HSet(ctx, cacheKey, ConvFieldUnreadCount, attr.UnreadCount)
-		err = dbStore.UpdateUnreadCount(ctx, attr.UID, attr.ConversationID, attr.UnreadCount)
+		err = c.storage.UpdateUnreadCount(ctx, attr.UID, attr.ConversationID, attr.UnreadCount)
 	case ConvFieldDeleted:
 		c.cache.HSet(ctx, cacheKey, ConvFieldDeleted, attr.Deleted)
-		err = dbStore.UpdateDeleted(ctx, attr.UID, attr.ConversationID, attr.Deleted)
+		err = c.storage.UpdateDeleted(ctx, attr.UID, attr.ConversationID, attr.Deleted)
 	default:
 		return errors.New("invalid op type")
 	}

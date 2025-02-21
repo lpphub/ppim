@@ -26,16 +26,21 @@ const (
 )
 
 type MessageSrv struct {
+	seq   seq.Sequence
 	conv  *ConversationSrv
 	route *RouteSrv
-	seq   seq.Sequence
+
+	storage    *store.Message
+	groupStore *store.Group
 }
 
 func newMessageSrv(conv *ConversationSrv, route *RouteSrv) *MessageSrv {
 	return &MessageSrv{
-		conv:  conv,
-		route: route,
-		seq:   seq.NewStepSequence(100, seq.WithDefaultSeqStorage(global.Redis, new(store.Conversation))),
+		conv:       conv,
+		route:      route,
+		seq:        seq.NewStepSequence(100, seq.WithDefaultSeqStorage(global.Redis, new(store.Conversation))),
+		storage:    new(store.Message),
+		groupStore: new(store.Group),
 	}
 }
 
@@ -105,11 +110,11 @@ func (s *MessageSrv) getGroupMembers(ctx context.Context, groupID string) ([]str
 	if len(members) > 0 {
 		return members, nil
 	}
-	return new(store.Group).ListMembers(ctx, groupID)
+	return s.groupStore.ListMembers(ctx, groupID)
 }
 
 func (s *MessageSrv) PullUpOrDown(ctx context.Context, conversationID string, startSeq, limit int64) ([]types.MessageDTO, error) {
-	list, err := new(store.Message).PullUpOrDown(ctx, conversationID, startSeq, limit)
+	list, err := s.storage.PullUpOrDown(ctx, conversationID, startSeq, limit)
 	if err != nil {
 		return nil, err
 	}
@@ -127,7 +132,7 @@ func (s *MessageSrv) PullUpOrDown(ctx context.Context, conversationID string, st
 }
 
 func (s *MessageSrv) Revoke(ctx context.Context, msgID, conversationID string) error {
-	if err := new(store.Message).Revoke(ctx, msgID); err != nil {
+	if err := s.storage.Revoke(ctx, msgID); err != nil {
 		return err
 	}
 	// 如果撤回的消息是会话最新消息，则更新会话最新消息
@@ -148,7 +153,7 @@ func (s *MessageSrv) Revoke(ctx context.Context, msgID, conversationID string) e
 }
 
 func (s *MessageSrv) Delete(ctx context.Context, msgID, conversationID string) error {
-	if err := new(store.Message).Delete(ctx, msgID); err != nil {
+	if err := s.storage.Delete(ctx, msgID); err != nil {
 		return err
 	}
 	// 如果删除的消息是会话最新消息，则更新会话最新消息
