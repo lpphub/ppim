@@ -24,10 +24,10 @@ type ConversationSrv struct {
 	cache          *redis.Client
 	storage        *store.Conversation
 	msgStore       *store.Message
-	batchProcessor *ext.BatchProcessor[*convStoreData]
+	batchProcessor *ext.BatchProcessor[*convDataWrap]
 }
 
-type convStoreData struct {
+type convDataWrap struct {
 	UID     string
 	LastMsg *types.MessageDTO
 	Count   int
@@ -80,7 +80,7 @@ func (c *ConversationSrv) IndexUpdate(ctx context.Context, msg *types.MessageDTO
 	}
 	// 异步存储用户会话数据
 	for _, uid := range receivers {
-		_ = c.batchProcessor.Submit(&convStoreData{UID: uid, LastMsg: msg})
+		_ = c.batchProcessor.Submit(&convDataWrap{UID: uid, LastMsg: msg})
 	}
 	return nil
 }
@@ -291,9 +291,9 @@ func (c *ConversationSrv) SetAttribute(ctx context.Context, attr types.ConvAttri
 	return
 }
 
-func batchStoreConv(dataList []*convStoreData) error {
+func batchStoreConv(dataList []*convDataWrap) error {
 	// rebase 同一会话的连续数据，只保留最新的一条
-	rebaseData := make(map[string]*convStoreData)
+	rebaseData := make(map[string]*convDataWrap)
 	for _, data := range dataList {
 		data.Count = 1
 		if data.LastMsg.FromUID == data.UID {
