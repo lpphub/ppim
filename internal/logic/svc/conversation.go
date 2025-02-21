@@ -47,13 +47,13 @@ const (
 	CacheConvList    = "conv:list:%s"
 	CacheConvInfo    = "conv:info:%s:%s"
 
-	ConvFieldCreatedAt   = "createdAt"
-	ConvFieldUnreadCount = "unreadCount"
-	ConvFieldPin         = "pin"
-	ConvFieldMute        = "mute"
-	ConvFieldLastMsgSeq  = "lastMsgSeq"
-	ConvFieldDeleted     = "deleted"
-	ConvFieldReadMsgSeq  = "readMsgSeq"
+	FieldConvCreatedAt   = "createdAt"
+	FieldConvUnreadCount = "unreadCount"
+	FieldConvPin         = "pin"
+	FieldConvMute        = "mute"
+	FieldConvLastMsgSeq  = "lastMsgSeq"
+	FieldConvDeleted     = "deleted"
+	FieldConvReadMsgSeq  = "readMsgSeq"
 )
 
 func newConversationSrv() *ConversationSrv {
@@ -106,14 +106,14 @@ func (c *ConversationSrv) cacheBatchStore(ctx context.Context, uidSlice []string
 			cacheInfoKey := c.getConvCacheKey(uid, msg.ConversationID)
 			// 未读消息数
 			if uid != msg.FromUID {
-				pipe.HIncrBy(ctx, cacheInfoKey, ConvFieldUnreadCount, 1)
+				pipe.HIncrBy(ctx, cacheInfoKey, FieldConvUnreadCount, 1)
 			}
 			// 会话最新消息
 			fields := map[string]interface{}{
-				ConvFieldLastMsgSeq: msg.MsgSeq,
+				FieldConvLastMsgSeq: msg.MsgSeq,
 			}
 			if msg.MsgSeq == 1 {
-				fields[ConvFieldCreatedAt] = msg.CreatedAt
+				fields[FieldConvCreatedAt] = msg.CreatedAt
 			}
 			pipe.HMSet(ctx, cacheInfoKey, fields)
 
@@ -157,8 +157,8 @@ func (c *ConversationSrv) cacheQueryDetail(ctx context.Context, uid string, conv
 	cmds := make([]cmdPair, len(convIds))
 	for i, cid := range convIds {
 		cmds[i].msgCmd = pipe.Get(ctx, fmt.Sprintf(CacheConvLastMsg, cid))
-		cmds[i].infoCmd = pipe.HMGet(ctx, c.getConvCacheKey(uid, cid), ConvFieldUnreadCount, ConvFieldPin, ConvFieldMute,
-			ConvFieldDeleted, ConvFieldCreatedAt)
+		cmds[i].infoCmd = pipe.HMGet(ctx, c.getConvCacheKey(uid, cid), FieldConvUnreadCount, FieldConvPin, FieldConvMute,
+			FieldConvDeleted, FieldConvCreatedAt)
 	}
 	_, err := pipe.Exec(ctx)
 	if err != nil && !errors.Is(err, redis.Nil) {
@@ -269,17 +269,17 @@ func (c *ConversationSrv) IncrQuery(ctx context.Context, uid string, startTime, 
 func (c *ConversationSrv) SetAttribute(ctx context.Context, attr types.ConvAttributeDTO) (err error) {
 	cacheKey := c.getConvCacheKey(attr.UID, attr.ConversationID)
 	switch attr.Attribute {
-	case ConvFieldPin:
-		c.cache.HSet(ctx, cacheKey, ConvFieldPin, attr.Pin)
+	case FieldConvPin:
+		c.cache.HSet(ctx, cacheKey, FieldConvPin, attr.Pin)
 		err = c.storage.UpdatePin(ctx, attr.UID, attr.ConversationID, attr.Pin)
-	case ConvFieldMute:
-		c.cache.HSet(ctx, cacheKey, ConvFieldMute, attr.Mute)
+	case FieldConvMute:
+		c.cache.HSet(ctx, cacheKey, FieldConvMute, attr.Mute)
 		err = c.storage.UpdateMute(ctx, attr.UID, attr.ConversationID, attr.Mute)
-	case ConvFieldUnreadCount:
-		c.cache.HSet(ctx, cacheKey, ConvFieldUnreadCount, attr.UnreadCount)
+	case FieldConvUnreadCount:
+		c.cache.HSet(ctx, cacheKey, FieldConvUnreadCount, attr.UnreadCount)
 		err = c.storage.UpdateUnreadCount(ctx, attr.UID, attr.ConversationID, attr.UnreadCount)
-	case ConvFieldDeleted:
-		c.cache.HSet(ctx, cacheKey, ConvFieldDeleted, attr.Deleted)
+	case FieldConvDeleted:
+		c.cache.HSet(ctx, cacheKey, FieldConvDeleted, attr.Deleted)
 		err = c.storage.UpdateDeleted(ctx, attr.UID, attr.ConversationID, attr.Deleted)
 	default:
 		return errors.New("invalid op type")

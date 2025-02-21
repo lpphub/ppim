@@ -43,7 +43,7 @@ func (srv *ConvSrv) SetPin(ctx *gin.Context, req types.ConvOpVO) error {
 	attr := types.ConvAttributeDTO{
 		UID:            req.UID,
 		ConversationID: req.ConversationID,
-		Attribute:      svc.ConvFieldPin,
+		Attribute:      svc.FieldConvPin,
 		Pin:            req.Pin,
 	}
 	err := svc.Hints().Conv.SetAttribute(ctx, attr)
@@ -58,7 +58,7 @@ func (srv *ConvSrv) SetMute(ctx *gin.Context, req types.ConvOpVO) error {
 	attr := types.ConvAttributeDTO{
 		UID:            req.UID,
 		ConversationID: req.ConversationID,
-		Attribute:      svc.ConvFieldMute,
+		Attribute:      svc.FieldConvMute,
 		Mute:           req.Mute,
 	}
 	err := svc.Hints().Conv.SetAttribute(ctx, attr)
@@ -73,7 +73,7 @@ func (srv *ConvSrv) SetUnreadCount(ctx *gin.Context, req types.ConvOpVO) error {
 	attr := types.ConvAttributeDTO{
 		UID:            req.UID,
 		ConversationID: req.ConversationID,
-		Attribute:      svc.ConvFieldUnreadCount,
+		Attribute:      svc.FieldConvUnreadCount,
 		UnreadCount:    req.UnreadCount,
 	}
 	err := svc.Hints().Conv.SetAttribute(ctx, attr)
@@ -88,7 +88,7 @@ func (srv *ConvSrv) SetDel(ctx *gin.Context, req types.ConvOpVO) error {
 	attr := types.ConvAttributeDTO{
 		UID:            req.UID,
 		ConversationID: req.ConversationID,
-		Attribute:      svc.ConvFieldDeleted,
+		Attribute:      svc.FieldConvDeleted,
 		Deleted:        req.Deleted,
 	}
 	err := svc.Hints().Conv.SetAttribute(ctx, attr)
