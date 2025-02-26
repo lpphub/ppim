@@ -22,8 +22,7 @@ type BatchProcessor[T any] struct {
 }
 
 // NewBatchProcessor
-// 同一批次顺序处理时，workers 应为 1；
-// 同一批次并发处理时，batchFn 注意并发安全
+// 注意：当workers>1时，不同元素可能被并发处理，不保证顺序性；batchFn 注意并发安全
 func NewBatchProcessor[T any](workers, batchSize int, interval time.Duration, batchFn BatchFunc[T]) *BatchProcessor[T] {
 	ctx, cancel := context.WithCancel(context.Background())
 	return &BatchProcessor[T]{
